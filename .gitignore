@@ -1,0 +1,26 @@
+# Dependências & Ambiente
+node_modules/
+.env
+.env.*
+!.env.example
+__pycache__/
+*.pyc
+
+# Builds & Binários
+target/
+dist/
+*.exe
+*.nupkg
+*.asar
+tauri-client/flow-ptt
+tauri-client/flow-paste
+test_*
+
+# Logs e Caches locais
+.qoder/
+.vite/
+*.log
+/tmp/
+
+# Análises e extrações locais
+analysis/

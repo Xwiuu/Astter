@@ -1,0 +1,10 @@
+<svg width="16" height="16" viewBox="0 0 256 256" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect width="256" height="256" rx="128" fill="#FFF"/>
+<g clip-path="url(#plaud_clip)">
+<path d="M62 214 L106 84 L150 84 L194 214" stroke="#000" stroke-width="28" stroke-linejoin="round"/>
+</g>
+<circle cx="128" cy="146" r="18" fill="#000"/>
+<defs>
+<clipPath id="plaud_clip"><rect x="0" y="0" width="256" height="200"/></clipPath>
+</defs>
+</svg>
