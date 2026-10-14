@@ -43,8 +43,8 @@
 
       /* PÍLULA FLUTUANTE REA (Wispr Flow Authentic Minimalist) */
       .thought-bubble {
-        -webkit-app-region: drag;
-        cursor: grab;
+        -webkit-app-region: no-drag !important;
+        cursor: pointer;
         position: relative;
         height: 30px;
         min-height: 30px;
@@ -63,10 +63,11 @@
                     border-color 0.2s ease,
                     box-shadow 0.2s ease;
         will-change: width, transform;
+        pointer-events: auto !important;
       }
 
       .thought-bubble:active {
-        cursor: grabbing;
+        cursor: pointer;
       }
 
       /* GLOW HOVER RING (Wispr Flow signature conic glow) */
@@ -109,7 +110,9 @@
         justify-content: center;
         width: 100%;
         height: 100%;
-        -webkit-app-region: drag;
+        -webkit-app-region: no-drag !important;
+        cursor: pointer;
+        pointer-events: auto !important;
       }
 
       .flow-symbol-svg {
@@ -503,12 +506,63 @@
           const restingLogo = bubbleInner.querySelector(".resting-logo");
           if (restingLogo) {
             restingLogo.addEventListener("click", (e) => {
+              if (dragDistance > 6) return;
               e.stopPropagation();
               renderBubble("menu");
             });
           }
         }
       }
+
+      // Sistema de Arrastar da Cápsula (JS smooth drag via IPC)
+      let isDragging = false;
+      let startX = 0, startY = 0;
+      let dragDistance = 0;
+
+      thoughtBubble.addEventListener("mousedown", (e) => {
+        if (e.button !== 0) return; // Apenas botão esquerdo
+        isDragging = true;
+        dragDistance = 0;
+        startX = e.screenX;
+        startY = e.screenY;
+      });
+
+      window.addEventListener("mousemove", (e) => {
+        if (!isDragging) return;
+        const dx = e.screenX - startX;
+        const dy = e.screenY - startY;
+        const dist = Math.hypot(dx, dy);
+        if (dist > 3) {
+          dragDistance += dist;
+          startX = e.screenX;
+          startY = e.screenY;
+          if (window.flowNative && window.flowNative.moveStatus) {
+            window.flowNative.moveStatus(dx, dy);
+          }
+        }
+      });
+
+      window.addEventListener("mouseup", () => {
+        setTimeout(() => {
+          isDragging = false;
+        }, 50);
+      });
+
+      // Clique direto na cápsula em repouso expande para Menu (Mic + Settings)
+      thoughtBubble.addEventListener("click", (e) => {
+        if (dragDistance > 6) return; // Arrastando a janela, não dispara clique
+        if (currentStatus === "resting") {
+          e.stopPropagation();
+          renderBubble("menu");
+        }
+      });
+
+      // Clique fora recolhe o menu
+      window.addEventListener("click", (e) => {
+        if (currentStatus === "menu" && !thoughtBubble.contains(e.target)) {
+          renderBubble("resting");
+        }
+      });
 
       // Escuta mudanças de status disparadas pelo Bridge
       window.addEventListener("flow:dictationStatus", (e) => {

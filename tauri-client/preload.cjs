@@ -9,6 +9,9 @@ contextBridge.exposeInMainWorld('flowNative', {
   setStatusSize: (width, height, expandUpwards = true) => {
     ipcRenderer.send('flow:set-status-bounds', { width, height, expandUpwards });
   },
+  moveStatus: (dx, dy) => {
+    ipcRenderer.send('flow:move-status', { dx, dy });
+  },
   copyToClipboard: (payload) => {
     if (typeof payload === 'string') {
       ipcRenderer.send('flow:copy-to-clipboard', { text: payload, autoPaste: true });

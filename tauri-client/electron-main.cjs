@@ -113,7 +113,7 @@ function createStatusWindow() {
     skipTaskbar: true,
     resizable: false,
     show: false,
-    focusable: false,
+    focusable: true,
     hasShadow: false,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
@@ -319,6 +319,12 @@ ipcMain.on('flow:close-hub', () => {
   if (hubWindow) hubWindow.hide();
 });
 ipcMain.on('flow:quit', quitFlow);
+
+ipcMain.on('flow:move-status', (event, { dx, dy }) => {
+  if (!statusWindow) return;
+  const [x, y] = statusWindow.getPosition();
+  statusWindow.setPosition(x + dx, y + dy);
+});
 
 ipcMain.on('flow:set-status-bounds', (event, { width, height, expandUpwards = true }) => {
   if (!statusWindow) return;
