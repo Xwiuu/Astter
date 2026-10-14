@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Aion Floating Pill</title>
+    <title>Flow Capsule</title>
     <link rel="icon" type="image/png" href="/assets/icons/flow-64.png"/>
     <script src="../hub/bridge.js"></script>
     <style>
@@ -29,6 +29,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        pointer-events: none !important;
       }
 
       /* Container Centralizado */
@@ -39,12 +40,14 @@
         width: 100%;
         height: 100%;
         position: relative;
+        pointer-events: none !important;
       }
 
       /* PÍLULA FLUTUANTE REA (Wispr Flow Authentic Minimalist) */
       .thought-bubble {
-        -webkit-app-region: no-drag !important;
-        cursor: pointer;
+        -webkit-app-region: drag !important;
+        cursor: grab !important;
+        user-select: none;
         position: relative;
         height: 30px;
         min-height: 30px;
@@ -57,7 +60,7 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        padding: 0 8px;
+        padding: 0 6px;
         transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1),
                     background-color 0.2s ease,
                     border-color 0.2s ease,
@@ -67,7 +70,34 @@
       }
 
       .thought-bubble:active {
-        cursor: pointer;
+        cursor: grabbing !important;
+      }
+
+      .drag-handle {
+        -webkit-app-region: drag !important;
+        cursor: grab !important;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: rgba(255, 255, 255, 0.4);
+        padding: 0 4px 0 2px;
+        height: 100%;
+        user-select: none;
+        flex-shrink: 0;
+        transition: color 0.15s ease;
+      }
+
+      .drag-handle:hover {
+        color: rgba(255, 255, 255, 0.95);
+      }
+
+      .drag-handle:active {
+        cursor: grabbing !important;
+        color: #FFFFFF;
+      }
+
+      .drag-handle svg {
+        display: block;
       }
 
       /* GLOW HOVER RING (Wispr Flow signature conic glow) */
@@ -96,22 +126,22 @@
         to { --glow-angle: 360deg; }
       }
 
-      /* ==================== ESTADO 1: RESTING (Apenas o Logo) ==================== */
+      /* ==================== ESTADO 1: RESTING (Grip + Logo) ==================== */
       .thought-bubble.state-resting {
-        width: 32px;
-        min-width: 32px;
-        padding: 0;
-        cursor: pointer;
+        width: 54px;
+        min-width: 54px;
+        padding: 0 6px 0 4px;
+        cursor: grab !important;
       }
 
       .resting-logo {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 100%;
+        width: 24px;
         height: 100%;
         -webkit-app-region: no-drag !important;
-        cursor: pointer;
+        cursor: pointer !important;
         pointer-events: auto !important;
       }
 
@@ -126,11 +156,11 @@
         transform: scale(1.15);
       }
 
-      /* ==================== ESTADO 1B: MENU (Ao Clicar no Logo: Mic + Settings) ==================== */
+      /* ==================== ESTADO 1B: MENU (Grip + Mic + Logo + Settings) ==================== */
       .thought-bubble.state-menu {
-        width: 96px;
-        min-width: 96px;
-        padding: 0 6px;
+        width: 126px;
+        min-width: 126px;
+        padding: 0 6px 0 4px;
         background: rgba(18, 18, 22, 0.94);
         border-color: rgba(255, 255, 255, 0.15);
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.15);
@@ -430,6 +460,16 @@
           thoughtBubble.classList.add("state-menu");
           bubbleInner.innerHTML = `
             <div class="menu-content">
+              <div class="drag-handle" id="menuDragHandle" title="Arrastar cápsula (Clique duplo para reposicionar)">
+                <svg width="6" height="12" viewBox="0 0 6 12" fill="currentColor">
+                  <circle cx="1.5" cy="2" r="1"/>
+                  <circle cx="4.5" cy="2" r="1"/>
+                  <circle cx="1.5" cy="6" r="1"/>
+                  <circle cx="4.5" cy="6" r="1"/>
+                  <circle cx="1.5" cy="10" r="1"/>
+                  <circle cx="4.5" cy="10" r="1"/>
+                </svg>
+              </div>
               <button class="pill-btn mic-btn" id="menuMicBtn" title="Gravar voz (Ctrl+Win)">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
@@ -459,6 +499,16 @@
           const mic = document.getElementById("menuMicBtn");
           const settings = document.getElementById("menuSettingsBtn");
           const logo = document.getElementById("menuLogoBtn");
+          const menuGrip = document.getElementById("menuDragHandle");
+
+          if (menuGrip) {
+            menuGrip.addEventListener("dblclick", (e) => {
+              e.stopPropagation();
+              if (window.flowNative && window.flowNative.triggerWindowMove) {
+                window.flowNative.triggerWindowMove();
+              }
+            });
+          }
 
           if (mic) {
             mic.addEventListener("click", (e) => {
@@ -488,10 +538,20 @@
             });
           }
         } else {
-          // ==================== RESTING (Apenas o Logo do Aion) ====================
+          // ==================== RESTING (Grip + Logo do Aion) ====================
           thoughtBubble.classList.add("state-resting");
           bubbleInner.innerHTML = `
-            <div class="resting-logo" title="Aion (Clique para abrir opções | Ctrl+Win para falar)">
+            <div class="drag-handle" id="restingDragHandle" title="Arrastar cápsula (Clique duplo para reposicionar)">
+              <svg width="7" height="13" viewBox="0 0 7 13" fill="currentColor">
+                <circle cx="1.8" cy="2" r="1.1"/>
+                <circle cx="5.2" cy="2" r="1.1"/>
+                <circle cx="1.8" cy="6.5" r="1.1"/>
+                <circle cx="5.2" cy="6.5" r="1.1"/>
+                <circle cx="1.8" cy="11" r="1.1"/>
+                <circle cx="5.2" cy="11" r="1.1"/>
+              </svg>
+            </div>
+            <div class="resting-logo" id="restingLogoBtn" title="Aion (Clique para abrir opções | Ctrl+Win para falar)">
               <svg class="flow-symbol-svg" viewBox="0 0 187 187" fill="none">
                 <rect width="187" height="187" rx="40" fill="#1A1A1A"/>
                 <path d="M48.1 41.6C44.2 41.6 40.6 45.2 40.6 49.1V137.8C40.6 142.5 44.3 145.4 48.1 145.4C52 145.4 55.6 141.8 55.6 137.9V49.1C55.6 45.2 52 41.6 48.1 41.6Z" fill="#FFFFEB"/>
@@ -503,59 +563,25 @@
             </div>
           `;
 
-          const restingLogo = bubbleInner.querySelector(".resting-logo");
+          const restingLogo = document.getElementById("restingLogoBtn");
           if (restingLogo) {
             restingLogo.addEventListener("click", (e) => {
-              if (dragDistance > 6) return;
               e.stopPropagation();
               renderBubble("menu");
             });
           }
-        }
-      }
 
-      // Sistema de Arrastar da Cápsula (JS smooth drag via IPC)
-      let isDragging = false;
-      let startX = 0, startY = 0;
-      let dragDistance = 0;
-
-      thoughtBubble.addEventListener("mousedown", (e) => {
-        if (e.button !== 0) return; // Apenas botão esquerdo
-        isDragging = true;
-        dragDistance = 0;
-        startX = e.screenX;
-        startY = e.screenY;
-      });
-
-      window.addEventListener("mousemove", (e) => {
-        if (!isDragging) return;
-        const dx = e.screenX - startX;
-        const dy = e.screenY - startY;
-        const dist = Math.hypot(dx, dy);
-        if (dist > 3) {
-          dragDistance += dist;
-          startX = e.screenX;
-          startY = e.screenY;
-          if (window.flowNative && window.flowNative.moveStatus) {
-            window.flowNative.moveStatus(dx, dy);
+          const restingGrip = document.getElementById("restingDragHandle");
+          if (restingGrip) {
+            restingGrip.addEventListener("dblclick", (e) => {
+              e.stopPropagation();
+              if (window.flowNative && window.flowNative.triggerWindowMove) {
+                window.flowNative.triggerWindowMove();
+              }
+            });
           }
         }
-      });
-
-      window.addEventListener("mouseup", () => {
-        setTimeout(() => {
-          isDragging = false;
-        }, 50);
-      });
-
-      // Clique direto na cápsula em repouso expande para Menu (Mic + Settings)
-      thoughtBubble.addEventListener("click", (e) => {
-        if (dragDistance > 6) return; // Arrastando a janela, não dispara clique
-        if (currentStatus === "resting") {
-          e.stopPropagation();
-          renderBubble("menu");
-        }
-      });
+      }
 
       // Clique fora recolhe o menu
       window.addEventListener("click", (e) => {
@@ -586,7 +612,7 @@
         if (currentStatus === "menu") {
           menuLeaveTimer = setTimeout(() => {
             if (currentStatus === "menu") renderBubble("resting");
-          }, 3500);
+          }, 4000);
         }
       });
       thoughtBubble.addEventListener("mouseenter", () => {
@@ -596,13 +622,7 @@
         }
       });
 
-      // Duplo-clique ou clique direito em qualquer modo abre o Hub
-      thoughtBubble.addEventListener("dblclick", (e) => {
-        if (window.flowNative && window.flowNative.toggleHub) {
-          window.flowNative.toggleHub();
-        }
-      });
-
+      // Clique com botão direito em qualquer modo abre o Flow Hub
       thoughtBubble.addEventListener("contextmenu", (e) => {
         e.preventDefault();
         if (window.flowNative && window.flowNative.toggleHub) {

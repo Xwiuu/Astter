@@ -14,6 +14,11 @@ if [ "$1" = "--dictate" ]; then
   exit 0
 fi
 
+if [ "$1" = "--hub" ]; then
+  curl -s http://127.0.0.1:1422/hub >/dev/null 2>&1 || true
+  exit 0
+fi
+
 cd "$TAURI_CLIENT_DIR" || exit 1
 ELECTRON_BIN="$TAURI_CLIENT_DIR/node_modules/.bin/electron"
 exec "$ELECTRON_BIN" electron-main.cjs "$@"

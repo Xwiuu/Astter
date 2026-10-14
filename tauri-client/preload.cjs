@@ -6,6 +6,7 @@ contextBridge.exposeInMainWorld('flowNative', {
   minimizeHub: () => ipcRenderer.send('flow:minimize-hub'),
   closeHub: () => ipcRenderer.send('flow:close-hub'),
   toggleStatus: () => ipcRenderer.send('flow:toggle-status'),
+  triggerWindowMove: () => ipcRenderer.send('flow:trigger-window-move'),
   setStatusSize: (width, height, expandUpwards = true) => {
     ipcRenderer.send('flow:set-status-bounds', { width, height, expandUpwards });
   },

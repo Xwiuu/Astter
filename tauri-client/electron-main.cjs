@@ -6,7 +6,7 @@ const http = require('http');
 app.setName('flow-desktop');
 app.setDesktopName('flow-desktop');
 app.commandLine.appendSwitch('enable-features', 'GlobalShortcutsPortal');
-app.commandLine.appendSwitch('ozone-platform', 'x11');
+app.commandLine.appendSwitch('ozone-platform-hint', 'auto');
 
 let hubWindow = null;
 let statusWindow = null;
@@ -47,6 +47,10 @@ const triggerServer = http.createServer((req, res) => {
     stopDictation();
     res.writeHead(200, { 'Content-Type': 'text/plain' });
     res.end('STOPPED\n');
+  } else if (req.url === '/hub') {
+    toggleHub();
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('HUB_TOGGLED\n');
   } else {
     res.writeHead(404);
     res.end();
@@ -56,18 +60,52 @@ triggerServer.listen(1422, '127.0.0.1', () => {
   console.log('✓ [Flow] Servidor de gatilho ativo em 127.0.0.1:1422');
 });
 
+function getTargetDisplay() {
+  try {
+    const { execSync } = require('child_process');
+    const activeName = execSync('qdbus-qt6 org.kde.KWin /KWin org.kde.KWin.activeOutputName', { encoding: 'utf8', timeout: 500 }).trim();
+    if (activeName) {
+      const displays = screen.getAllDisplays();
+      if (activeName === 'eDP-1') {
+        const match = displays.find(d => d.bounds.x === 900 || d.bounds.width === 1920);
+        if (match) return match;
+      } else if (activeName === 'HDMI-A-1') {
+        const match = displays.find(d => d.bounds.x === 0 || d.bounds.width === 900);
+        if (match) return match;
+      }
+    }
+  } catch (_) {}
+
+  try {
+    const cursorPoint = screen.getCursorScreenPoint();
+    if (cursorPoint && (cursorPoint.x > 0 || cursorPoint.y > 0)) {
+      return screen.getDisplayNearestPoint(cursorPoint);
+    }
+  } catch (_) {}
+
+  return screen.getAllDisplays().find(d => d.bounds.width === 1920) || screen.getPrimaryDisplay();
+}
+
 function createHubWindow() {
   const iconPath = path.join(__dirname, 'assets/icons/flow-256.png');
+  const targetDisplay = getTargetDisplay();
+  const { x: scrX, y: scrY, width: scrW, height: scrH } = targetDisplay.workArea;
+  const hubW = Math.min(1140, scrW - 40);
+  const hubH = Math.min(780, scrH - 40);
+  const hubX = Math.round(scrX + (scrW - hubW) / 2);
+  const hubY = Math.round(scrY + (scrH - hubH) / 2);
 
   hubWindow = new BrowserWindow({
-    width: 1140,
-    height: 780,
+    width: hubW,
+    height: hubH,
+    x: hubX,
+    y: hubY,
     minWidth: 900,
     minHeight: 600,
     backgroundColor: '#121212',
     icon: iconPath,
     title: 'Flow',
-    show: false,
+    show: true,
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
@@ -80,8 +118,9 @@ function createHubWindow() {
   hubWindow.loadURL('http://localhost:1420/renderer/hub/index.html');
 
   hubWindow.once('ready-to-show', () => {
-    // Hub inicia silencioso na bandeja; abre quando solicitado pelo menu ou configurações
-    console.log('✓ [Flow] Janela principal Hub pronta em segundo plano.');
+    hubWindow.show();
+    hubWindow.focus();
+    console.log('✓ [Flow] Janela principal Hub aberta com sucesso na tela ativa:', hubWindow.getPosition());
   });
 
   hubWindow.on('close', (event) => {
@@ -97,15 +136,43 @@ function createHubWindow() {
   });
 }
 
+function positionKWinWindow(title, x, y) {
+  const kwinScript = `
+    let wins = workspace.stackingOrder;
+    for (let i = 0; i < wins.length; i++) {
+      if (wins[i].caption === "${title}") {
+        wins[i].frameGeometry = {
+          x: ${Math.round(x)},
+          y: ${Math.round(y)},
+          width: wins[i].width,
+          height: wins[i].height
+        };
+        break;
+      }
+    }
+  `;
+  const scriptName = `pos_${Date.now()}`;
+  const tmpPath = path.join('/tmp', `${scriptName}.js`);
+  try {
+    const fs = require('fs');
+    const { execSync } = require('child_process');
+    fs.writeFileSync(tmpPath, kwinScript);
+    execSync(`qdbus-qt6 org.kde.KWin /Scripting org.kde.kwin.Scripting.loadScript "${tmpPath}" "${scriptName}" && qdbus-qt6 org.kde.KWin /Scripting org.kde.kwin.Scripting.start`);
+    try { fs.unlinkSync(tmpPath); } catch (_) {}
+  } catch (err) {}
+}
+
 function createStatusWindow() {
-  const primaryDisplay = screen.getPrimaryDisplay();
-  const { width, height } = primaryDisplay.bounds;
+  const targetDisplay = getTargetDisplay();
+  const { x: scrX, y: scrY, width: scrW, height: scrH } = targetDisplay.workArea;
+  const capsuleX = Math.round(scrX + (scrW - 220) / 2);
+  const capsuleY = Math.round(scrY + scrH - 65);
 
   statusWindow = new BrowserWindow({
     width: 220,
     height: 46,
-    x: Math.round((width - 220) / 2),
-    y: height - 80,
+    x: capsuleX,
+    y: capsuleY,
     frame: false,
     transparent: true,
     backgroundColor: '#00000000',
@@ -115,7 +182,7 @@ function createStatusWindow() {
     show: false,
     focusable: true,
     hasShadow: false,
-    type: 'toolbar',
+    title: 'Flow Capsule',
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       nodeIntegration: false,
@@ -126,9 +193,20 @@ function createStatusWindow() {
 
   statusWindow.once('ready-to-show', () => {
     statusWindow.show();
-    statusWindow.setAlwaysOnTop(true, 'screen-saver');
+    statusWindow.setAlwaysOnTop(true, 'screen-saver', 1);
     statusWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+    statusWindow.moveTop();
+    setTimeout(() => {
+      positionKWinWindow('Flow Capsule', capsuleX, capsuleY);
+    }, 350);
     console.log('✓ [Flow] Cápsula flutuante visível em:', statusWindow.getPosition());
+  });
+
+  statusWindow.on('blur', () => {
+    if (statusWindow && !statusWindow.isDestroyed()) {
+      statusWindow.setAlwaysOnTop(true, 'screen-saver', 1);
+      statusWindow.moveTop();
+    }
   });
 
   statusWindow.webContents.on('did-fail-load', (e, code, desc, url) => {
@@ -242,8 +320,9 @@ function toggleStatus() {
     statusWindow.hide();
   } else {
     statusWindow.show();
-    statusWindow.setAlwaysOnTop(true, 'screen-saver');
+    statusWindow.setAlwaysOnTop(true, 'screen-saver', 1);
     statusWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+    statusWindow.moveTop();
   }
 }
 
@@ -252,8 +331,9 @@ function triggerDictation() {
   if (statusWindow && statusWindow.webContents) {
     if (!statusWindow.isVisible()) {
       statusWindow.show();
-      statusWindow.setAlwaysOnTop(true, 'screen-saver');
     }
+    statusWindow.setAlwaysOnTop(true, 'screen-saver', 1);
+    statusWindow.moveTop();
     statusWindow.webContents.send('flow:dictation-trigger');
   } else if (hubWindow && hubWindow.webContents) {
     hubWindow.webContents.send('flow:dictation-trigger');
@@ -265,8 +345,9 @@ function startDictation() {
   if (statusWindow && statusWindow.webContents) {
     if (!statusWindow.isVisible()) {
       statusWindow.show();
-      statusWindow.setAlwaysOnTop(true, 'screen-saver');
     }
+    statusWindow.setAlwaysOnTop(true, 'screen-saver', 1);
+    statusWindow.moveTop();
     statusWindow.webContents.send('flow:dictation-start');
   } else if (hubWindow && hubWindow.webContents) {
     hubWindow.webContents.send('flow:dictation-start');
@@ -343,11 +424,22 @@ ipcMain.on('flow:close-hub', () => {
   if (hubWindow) hubWindow.hide();
 });
 ipcMain.on('flow:quit', quitFlow);
+ipcMain.on('flow:trigger-window-move', () => {
+  if (statusWindow && !statusWindow.isDestroyed()) {
+    statusWindow.focus();
+    try {
+      const { execSync } = require('child_process');
+      execSync('qdbus-qt6 org.kde.kglobalaccel /component/kwin invokeShortcut "Window Move"');
+    } catch (_) {}
+  }
+});
 
 ipcMain.on('flow:move-status', (event, { dx, dy }) => {
-  if (!statusWindow) return;
+  if (!statusWindow || statusWindow.isDestroyed()) return;
   const [x, y] = statusWindow.getPosition();
-  statusWindow.setPosition(x + dx, y + dy);
+  statusWindow.setPosition(Math.round(x + dx), Math.round(y + dy));
+  statusWindow.setAlwaysOnTop(true, 'screen-saver', 1);
+  statusWindow.moveTop();
 });
 
 ipcMain.on('flow:set-status-bounds', (event, { width, height, expandUpwards = true }) => {
@@ -475,6 +567,7 @@ async function ensureViteServer() {
   const viteBin = path.join(__dirname, 'node_modules/vite/bin/vite.js');
   const viteProcess = spawn(process.execPath, [viteBin, '--port', '1420'], {
     cwd: __dirname,
+    env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' },
     stdio: 'ignore',
     detached: false
   });
