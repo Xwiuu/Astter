@@ -298,6 +298,19 @@ function quitFlow() {
 
 // IPC Handlers
 ipcMain.on('flow:toggle-hub', toggleHub);
+ipcMain.on('flow:open-settings', () => {
+  if (!hubWindow) {
+    createHubWindow();
+  } else {
+    hubWindow.show();
+    hubWindow.focus();
+    hubWindow.webContents.executeJavaScript(`
+      if (window.zubridge && window.zubridge.dispatch) {
+        window.zubridge.dispatch("SET_PREFS", { user: { selectedTab: "settings" } });
+      }
+    `).catch(() => {});
+  }
+});
 ipcMain.on('flow:toggle-status', toggleStatus);
 ipcMain.on('flow:minimize-hub', () => {
   if (hubWindow) hubWindow.minimize();

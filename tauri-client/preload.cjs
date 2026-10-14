@@ -2,6 +2,7 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('flowNative', {
   toggleHub: () => ipcRenderer.send('flow:toggle-hub'),
+  openSettings: () => ipcRenderer.send('flow:open-settings'),
   minimizeHub: () => ipcRenderer.send('flow:minimize-hub'),
   closeHub: () => ipcRenderer.send('flow:close-hub'),
   toggleStatus: () => ipcRenderer.send('flow:toggle-status'),

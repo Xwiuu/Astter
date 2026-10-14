@@ -123,6 +123,85 @@
         transform: scale(1.15);
       }
 
+      /* ==================== ESTADO 1B: MENU (Ao Clicar no Logo: Mic + Settings) ==================== */
+      .thought-bubble.state-menu {
+        width: 96px;
+        min-width: 96px;
+        padding: 0 6px;
+        background: rgba(18, 18, 22, 0.94);
+        border-color: rgba(255, 255, 255, 0.15);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      }
+
+      .menu-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        height: 100%;
+        animation: menuFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+
+      @keyframes menuFadeIn {
+        from { opacity: 0; transform: scale(0.9); }
+        to { opacity: 1; transform: scale(1); }
+      }
+
+      .pill-btn {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(255, 255, 255, 0.08);
+        color: #E0E0E5;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        -webkit-app-region: no-drag;
+        transition: all 0.14s cubic-bezier(0.16, 1, 0.3, 1);
+        flex-shrink: 0;
+      }
+
+      .pill-btn:hover {
+        transform: scale(1.12);
+        background: rgba(255, 255, 255, 0.2);
+        color: #FFFFFF;
+      }
+
+      .pill-btn:active {
+        transform: scale(0.94);
+      }
+
+      .pill-btn.mic-btn:hover {
+        background: rgba(255, 69, 58, 0.28);
+        color: #FF453A;
+        box-shadow: 0 0 10px rgba(255, 69, 58, 0.4);
+      }
+
+      .pill-btn.settings-btn:hover {
+        background: rgba(167, 139, 250, 0.25);
+        color: #C4B5FD;
+        box-shadow: 0 0 10px rgba(167, 139, 250, 0.35);
+      }
+
+      .menu-center-logo {
+        width: 18px;
+        height: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        -webkit-app-region: no-drag;
+        transition: transform 0.14s ease, opacity 0.14s ease;
+        flex-shrink: 0;
+      }
+
+      .menu-center-logo:hover {
+        transform: scale(1.1);
+        opacity: 0.8;
+      }
+
 
       /* ==================== ESTADO 2: RECORDING (PTT Ativo) ==================== */
       .thought-bubble.state-recording {
@@ -343,11 +422,73 @@
               renderBubble("resting");
             }
           }, 1400);
+        } else if (status === "menu") {
+          // ==================== MENU (Microfone + Logo + Settings) ====================
+          thoughtBubble.classList.add("state-menu");
+          bubbleInner.innerHTML = `
+            <div class="menu-content">
+              <button class="pill-btn mic-btn" id="menuMicBtn" title="Gravar voz (Ctrl+Win)">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                  <line x1="12" x2="12" y1="19" y2="22"/>
+                </svg>
+              </button>
+              <div class="menu-center-logo" id="menuLogoBtn" title="Fechar menu">
+                <svg class="flow-symbol-svg" viewBox="0 0 187 187" fill="none">
+                  <rect width="187" height="187" rx="40" fill="#1A1A1A"/>
+                  <path d="M48.1 41.6C44.2 41.6 40.6 45.2 40.6 49.1V137.8C40.6 142.5 44.3 145.4 48.1 145.4C52 145.4 55.6 141.8 55.6 137.9V49.1C55.6 45.2 52 41.6 48.1 41.6Z" fill="#FFFFEB"/>
+                  <path d="M93.4 58.6C89.6 58.6 85.9 62.2 85.9 66V120.2C85.9 124.1 89.6 127.6 93.4 127.6C97.3 127.6 101 124.1 101 120.2V66C101 62.2 97.3 58.6 93.4 58.6Z" fill="#FFFFEB"/>
+                  <path d="M70.8 89.1C66.8 89.1 63.2 92.7 63.2 96.6V127.5C63.2 131.3 66.8 134.9 70.8 134.9C74.7 134.9 78.3 131.3 78.3 127.5V96.6C78.3 92.7 74.7 89.1 70.8 89.1Z" fill="#FFFFEB"/>
+                  <path d="M138.7 41.6C134.9 41.6 131.1 45.2 131.1 49.1V137.8C131.1 141.7 134.8 145.3 138.7 145.3C142.6 145.3 146.2 141.7 146.2 137.8V49.1C146.2 45.2 142.6 41.6 138.7 41.6Z" fill="#FFFFEB"/>
+                  <path d="M116 89.1C112 89.1 108.5 92.7 108.5 96.6V127.5C108.5 131.3 112 134.9 116 134.9C120 134.9 123.6 131.3 123.6 127.5V96.6C123.6 92.7 120 89.1 116 89.1Z" fill="#FFFFEB"/>
+                </svg>
+              </div>
+              <button class="pill-btn settings-btn" id="menuSettingsBtn" title="Configurações do Aion">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="3"></circle>
+                  <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                </svg>
+              </button>
+            </div>
+          `;
+
+          const mic = document.getElementById("menuMicBtn");
+          const settings = document.getElementById("menuSettingsBtn");
+          const logo = document.getElementById("menuLogoBtn");
+
+          if (mic) {
+            mic.addEventListener("click", (e) => {
+              e.stopPropagation();
+              if (typeof window.__flowToggleDictation === "function") {
+                window.__flowToggleDictation();
+              }
+            });
+          }
+
+          if (settings) {
+            settings.addEventListener("click", (e) => {
+              e.stopPropagation();
+              if (window.flowNative && window.flowNative.openSettings) {
+                window.flowNative.openSettings();
+              } else if (window.flowNative && window.flowNative.toggleHub) {
+                window.flowNative.toggleHub();
+              }
+              renderBubble("resting");
+            });
+          }
+
+          if (logo) {
+            logo.addEventListener("click", (e) => {
+              e.stopPropagation();
+              renderBubble("resting");
+            });
+          }
         } else {
-          // ==================== RESTING (Aion Glyph + Teclas de Atalho) ====================
+          // ==================== RESTING (Apenas o Logo do Aion) ====================
           thoughtBubble.classList.add("state-resting");
           bubbleInner.innerHTML = `
-            <div class="resting-logo" title="Aion Ditado (Ctrl+Win | Clique para falar | Duplo-clique para abrir Hub)">
+            <div class="resting-logo" title="Aion (Clique para abrir opções | Ctrl+Win para falar)">
               <svg class="flow-symbol-svg" viewBox="0 0 187 187" fill="none">
                 <rect width="187" height="187" rx="40" fill="#1A1A1A"/>
                 <path d="M48.1 41.6C44.2 41.6 40.6 45.2 40.6 49.1V137.8C40.6 142.5 44.3 145.4 48.1 145.4C52 145.4 55.6 141.8 55.6 137.9V49.1C55.6 45.2 52 41.6 48.1 41.6Z" fill="#FFFFEB"/>
@@ -358,6 +499,14 @@
               </svg>
             </div>
           `;
+
+          const restingLogo = bubbleInner.querySelector(".resting-logo");
+          if (restingLogo) {
+            restingLogo.addEventListener("click", (e) => {
+              e.stopPropagation();
+              renderBubble("menu");
+            });
+          }
         }
       }
 
@@ -377,23 +526,24 @@
         }
       });
 
-      // Suporte a clique direto na cápsula para iniciar/parar ditado
-      let clickTimer = null;
-      thoughtBubble.addEventListener("click", (e) => {
-        if (clickTimer) clearTimeout(clickTimer);
-        clickTimer = setTimeout(() => {
-          if (typeof window.__flowToggleDictation === "function") {
-            window.__flowToggleDictation();
-          }
-        }, 220);
+      // Auto-fechamento do menu ao tirar o mouse
+      let menuLeaveTimer = null;
+      thoughtBubble.addEventListener("mouseleave", () => {
+        if (currentStatus === "menu") {
+          menuLeaveTimer = setTimeout(() => {
+            if (currentStatus === "menu") renderBubble("resting");
+          }, 3500);
+        }
+      });
+      thoughtBubble.addEventListener("mouseenter", () => {
+        if (menuLeaveTimer) {
+          clearTimeout(menuLeaveTimer);
+          menuLeaveTimer = null;
+        }
       });
 
-      // Duplo-clique ou clique direito abre o Hub
+      // Duplo-clique ou clique direito em qualquer modo abre o Hub
       thoughtBubble.addEventListener("dblclick", (e) => {
-        if (clickTimer) {
-          clearTimeout(clickTimer);
-          clickTimer = null;
-        }
         if (window.flowNative && window.flowNative.toggleHub) {
           window.flowNative.toggleHub();
         }
