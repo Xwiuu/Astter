@@ -6,6 +6,7 @@ const http = require('http');
 app.setName('flow-desktop');
 app.setDesktopName('flow-desktop');
 app.commandLine.appendSwitch('enable-features', 'GlobalShortcutsPortal');
+app.commandLine.appendSwitch('ozone-platform', 'x11');
 
 let hubWindow = null;
 let statusWindow = null;
@@ -66,7 +67,7 @@ function createHubWindow() {
     backgroundColor: '#121212',
     icon: iconPath,
     title: 'Flow',
-    show: true,
+    show: false,
     autoHideMenuBar: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
@@ -79,9 +80,8 @@ function createHubWindow() {
   hubWindow.loadURL('http://localhost:1420/renderer/hub/index.html');
 
   hubWindow.once('ready-to-show', () => {
-    hubWindow.show();
-    hubWindow.focus();
-    console.log('✓ [Flow] Janela principal Hub exibida com sucesso.');
+    // Hub inicia silencioso na bandeja; abre quando solicitado pelo menu ou configurações
+    console.log('✓ [Flow] Janela principal Hub pronta em segundo plano.');
   });
 
   hubWindow.on('close', (event) => {
@@ -99,13 +99,13 @@ function createHubWindow() {
 
 function createStatusWindow() {
   const primaryDisplay = screen.getPrimaryDisplay();
-  const { width, height } = primaryDisplay.workAreaSize;
+  const { width, height } = primaryDisplay.bounds;
 
   statusWindow = new BrowserWindow({
     width: 220,
     height: 46,
     x: Math.round((width - 220) / 2),
-    y: height - 65,
+    y: height - 80,
     frame: false,
     transparent: true,
     backgroundColor: '#00000000',
@@ -115,6 +115,7 @@ function createStatusWindow() {
     show: false,
     focusable: true,
     hasShadow: false,
+    type: 'toolbar',
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       nodeIntegration: false,
@@ -123,8 +124,27 @@ function createStatusWindow() {
     }
   });
 
+  statusWindow.once('ready-to-show', () => {
+    statusWindow.show();
+    statusWindow.setAlwaysOnTop(true, 'screen-saver');
+    statusWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+    console.log('✓ [Flow] Cápsula flutuante visível em:', statusWindow.getPosition());
+  });
+
+  statusWindow.webContents.on('did-fail-load', (e, code, desc, url) => {
+    console.error('❌ [Flow] Falha ao carregar status:', desc, url);
+    setTimeout(() => {
+      if (statusWindow && !statusWindow.isDestroyed()) {
+        statusWindow.loadURL('http://localhost:1420/renderer/status/index.html');
+      }
+    }, 1000);
+  });
+
+  statusWindow.webContents.on('console-message', (e, level, message) => {
+    console.log(`[Status Console] ${message}`);
+  });
+
   statusWindow.loadURL('http://localhost:1420/renderer/status/index.html');
-  statusWindow.showInactive();
 
   statusWindow.on('closed', () => {
     statusWindow = null;
@@ -221,7 +241,9 @@ function toggleStatus() {
   if (statusWindow.isVisible()) {
     statusWindow.hide();
   } else {
-    statusWindow.showInactive();
+    statusWindow.show();
+    statusWindow.setAlwaysOnTop(true, 'screen-saver');
+    statusWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
   }
 }
 
@@ -229,7 +251,8 @@ function triggerDictation() {
   console.log('🎙️ [Flow] Gatilho de ditado acionado via atalho global / bandeja!');
   if (statusWindow && statusWindow.webContents) {
     if (!statusWindow.isVisible()) {
-      statusWindow.showInactive();
+      statusWindow.show();
+      statusWindow.setAlwaysOnTop(true, 'screen-saver');
     }
     statusWindow.webContents.send('flow:dictation-trigger');
   } else if (hubWindow && hubWindow.webContents) {
@@ -241,7 +264,8 @@ function startDictation() {
   console.log('🎙️ [Flow PTT] Iniciar ditado (tecla pressionada)');
   if (statusWindow && statusWindow.webContents) {
     if (!statusWindow.isVisible()) {
-      statusWindow.showInactive();
+      statusWindow.show();
+      statusWindow.setAlwaysOnTop(true, 'screen-saver');
     }
     statusWindow.webContents.send('flow:dictation-start');
   } else if (hubWindow && hubWindow.webContents) {
