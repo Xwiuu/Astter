@@ -3,15 +3,22 @@
   <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Flow Floating Pill Dock</title>
+    <title>Aion Floating Pill</title>
     <link rel="icon" type="image/png" href="/assets/icons/flow-64.png"/>
     <script src="../hub/bridge.js"></script>
     <style>
+      @property --glow-angle {
+        syntax: "<angle>";
+        initial-value: 0deg;
+        inherits: false;
+      }
+
       * {
         box-sizing: border-box;
         margin: 0;
         padding: 0;
       }
+
       html, body {
         width: 100vw;
         height: 100vh;
@@ -24,754 +31,480 @@
         justify-content: center;
       }
 
-      /* Container Principal */
-      .widget-container {
+      /* Container Centralizado */
+      .capsule-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
         width: 100%;
         height: 100%;
-        display: flex;
-        flex-direction: column;
-        justify-content: flex-end;
-        align-items: center;
-        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        position: relative;
       }
 
-      /* MODO PÍLULA (Compacto) */
-      .floating-pill {
+      /* PÍLULA FLUTUANTE REA (Wispr Flow Authentic Minimalist) */
+      .thought-bubble {
         -webkit-app-region: drag;
         cursor: grab;
-        width: 312px;
-        height: 44px;
-        background: rgba(18, 18, 22, 0.94);
-        backdrop-filter: blur(24px);
-        -webkit-backdrop-filter: blur(24px);
-        border: 1px solid rgba(255, 255, 255, 0.16);
+        position: relative;
+        height: 30px;
+        min-height: 30px;
+        background: rgba(15, 15, 18, 0.88);
+        backdrop-filter: blur(28px);
+        -webkit-backdrop-filter: blur(28px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
         border-radius: 9999px;
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-        display: flex;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.65), 0 2px 6px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+        display: inline-flex;
         align-items: center;
-        justify-content: space-between;
-        padding: 0 8px 0 12px;
-        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        justify-content: center;
+        padding: 0 8px;
+        transition: width 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+                    background-color 0.2s ease,
+                    border-color 0.2s ease,
+                    box-shadow 0.2s ease;
+        will-change: width, transform;
       }
 
-      .floating-pill:active {
+      .thought-bubble:active {
         cursor: grabbing;
       }
 
-      .pill-left {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        -webkit-app-region: no-drag;
-        cursor: pointer;
-      }
-
-      .flow-symbol-svg {
-        width: 20px;
-        height: 20px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        filter: drop-shadow(0 0 5px rgba(255, 255, 235, 0.35));
-      }
-
-      .pill-center {
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: flex-start;
-        margin-left: 6px;
-        flex: 1;
-        overflow: hidden;
+      /* GLOW HOVER RING (Wispr Flow signature conic glow) */
+      .thought-bubble::after {
+        content: "";
+        position: absolute;
+        inset: -1px;
+        border-radius: inherit;
+        padding: 1px;
+        background: conic-gradient(from var(--glow-angle), transparent 0%, rgba(255, 255, 235, 0.35) 12%, transparent 25%);
+        mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        mask-composite: exclude;
+        -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+        -webkit-mask-composite: destination-out;
+        opacity: 0;
+        transition: opacity 0.25s ease;
         pointer-events: none;
       }
 
-      .pill-title {
-        font-size: 12px;
-        font-weight: 600;
-        color: #EDEDED;
-        letter-spacing: -0.2px;
+      .thought-bubble:hover::after {
+        opacity: 1;
+        animation: rotateGlow 3s linear infinite;
+      }
+
+      @keyframes rotateGlow {
+        to { --glow-angle: 360deg; }
+      }
+
+      /* ==================== ESTADO 1: RESTING (Pronto / Compacto) ==================== */
+      .thought-bubble.state-resting {
+        width: 142px;
+      }
+
+      .resting-content {
         display: flex;
         align-items: center;
         gap: 6px;
-        white-space: nowrap;
+        width: 100%;
+        height: 100%;
       }
 
-      .pill-sub {
+      .aion-glyph-btn {
+        width: 16px;
+        height: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        -webkit-app-region: no-drag;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: transform 0.15s ease, opacity 0.15s ease;
+      }
+      .aion-glyph-btn:hover {
+        transform: scale(1.1);
+        opacity: 0.9;
+      }
+
+      .flow-symbol-svg {
+        width: 15px;
+        height: 15px;
+        filter: drop-shadow(0 0 4px rgba(255, 255, 235, 0.35));
+      }
+
+      .nudge-shortcut {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        flex-shrink: 0;
+      }
+
+      .nudge-key {
         font-size: 9.5px;
-        font-weight: 500;
-        color: #8E8D91;
+        line-height: 1;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 2px 4px;
+        background: #FAF8F2;
+        color: #121216;
+        border-radius: 3px;
+        box-shadow: -1px 1px 0 rgba(70, 70, 70, 0.8);
+        white-space: nowrap;
+        letter-spacing: -0.2px;
+      }
+
+      .nudge-label {
+        font-size: 11px;
+        font-weight: 550;
+        color: #EDEDED;
+        letter-spacing: -0.1px;
+        white-space: nowrap;
+        opacity: 0.85;
+      }
+
+      .hover-actions {
+        display: flex;
+        align-items: center;
+        gap: 3px;
+        margin-left: auto;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.15s ease;
+        -webkit-app-region: no-drag;
+      }
+
+      .thought-bubble:hover .hover-actions {
+        opacity: 1;
+        pointer-events: auto;
+      }
+
+      .mini-btn {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        border: none;
+        background: rgba(255, 255, 255, 0.1);
+        color: #C0C0C4;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: background 0.12s ease, color 0.12s ease;
+      }
+      .mini-btn:hover {
+        background: rgba(255, 255, 255, 0.25);
+        color: #FFFFFF;
+      }
+
+      /* ==================== ESTADO 2: RECORDING (PTT Ativo) ==================== */
+      .thought-bubble.state-recording {
+        width: 76px;
+        background: rgba(18, 14, 16, 0.92);
+        border-color: rgba(255, 69, 58, 0.4);
+        box-shadow: 0 0 16px rgba(255, 69, 58, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      }
+
+      .waveform-wrap {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 3px;
+        height: 18px;
+        width: 100%;
+        --audio-scale: 1;
+      }
+
+      .wave-bar {
+        width: 2.2px;
+        height: 12px;
+        background: #FFFFFF;
+        border-radius: 1px;
+        transform-origin: center;
+        will-change: transform;
+        transform: scaleY(calc(var(--audio-scale, 1) * var(--bar-scale, 1)));
+        animation: waveAnim 1s infinite ease-in-out;
+      }
+
+      @keyframes waveAnim {
+        0%, 100% { transform: scaleY(calc(var(--audio-scale, 1) * var(--bar-scale, 1) * 0.8)); }
+        20% { transform: scaleY(calc(var(--audio-scale, 1) * var(--bar-scale, 1) * 1.25)); }
+        40% { transform: scaleY(calc(var(--audio-scale, 1) * var(--bar-scale, 1) * 1.6)); }
+        80% { transform: scaleY(calc(var(--audio-scale, 1) * var(--bar-scale, 1) * 1.1)); }
+        90% { transform: scaleY(calc(var(--audio-scale, 1) * var(--bar-scale, 1) * 1.35)); }
+      }
+
+      /* ==================== ESTADO 3: PROCESSING (Rainbow Conic Ring) ==================== */
+      .thought-bubble.state-processing {
+        width: 98px;
+        background: #0f0f12;
+        border: none !important;
+        position: relative;
+        overflow: hidden;
+        isolation: isolate;
+      }
+
+      .thought-bubble.state-processing::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 300px;
+        height: 300px;
+        background: conic-gradient(from 0deg, #f0d7ff, #ffbcf2, #ff6c4c, #ffa946, #7232a6, #f0d7ff);
+        transform: translate(-50%, -50%) rotate(0deg);
+        transform-origin: center center;
+        animation: rainbowSpin 3.5s linear infinite;
+        will-change: transform;
+        z-index: 0;
+      }
+
+      .thought-bubble.state-processing::after {
+        content: "";
+        position: absolute;
+        inset: 1px;
+        background: #0f0f12;
+        border-radius: inherit;
+        z-index: 1;
+        opacity: 1 !important;
+        animation: none !important;
+        mask: none !important;
+        -webkit-mask: none !important;
+      }
+
+      @keyframes rainbowSpin {
+        to { transform: translate(-50%, -50%) rotate(360deg); }
+      }
+
+      .processing-content {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+      }
+
+      /* Radial 8-bar spinner (authentic Wispr REA module-64037) */
+      .radial-spinner {
+        position: relative;
+        width: 14px;
+        height: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .spinner-tick {
+        position: absolute;
+        width: 1.8px;
+        height: 4.5px;
+        border-radius: 1px;
+        background: rgba(163, 148, 199, 0.3);
+        transform-origin: center center;
+        animation: tickFade 1.1s linear infinite;
+      }
+
+      @keyframes tickFade {
+        0% { background: rgba(163, 148, 199, 0.95); }
+        100% { background: rgba(163, 148, 199, 0.15); }
+      }
+
+      .processing-label {
+        font-size: 11px;
+        font-weight: 550;
+        color: #C4B5FD;
         letter-spacing: -0.1px;
         white-space: nowrap;
       }
 
-      /* Audio waveforms */
-      .wave-container {
-        display: none;
-        align-items: center;
-        gap: 2.5px;
-        height: 14px;
+      /* ==================== ESTADO 4: COMPLETED (Checkmark Sucesso) ==================== */
+      .thought-bubble.state-completed {
+        width: 104px;
+        border-color: rgba(52, 199, 89, 0.45);
+        box-shadow: 0 0 16px rgba(52, 199, 89, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
       }
 
-      .wave-bar {
-        width: 2.5px;
-        background: #FF453A;
-        border-radius: 999px;
-        height: 4px;
-        transition: height 0.08s ease;
-      }
-
-      .rec-dot {
-        display: none;
-        width: 7px;
-        height: 7px;
-        border-radius: 50%;
-        background: #FF453A;
-        box-shadow: 0 0 8px #FF453A;
-        animation: recPulse 1.2s infinite;
-      }
-
-      @keyframes recPulse {
-        0%, 100% { opacity: 1; transform: scale(1); }
-        50% { opacity: 0.4; transform: scale(0.85); }
-      }
-
-      /* Ações da Pílula */
-      .pill-actions {
-        display: flex;
-        align-items: center;
-        gap: 3px;
-        -webkit-app-region: no-drag;
-      }
-
-      .action-btn {
-        width: 28px;
-        height: 28px;
-        border-radius: 50%;
-        border: none;
-        background: rgba(255, 255, 255, 0.08);
-        color: #EDEDED;
+      .completed-content {
         display: flex;
         align-items: center;
         justify-content: center;
-        cursor: pointer;
-        transition: all 0.15s ease;
-      }
-
-      .action-btn:hover {
-        background: rgba(255, 255, 255, 0.18);
-        color: #FFFFFF;
-        transform: scale(1.05);
-      }
-
-      .action-btn:active {
-        transform: scale(0.95);
-      }
-
-      .action-btn.mic-btn {
-        background: rgba(255, 255, 255, 0.12);
-      }
-
-      .action-btn.mic-btn.active {
-        background: #FF453A;
-        color: #FFFFFF;
-        box-shadow: 0 0 12px rgba(255, 69, 58, 0.6);
-      }
-
-      /* MODO EXPANDIDO: CAMPO DE TEXTO AO VIVO */
-      .expanded-card {
-        display: none;
-        width: 432px;
-        height: 232px;
-        background: rgba(18, 18, 24, 0.96);
-        backdrop-filter: blur(28px);
-        -webkit-backdrop-filter: blur(28px);
-        border: 1px solid rgba(255, 255, 255, 0.16);
-        border-radius: 16px;
-        box-shadow: 0 16px 48px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.15);
-        flex-direction: column;
-        overflow: hidden;
-        animation: cardIn 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-      }
-
-      @keyframes cardIn {
-        from { opacity: 0; transform: translateY(12px) scale(0.97); }
-        to { opacity: 1; transform: translateY(0) scale(1); }
-      }
-
-      .card-header {
-        -webkit-app-region: drag;
-        cursor: grab;
-        height: 40px;
-        padding: 0 12px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-        background: rgba(255, 255, 255, 0.02);
-      }
-
-      .card-header:active {
-        cursor: grabbing;
-      }
-
-      .header-title-wrap {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        font-size: 12px;
-        font-weight: 600;
-        color: #EDEDED;
-      }
-
-      .badge-state {
-        font-size: 10px;
-        font-weight: 600;
-        padding: 2px 8px;
-        border-radius: 999px;
-        background: rgba(255, 255, 255, 0.08);
-        color: #A0A0A5;
-      }
-      .badge-state.recording {
-        background: rgba(255, 69, 58, 0.2);
-        color: #FF453A;
-        border: 1px solid rgba(255, 69, 58, 0.4);
-      }
-      .badge-state.processing {
-        background: rgba(167, 139, 250, 0.2);
-        color: #C4B5FD;
-        border: 1px solid rgba(167, 139, 250, 0.4);
-      }
-      .badge-state.copied {
-        background: rgba(52, 199, 89, 0.2);
-        color: #34C759;
-        border: 1px solid rgba(52, 199, 89, 0.4);
-      }
-
-      /* ÁREA DO CAMPO DE TEXTO */
-      .card-body {
-        flex: 1;
-        padding: 10px 12px;
-        display: flex;
-        flex-direction: column;
-        position: relative;
-        -webkit-app-region: no-drag;
-      }
-
-      .live-textarea {
-        width: 100%;
-        height: 100%;
-        background: rgba(10, 10, 14, 0.65);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 10px;
-        padding: 10px 12px;
-        color: #F5F5F5;
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-        font-size: 13.5px;
-        line-height: 1.55;
-        resize: none;
-        outline: none;
-        transition: border 0.15s ease;
-      }
-
-      .live-textarea:focus {
-        border-color: rgba(255, 255, 255, 0.25);
-        box-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
-      }
-
-      .live-textarea::placeholder {
-        color: #636266;
-        font-style: italic;
-      }
-
-      /* RODAPÉ DO CARD */
-      .card-footer {
-        height: 38px;
-        padding: 0 12px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        border-top: 1px solid rgba(255, 255, 255, 0.08);
-        background: rgba(255, 255, 255, 0.02);
-        -webkit-app-region: no-drag;
-      }
-
-      .footer-stats {
-        font-size: 10.5px;
-        color: #8E8D91;
-        font-weight: 500;
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      }
-
-      .footer-actions {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-      }
-
-      .btn-pill {
-        padding: 4px 10px;
-        border-radius: 6px;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        background: rgba(255, 255, 255, 0.08);
-        color: #EDEDED;
-        font-size: 11px;
-        font-weight: 500;
-        cursor: pointer;
-        display: flex;
-        align-items: center;
         gap: 5px;
-        transition: all 0.15s ease;
+        color: #34C759;
       }
 
-      .btn-pill:hover {
-        background: rgba(255, 255, 255, 0.16);
-        color: #FFFFFF;
+      .check-icon {
+        width: 13px;
+        height: 13px;
+        stroke: #34C759;
+        stroke-width: 2.5;
+        fill: none;
+        stroke-linecap: round;
+        stroke-linejoin: round;
       }
 
-      .btn-pill.primary {
-        background: #F5F5F5;
-        color: #121212;
-        border: none;
+      .completed-label {
+        font-size: 11px;
         font-weight: 600;
+        color: #34C759;
+        letter-spacing: -0.1px;
+        white-space: nowrap;
       }
-      .btn-pill.primary:hover {
-        background: #FFFFFF;
-        box-shadow: 0 0 12px rgba(255, 255, 255, 0.25);
-      }
-
-      /* Estados do Card */
-      .is-expanded .floating-pill { display: none !important; }
-      .is-expanded .expanded-card { display: flex !important; }
     </style>
   </head>
   <body>
-    <div class="widget-container" id="widgetContainer">
-      <!-- MODO 1: PÍLULA FLUTUANTE COMPACTA -->
-      <div class="floating-pill" id="flowPill">
-        <!-- Logo Esquerda: Clicar abre o Hub -->
-        <div class="pill-left" id="hubLogoBtn" title="Abrir Flow Hub">
-          <svg class="flow-symbol-svg" viewBox="0 0 187 187" fill="none">
-            <rect width="187" height="187" rx="40" fill="#1A1A1A"/>
-            <path d="M48.1 41.6C44.2 41.6 40.6 45.2 40.6 49.1V137.8C40.6 142.5 44.3 145.4 48.1 145.4C52 145.4 55.6 141.8 55.6 137.9V49.1C55.6 45.2 52 41.6 48.1 41.6Z" fill="#FFFFEB"/>
-            <path d="M93.4 58.6C89.6 58.6 85.9 62.2 85.9 66V120.2C85.9 124.1 89.6 127.6 93.4 127.6C97.3 127.6 101 124.1 101 120.2V66C101 62.2 97.3 58.6 93.4 58.6Z" fill="#FFFFEB"/>
-            <path d="M70.8 89.1C66.8 89.1 63.2 92.7 63.2 96.6V127.5C63.2 131.3 66.8 134.9 70.8 134.9C74.7 134.9 78.3 131.3 78.3 127.5V96.6C78.3 92.7 74.7 89.1 70.8 89.1Z" fill="#FFFFEB"/>
-            <path d="M138.7 41.6C134.9 41.6 131.1 45.2 131.1 49.1V137.8C131.1 141.7 134.8 145.3 138.7 145.3C142.6 145.3 146.2 141.7 146.2 137.8V49.1C146.2 45.2 142.6 41.6 138.7 41.6Z" fill="#FFFFEB"/>
-            <path d="M116 89.1C112 89.1 108.5 92.7 108.5 96.6V127.5C108.5 131.3 112 134.9 116 134.9C120 134.9 123.6 131.3 123.6 127.5V96.6C123.6 92.7 120 89.1 116 89.1Z" fill="#FFFFEB"/>
-          </svg>
-        </div>
-
-        <!-- Centro: Status & Feedback em tempo real -->
-        <div class="pill-center" id="pillCenter">
-          <div class="pill-title" id="pillTitle">
-            <span class="rec-dot" id="recDot"></span>
-            <span id="titleText">Flow</span>
-            <div class="wave-container" id="waveContainer">
-              <div class="wave-bar"></div>
-              <div class="wave-bar"></div>
-              <div class="wave-bar"></div>
-              <div class="wave-bar"></div>
-              <div class="wave-bar"></div>
-            </div>
-          </div>
-          <div class="pill-sub" id="subText">Ctrl+Alt+Espaço</div>
-        </div>
-
-        <!-- Ações da Pílula -->
-        <div class="pill-actions">
-          <!-- Botão Expandir para Campo de Texto -->
-          <button class="action-btn" id="expandBtn" title="Abrir Campo de Texto ao Vivo">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-              <polyline points="15 3 21 3 21 9"></polyline>
-              <polyline points="9 21 3 21 3 15"></polyline>
-              <line x1="21" y1="3" x2="14" y2="10"></line>
-              <line x1="3" y1="21" x2="10" y2="14"></line>
-            </svg>
-          </button>
-
-          <!-- Microfone: Iniciar / Pausar Gravação -->
-          <button class="action-btn mic-btn" id="micBtn" title="Gravar / Pausar Voz (Ctrl+Alt+Espaço)">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
-              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-              <line x1="12" x2="12" y1="19" y2="22"/>
-            </svg>
-          </button>
-
-          <!-- Abrir Hub Oficial -->
-          <button class="action-btn" id="hubBtn" title="Abrir Flow Hub">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-              <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
-              <line x1="9" x2="9" y1="3" y2="21"/>
-            </svg>
-          </button>
-
-          <!-- Fechar / Ocultar Barra -->
-          <button class="action-btn" id="closeBtn" title="Ocultar Barra Flutuante">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M18 6 6 18"/>
-              <path d="m6 6 12 12"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-
-      <!-- MODO 2: CAMPO DE DITADO AO VIVO EXPANDIDO -->
-      <div class="expanded-card" id="expandedCard">
-        <!-- Topo: Título, Status e Ações -->
-        <div class="card-header">
-          <div class="header-title-wrap">
-            <svg class="flow-symbol-svg" style="width: 17px; height: 17px;" viewBox="0 0 187 187" fill="none">
-              <rect width="187" height="187" rx="40" fill="#1A1A1A"/>
-              <path d="M48.1 41.6C44.2 41.6 40.6 45.2 40.6 49.1V137.8C40.6 142.5 44.3 145.4 48.1 145.4C52 145.4 55.6 141.8 55.6 137.9V49.1C55.6 45.2 52 41.6 48.1 41.6Z" fill="#FFFFEB"/>
-              <path d="M93.4 58.6C89.6 58.6 85.9 62.2 85.9 66V120.2C85.9 124.1 89.6 127.6 93.4 127.6C97.3 127.6 101 124.1 101 120.2V66C101 62.2 97.3 58.6 93.4 58.6Z" fill="#FFFFEB"/>
-              <path d="M70.8 89.1C66.8 89.1 63.2 92.7 63.2 96.6V127.5C63.2 131.3 66.8 134.9 70.8 134.9C74.7 134.9 78.3 131.3 78.3 127.5V96.6C78.3 92.7 74.7 89.1 70.8 89.1Z" fill="#FFFFEB"/>
-              <path d="M138.7 41.6C134.9 41.6 131.1 45.2 131.1 49.1V137.8C131.1 141.7 134.8 145.3 138.7 145.3C142.6 145.3 146.2 141.7 146.2 137.8V49.1C146.2 45.2 142.6 41.6 138.7 41.6Z" fill="#FFFFEB"/>
-              <path d="M116 89.1C112 89.1 108.5 92.7 108.5 96.6V127.5C108.5 131.3 112 134.9 116 134.9C120 134.9 123.6 131.3 123.6 127.5V96.6C123.6 92.7 120 89.1 116 89.1Z" fill="#FFFFEB"/>
-            </svg>
-            <span>Flow Ditado</span>
-            <span class="badge-state" id="cardBadge">Pronto</span>
-          </div>
-
-          <div style="display: flex; align-items: center; gap: 4px; -webkit-app-region: no-drag;">
-            <!-- Microfone no topo do card -->
-            <button class="action-btn mic-btn" id="cardMicBtn" title="Gravar / Pausar Voz">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
-                <line x1="12" x2="12" y1="19" y2="22"/>
-              </svg>
-            </button>
-
-            <!-- Recolher para Pílula -->
-            <button class="action-btn" id="collapseBtn" title="Recolher para Pílula Compacta">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                <polyline points="4 14 10 14 10 20"></polyline>
-                <polyline points="20 10 14 10 14 4"></polyline>
-                <line x1="14" y1="10" x2="21" y2="3"></line>
-                <line x1="3" y1="21" x2="10" y2="14"></line>
-              </svg>
-            </button>
-
-            <!-- Fechar Barra -->
-            <button class="action-btn" id="cardCloseBtn" title="Ocultar Barra">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M18 6 6 18"/>
-                <path d="m6 6 12 12"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <!-- Corpo: O Campo de Texto em Tempo Real -->
-        <div class="card-body">
-          <textarea
-            class="live-textarea"
-            id="liveTextArea"
-            placeholder="Fale agora... suas palavras aparecerão aqui em tempo real conforme você fala |"
-            spellcheck="false"
-          ></textarea>
-        </div>
-
-        <!-- Rodapé: Estatísticas e Botões -->
-        <div class="card-footer">
-          <div class="footer-stats" id="footerStats">
-            <span id="wordCount">0 palavras</span>
-            <span>•</span>
-            <span id="charCount">0 caracteres</span>
-          </div>
-
-          <div class="footer-actions">
-            <!-- Limpar -->
-            <button class="btn-pill" id="clearBtn" title="Limpar Texto">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 6h18"></path>
-                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-              </svg>
-              Limpar
-            </button>
-
-            <!-- Copiar -->
-            <button class="btn-pill primary" id="copyBtn" title="Copiar para Área de Transferência">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
-                <rect width="14" height="14" x="8" y="8" rx="2" ry="2"/>
-                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/>
-              </svg>
-              <span id="copyBtnText">Copiar</span>
-            </button>
-          </div>
-        </div>
+    <div class="capsule-wrapper">
+      <div class="thought-bubble state-resting" id="thoughtBubble" title="Aion Voice Dictation (Ctrl+Win)">
+        <!-- Conteúdo Injetado Dinamicamente -->
+        <div id="bubbleInner" style="display:flex;align-items:center;width:100%;height:100%;justify-content:center;"></div>
       </div>
     </div>
 
     <script>
-      const widgetContainer = document.getElementById("widgetContainer");
-      const flowPill = document.getElementById("flowPill");
-      const expandedCard = document.getElementById("expandedCard");
+      const thoughtBubble = document.getElementById("thoughtBubble");
+      const bubbleInner = document.getElementById("bubbleInner");
 
-      const titleText = document.getElementById("titleText");
-      const subText = document.getElementById("subText");
-      const recDot = document.getElementById("recDot");
-      const waveContainer = document.getElementById("waveContainer");
-      const waveBars = document.querySelectorAll(".wave-bar");
-
-      const micBtn = document.getElementById("micBtn");
-      const cardMicBtn = document.getElementById("cardMicBtn");
-      const hubBtn = document.getElementById("hubBtn");
-      const hubLogoBtn = document.getElementById("hubLogoBtn");
-      const closeBtn = document.getElementById("closeBtn");
-      const cardCloseBtn = document.getElementById("cardCloseBtn");
-
-      const expandBtn = document.getElementById("expandBtn");
-      const collapseBtn = document.getElementById("collapseBtn");
-      const liveTextArea = document.getElementById("liveTextArea");
-      const cardBadge = document.getElementById("cardBadge");
-      const wordCount = document.getElementById("wordCount");
-      const charCount = document.getElementById("charCount");
-      const clearBtn = document.getElementById("clearBtn");
-      const copyBtn = document.getElementById("copyBtn");
-      const copyBtnText = document.getElementById("copyBtnText");
-
-      let isExpanded = false;
       let currentStatus = "resting";
-      let recordingStartTime = 0;
-      let timerInterval = null;
+      let audioScale = 1;
 
-      function setExpandedMode(expand, shouldFocus = false) {
-        isExpanded = expand;
-        if (isExpanded) {
-          widgetContainer.classList.add("is-expanded");
-          if (window.flowNative && window.flowNative.setStatusSize) {
-            window.flowNative.setStatusSize(440, 240, true);
-          }
-          if (shouldFocus) {
-            liveTextArea.focus();
-          }
-        } else {
-          widgetContainer.classList.remove("is-expanded");
-          if (window.flowNative && window.flowNative.setStatusSize) {
-            window.flowNative.setStatusSize(320, 52, true);
-          }
-        }
-      }
-
-      function updateStats() {
-        const text = liveTextArea.value.trim();
-        const words = text ? text.split(/\s+/).length : 0;
-        const chars = liveTextArea.value.length;
-        wordCount.textContent = `${words} palavra${words === 1 ? '' : 's'}`;
-        charCount.textContent = `${chars} caractere${chars === 1 ? '' : 's'}`;
-      }
-
-      function updateStatus(status) {
+      // Renderiza o interior da cápsula com base no estado REA
+      function renderBubble(status) {
         currentStatus = status;
+        thoughtBubble.className = "thought-bubble";
 
-        if (timerInterval) {
-          clearInterval(timerInterval);
-          timerInterval = null;
-        }
-
-        if (status === "active_ptt" || status === "active") {
-          // Gravação ativa
-          recDot.style.display = "inline-block";
-          waveContainer.style.display = "flex";
-          subText.style.display = "none";
-          titleText.style.color = "#FF453A";
-          titleText.textContent = "Ouvindo...";
-
-          micBtn.classList.add("active");
-          cardMicBtn.classList.add("active");
-
-          cardBadge.className = "badge-state recording";
-          cardBadge.textContent = "Gravando...";
-
-          recordingStartTime = Date.now();
-          timerInterval = setInterval(() => {
-            const sec = Math.floor((Date.now() - recordingStartTime) / 1000);
-            const m = Math.floor(sec / 60);
-            const s = sec % 60;
-            cardBadge.textContent = `Gravando ${m}:${s < 10 ? '0' : ''}${s}`;
-          }, 500);
-
+        if (status === "active_ptt" || status === "active" || status === "listening") {
+          // ==================== GRAVANDO (Waveform 5 barras parabólicas) ====================
+          thoughtBubble.classList.add("state-recording");
+          bubbleInner.innerHTML = `
+            <div class="waveform-wrap" id="waveWrap">
+              <div class="wave-bar" style="--bar-scale: 0.35; animation-delay: -0.2s;"></div>
+              <div class="wave-bar" style="--bar-scale: 0.70; animation-delay: -0.1s;"></div>
+              <div class="wave-bar" style="--bar-scale: 1.00; animation-delay: 0s;"></div>
+              <div class="wave-bar" style="--bar-scale: 0.70; animation-delay: 0.1s;"></div>
+              <div class="wave-bar" style="--bar-scale: 0.35; animation-delay: 0.2s;"></div>
+            </div>
+          `;
         } else if (status === "polish_processing" || status === "processing") {
-          // Processando AI
-          recDot.style.display = "none";
-          waveContainer.style.display = "none";
-          subText.style.display = "block";
-          titleText.style.color = "#A78BFA";
-          titleText.textContent = "Transcrevendo...";
-          subText.textContent = "Groq Whisper...";
-
-          micBtn.classList.remove("active");
-          cardMicBtn.classList.remove("active");
-
-          cardBadge.className = "badge-state processing";
-          cardBadge.textContent = "✨ Transcrevendo...";
-
+          // ==================== PROCESSANDO (Rainbow Conic + Radial 8-bar Spinner) ====================
+          thoughtBubble.classList.add("state-processing");
+          let ticks = "";
+          for (let i = 0; i < 8; i++) {
+            const rot = i * 45;
+            const delay = (0.1375 * -(7 - i)).toFixed(4);
+            ticks += `<div class="spinner-tick" style="transform: rotate(${rot}deg) translate(0, -5px); animation-delay: ${delay}s;"></div>`;
+          }
+          bubbleInner.innerHTML = `
+            <div class="processing-content">
+              <div class="radial-spinner">${ticks}</div>
+              <span class="processing-label">Aion...</span>
+            </div>
+          `;
         } else if (status === "polish_completed_action" || status === "completed") {
-          // Concluído
-          recDot.style.display = "none";
-          waveContainer.style.display = "none";
-          subText.style.display = "block";
-          titleText.style.color = "#34C759";
-          titleText.textContent = "✓ Copiado!";
-          subText.textContent = "Área de transferência";
-
-          micBtn.classList.remove("active");
-          cardMicBtn.classList.remove("active");
-
-          cardBadge.className = "badge-state copied";
-          cardBadge.textContent = "✓ Copiado!";
-
+          // ==================== CONCLUÍDO (Checkmark verde) ====================
+          thoughtBubble.classList.add("state-completed");
+          bubbleInner.innerHTML = `
+            <div class="completed-content">
+              <svg class="check-icon" viewBox="0 0 24 24">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+              <span class="completed-label">Copiado!</span>
+            </div>
+          `;
           setTimeout(() => {
-            if (currentStatus === "polish_completed_action") {
-              updateStatus("resting");
+            if (currentStatus === "polish_completed_action" || currentStatus === "completed") {
+              renderBubble("resting");
             }
-          }, 2000);
-
+          }, 1400);
         } else {
-          // Resting / Idle
-          recDot.style.display = "none";
-          waveContainer.style.display = "none";
-          subText.style.display = "block";
-          titleText.style.color = "#EDEDED";
-          titleText.textContent = "Flow";
-          subText.textContent = "Ctrl+Alt+Espaço";
+          // ==================== RESTING (Aion Glyph + Teclas de Atalho) ====================
+          thoughtBubble.classList.add("state-resting");
+          bubbleInner.innerHTML = `
+            <div class="resting-content">
+              <div class="aion-glyph-btn" id="glyphBtn" title="Abrir Aion Hub">
+                <svg class="flow-symbol-svg" viewBox="0 0 187 187" fill="none">
+                  <rect width="187" height="187" rx="40" fill="#1A1A1A"/>
+                  <path d="M48.1 41.6C44.2 41.6 40.6 45.2 40.6 49.1V137.8C40.6 142.5 44.3 145.4 48.1 145.4C52 145.4 55.6 141.8 55.6 137.9V49.1C55.6 45.2 52 41.6 48.1 41.6Z" fill="#FFFFEB"/>
+                  <path d="M93.4 58.6C89.6 58.6 85.9 62.2 85.9 66V120.2C85.9 124.1 89.6 127.6 93.4 127.6C97.3 127.6 101 124.1 101 120.2V66C101 62.2 97.3 58.6 93.4 58.6Z" fill="#FFFFEB"/>
+                  <path d="M70.8 89.1C66.8 89.1 63.2 92.7 63.2 96.6V127.5C63.2 131.3 66.8 134.9 70.8 134.9C74.7 134.9 78.3 131.3 78.3 127.5V96.6C78.3 92.7 74.7 89.1 70.8 89.1Z" fill="#FFFFEB"/>
+                  <path d="M138.7 41.6C134.9 41.6 131.1 45.2 131.1 49.1V137.8C131.1 141.7 134.8 145.3 138.7 145.3C142.6 145.3 146.2 141.7 146.2 137.8V49.1C146.2 45.2 142.6 41.6 138.7 41.6Z" fill="#FFFFEB"/>
+                  <path d="M116 89.1C112 89.1 108.5 92.7 108.5 96.6V127.5C108.5 131.3 112 134.9 116 134.9C120 134.9 123.6 131.3 123.6 127.5V96.6C123.6 92.7 120 89.1 116 89.1Z" fill="#FFFFEB"/>
+                </svg>
+              </div>
+              <div class="nudge-shortcut" title="Atalho global para falar">
+                <span class="nudge-key">Ctrl</span>
+                <span class="nudge-key">Win</span>
+              </div>
+              <span class="nudge-label">Aion</span>
+              <div class="hover-actions">
+                <button class="mini-btn" id="openHubBtn" title="Abrir Aion Hub">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+                    <line x1="9" x2="9" y1="3" y2="21"/>
+                  </svg>
+                </button>
+                <button class="mini-btn" id="hideBtn" title="Ocultar Barra Flutuante">
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M18 6 6 18"/>
+                    <path d="m6 6 12 12"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          `;
 
-          micBtn.classList.remove("active");
-          cardMicBtn.classList.remove("active");
+          // Eventos dos botões no modo resting
+          const glyph = document.getElementById("glyphBtn");
+          const openHubBtn = document.getElementById("openHubBtn");
+          const hideBtn = document.getElementById("hideBtn");
 
-          cardBadge.className = "badge-state";
-          cardBadge.textContent = "Pronto";
+          const toggleHub = (e) => {
+            e.stopPropagation();
+            if (window.flowNative && window.flowNative.toggleHub) {
+              window.flowNative.toggleHub();
+            }
+          };
+
+          if (glyph) glyph.addEventListener("click", toggleHub);
+          if (openHubBtn) openHubBtn.addEventListener("click", toggleHub);
+
+          if (hideBtn) {
+            hideBtn.addEventListener("click", (e) => {
+              e.stopPropagation();
+              if (window.flowNative && window.flowNative.toggleStatus) {
+                window.flowNative.toggleStatus();
+              }
+            });
+          }
         }
       }
 
-      // Recebe texto falado em tempo real
-      window.addEventListener("flow:liveTranscript", (e) => {
-        const { text, isFinal } = e.detail || {};
-        if (typeof text === "string" && text.length > 0) {
-          liveTextArea.value = text;
-          updateStats();
-          // Garante rolagem até o fim
-          liveTextArea.scrollTop = liveTextArea.scrollHeight;
-        }
+      // Escuta mudanças de status disparadas pelo Bridge
+      window.addEventListener("flow:dictationStatus", (e) => {
+        renderBubble(e.detail);
       });
 
-      // Animação reativa do volume de áudio do microfone
+      // Escuta nível de áudio em tempo real para animar as barras
       window.addEventListener("flow:audioLevel", (e) => {
         const level = e.detail || 0;
-        waveBars.forEach((bar, index) => {
-          const mult = [0.8, 1.4, 2.0, 1.6, 0.9][index] || 1;
-          const h = Math.min(16, Math.max(3, Math.round(level * 22 * mult)));
-          bar.style.height = `${h}px`;
-        });
+        const wrap = document.getElementById("waveWrap");
+        if (wrap) {
+          // Escala suave de 0.8 a 2.5x dependendo da amplitude da voz
+          const s = Math.min(2.5, Math.max(0.7, 0.8 + level * 2.8));
+          wrap.style.setProperty("--audio-scale", s);
+        }
       });
 
-      // Recebe mudança de status
-      window.addEventListener("flow:dictationStatus", (e) => {
-        updateStatus(e.detail);
-      });
-
-      // Suporte a Push-to-Talk (Pressionar e segurar para falar, soltar para colar!)
-      let isHoldingMic = false;
-      let micPressStartTime = 0;
-
-      const handleMicDown = (e) => {
-        e.preventDefault();
-        isHoldingMic = true;
-        micPressStartTime = Date.now();
-        if (typeof window.__flowStartDictation === "function") {
-          window.__flowStartDictation();
-        } else if (typeof window.__flowToggleDictation === "function") {
-          window.__flowToggleDictation(true);
-        }
-      };
-
-      const handleMicUp = (e) => {
-        if (!isHoldingMic) return;
-        isHoldingMic = false;
-        const pressDuration = Date.now() - micPressStartTime;
-        // Se segurou por mais de 250ms, ao soltar ele finaliza a gravação imediatamente (Wispr Flow PTT)
-        // Se deu só um clique rápido (< 250ms), ele alterna o modo contínuo (Hands-free)
-        if (pressDuration >= 250) {
-          if (typeof window.__flowStopDictation === "function") {
-            window.__flowStopDictation();
-          } else if (typeof window.__flowToggleDictation === "function") {
-            window.__flowToggleDictation(false);
-          }
-        }
-      };
-
-      micBtn.addEventListener("mousedown", handleMicDown);
-      cardMicBtn.addEventListener("mousedown", handleMicDown);
-      window.addEventListener("mouseup", handleMicUp);
-
-      // Clique simples como fallback
-      const toggleRecord = () => {
-        const pressDuration = Date.now() - micPressStartTime;
-        if (pressDuration < 250 && typeof window.__flowToggleDictation === "function") {
+      // Suporte a clique direto na cápsula para iniciar/parar
+      thoughtBubble.addEventListener("click", (e) => {
+        // Se não clicou num botão interno
+        if (e.target.closest(".mini-btn") || e.target.closest(".aion-glyph-btn")) return;
+        if (typeof window.__flowToggleDictation === "function") {
           window.__flowToggleDictation();
         }
-      };
-      micBtn.addEventListener("click", toggleRecord);
-      cardMicBtn.addEventListener("click", toggleRecord);
-
-      // Expandir / Recolher
-      expandBtn.addEventListener("click", () => setExpandedMode(true, true));
-      collapseBtn.addEventListener("click", () => setExpandedMode(false));
-
-      // Limpar Campo
-      clearBtn.addEventListener("click", () => {
-        liveTextArea.value = "";
-        updateStats();
-        liveTextArea.focus();
       });
-
-      // Copiar Campo
-      copyBtn.addEventListener("click", () => {
-        const text = liveTextArea.value;
-        if (!text) return;
-        if (window.flowNative && window.flowNative.copyToClipboard) {
-          window.flowNative.copyToClipboard(text);
-        } else {
-          navigator.clipboard.writeText(text).catch(() => {});
-        }
-        copyBtnText.textContent = "✓ Copiado!";
-        copyBtn.style.background = "#34C759";
-        copyBtn.style.color = "#FFFFFF";
-        setTimeout(() => {
-          copyBtnText.textContent = "Copiar";
-          copyBtn.style.background = "#F5F5F5";
-          copyBtn.style.color = "#121212";
-        }, 1500);
-      });
-
-      // Digitação manual atualiza estatísticas
-      liveTextArea.addEventListener("input", updateStats);
-
-      // Abrir Hub
-      const openHub = () => {
-        if (window.flowNative && window.flowNative.toggleHub) {
-          window.flowNative.toggleHub();
-        }
-      };
-      hubBtn.addEventListener("click", openHub);
-      hubLogoBtn.addEventListener("click", openHub);
-
-      // Fechar barra
-      const closeBar = () => {
-        if (window.flowNative && window.flowNative.toggleStatus) {
-          window.flowNative.toggleStatus();
-        }
-      };
-      closeBtn.addEventListener("click", closeBar);
-      cardCloseBtn.addEventListener("click", closeBar);
 
       // Inicializa
-      updateStatus("resting");
-      updateStats();
+      renderBubble("resting");
     </script>
   </body>
 </html>

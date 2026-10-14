@@ -102,10 +102,10 @@ function createStatusWindow() {
   const { width, height } = primaryDisplay.workAreaSize;
 
   statusWindow = new BrowserWindow({
-    width: 320,
-    height: 52,
-    x: Math.round((width - 320) / 2),
-    y: height - 80,
+    width: 220,
+    height: 46,
+    x: Math.round((width - 220) / 2),
+    y: height - 65,
     frame: false,
     transparent: true,
     backgroundColor: '#00000000',
