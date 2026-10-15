@@ -32,6 +32,13 @@
     }
   });
 
+  // Minimiza por padrão o widget secundário do Notetaker na Home, liberando espaço total para os Ditados
+  try {
+    if (window.localStorage && window.localStorage.getItem("homepageNotetakerWidgetMinimized") === null) {
+      window.localStorage.setItem("homepageNotetakerWidgetMinimized", "true");
+    }
+  } catch (_) {}
+
   // Polimento do Hub: Remove banners de marketing e menus de convite/indicação
   if (!window.location.pathname.includes("/status/")) {
     const cleanSidebarMenus = () => {
@@ -226,7 +233,14 @@
       status: "active"
     },
     enterprise: null,
-    shortcuts: {},
+    shortcuts: {
+      "162+91": "ptt",
+      "162+32+91": "popo",
+      "162+164+91": "lens",
+      "160+164+90": "paste_last_text",
+      "160+164+88": "copy_last_text",
+      "27": "dismiss"
+    },
     mouseFlowBannerDismissed: true,
     mouseFlowNudgeSeen: true,
     stashedScratchpadShortcuts: {},
@@ -430,7 +444,23 @@
         if (channel === "teams:refreshEnterprise") return {};
         if (channel === "billing:fetchStatus") return { tier: "pro", isTrial: false };
         if (channel === "billing:fetchDetails") return {};
-        if (channel === "connector:getConnectors") return [];
+        if (channel === "connector:getConnectors") {
+          return {
+            connectors: [
+              { key: "calendar", connected: false, blocked_by_enterprise: false },
+              { key: "outlook", connected: false, blocked_by_enterprise: false },
+              { key: "gmail", connected: false, blocked_by_enterprise: false },
+              { key: "slack", connected: false, blocked_by_enterprise: false },
+              { key: "notion", connected: false, blocked_by_enterprise: false }
+            ]
+          };
+        }
+        if (channel === "calendar:getUpcoming") {
+          return { events: [] };
+        }
+        if (channel === "connector:getConnectionRequestStatus") {
+          return null;
+        }
         // ==================== NOTAS (Persistência em Markdown & SQLite) ====================
         if (channel === "notes:get") {
           const id = args[0]?.id || args[0];
