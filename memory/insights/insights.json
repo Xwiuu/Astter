@@ -1,17 +1,17 @@
 {
-  "words_per_minute": 174,
-  "wpm_percentile": 96,
-  "total_words": 9,
+  "words_per_minute": 260,
+  "wpm_percentile": 99,
+  "total_words": 287,
   "current_streak": 1,
   "longest_streak": 1,
-  "total_duration_ms": 3100,
-  "desktop_total_words": 9,
+  "total_duration_ms": 11100,
+  "desktop_total_words": 287,
   "mobile_total_words": 0,
   "monthly_word_delta_percent": 25,
-  "previous_month_total_words": 7,
-  "desktop_total_words_corrected": 14,
+  "previous_month_total_words": 215,
+  "desktop_total_words_corrected": 23,
   "mobile_total_words_corrected": 0,
-  "desktop_total_dictionary_replacements": 5,
+  "desktop_total_dictionary_replacements": 9,
   "mobile_total_dictionary_replacements": 0,
   "desktop_total_apps_used": 1,
   "desktop_usage": [
@@ -19,8 +19,8 @@
       "key": "work",
       "category": "Konsole",
       "percentage": 100,
-      "word_count": 9,
-      "dictation_count": 1
+      "word_count": 287,
+      "dictation_count": 5
     }
   ]
 }

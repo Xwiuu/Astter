@@ -75,231 +75,78 @@
         margin-top: 4px !important;
       }
 
-      /* 2. Hero Banner Card: Visual Moderno de Gradiente Escuro (Adeus foto feia) */
-      .dSOOfnylM15Uu1YyfVOg {
-        background: linear-gradient(135deg, rgba(32, 26, 52, 0.95) 0%, rgba(18, 18, 24, 0.98) 100%) !important;
-        border: 1px solid rgba(168, 85, 247, 0.28) !important;
-        border-radius: 18px !important;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
-        padding: 28px !important;
+      /* ========================================================= */
+      /* 2. TIPOGRAFIA AUTÊNTICA DO WISPR FLOW (EB GARAMOND & FIGTREE) */
+      /* ========================================================= */
+      @font-face {
+        font-family: "EBGaramond";
+        src: url("../../assets/fonts/EBGaramond/EBGaramond-VariableFont_wght.ttf") format("truetype");
+        font-weight: 100 900;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: "EBGaramond";
+        src: url("../../assets/fonts/EBGaramond/EBGaramond-Italic-VariableFont_wght.ttf") format("truetype");
+        font-weight: 100 900;
+        font-style: italic;
+      }
+      @font-face {
+        font-family: "Figtree";
+        src: url("../../assets/fonts/Figtree/Figtree-VariableFont_wght.ttf") format("truetype");
+        font-weight: 100 900;
+        font-style: normal;
+      }
+      @font-face {
+        font-family: "Figtree";
+        src: url("../../assets/fonts/Figtree/Figtree-Italic-VariableFont_wght.ttf") format("truetype");
+        font-weight: 100 900;
+        font-style: italic;
       }
 
-      /* Oculta foto genérica escura do banner */
-      .hsHlMpb9XkJWQWvA6i8N {
-        display: none !important;
-      }
-
-      /* Tipografia moderna do banner */
-      .lczbmgKEV6CR4cBYgGbL,
-      .dSOOfnylM15Uu1YyfVOg h2,
-      .dSOOfnylM15Uu1YyfVOg strong {
-        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
-        font-weight: 700 !important;
+      /* Título do Banner Hero: EB Garamond autêntico do Wispr Flow REA */
+      .heAPKoMPVqO_PEU4p66o,
+      .dSOOfnylM15Uu1YyfVOg h2 {
+        font-family: "EBGaramond", "EB Garamond", Georgia, serif !important;
+        font-weight: 400 !important;
+        letter-spacing: -0.03em !important;
+        -webkit-font-smoothing: antialiased !important;
+        font-size: 34px !important;
+        line-height: 1.15 !important;
         color: #ffffff !important;
       }
 
-      /* 3. Card Stack de Estatísticas (Produtividade) */
-      .uyWSY8H5oOE07y_Z6Zf9 {
-        background: linear-gradient(135deg, rgba(26, 26, 32, 0.92) 0%, rgba(16, 16, 20, 0.98) 100%) !important;
-        border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        border-radius: 16px !important;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+      .heAPKoMPVqO_PEU4p66o strong,
+      .dSOOfnylM15Uu1YyfVOg h2 strong {
+        font-family: "EBGaramond", "EB Garamond", Georgia, serif !important;
+        font-weight: 700 !important;
       }
 
-      .vAYjeCe3S0tkbzZdWkld {
-        background: transparent !important;
-        padding: 20px !important;
+      /* Números do Card de Estatísticas: EB Garamond Itálico autêntico */
+      .UYD2gP22e6rK28UuE_N9,
+      [class*="metricValue"],
+      [class*="statValue"],
+      .vAYjeCe3S0tkbzZdWkld span:first-child {
+        font-family: "EBGaramond", "EB Garamond", Georgia, serif !important;
+        font-style: italic !important;
+        font-weight: 400 !important;
+        letter-spacing: -0.02em !important;
       }
 
-      /* 4. Widget de Ações Rápidas (Interatividade Total na Home) */
-      .flow-quick-widget {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-        background: linear-gradient(135deg, rgba(26, 26, 32, 0.85) 0%, rgba(16, 16, 20, 0.92) 100%);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 16px;
-        padding: 18px;
-        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
-      }
-
-      .flow-widget-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-      }
-
-      .flow-widget-title {
-        font-size: 13px;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        color: var(--foreground-tertiary, #888);
-      }
-
-      .flow-live-badge {
-        font-size: 11px;
-        font-weight: 600;
-        padding: 2px 8px;
-        background: rgba(34, 197, 94, 0.15);
-        color: #4ade80;
-        border-radius: 999px;
-        border: 1px solid rgba(34, 197, 94, 0.3);
-      }
-
-      .flow-actions-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 10px;
-      }
-
-      .flow-action-card {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        padding: 10px 12px;
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.07);
-        border-radius: 12px;
-        cursor: pointer;
-        color: var(--foreground, #fff);
-        text-align: left;
-        transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-      }
-
-      .flow-action-card:hover {
-        background: rgba(255, 255, 255, 0.07);
-        border-color: rgba(255, 255, 255, 0.18);
-        transform: translateY(-2px);
-      }
-
-      .flow-action-card.flow-action-mic {
-        background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.05) 100%);
-        border-color: rgba(239, 68, 68, 0.3);
-      }
-
-      .flow-action-card.flow-action-mic:hover {
-        background: linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(220, 38, 38, 0.12) 100%);
-        border-color: rgba(239, 68, 68, 0.5);
-      }
-
-      .flow-action-icon {
-        font-size: 18px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-      }
-
-      .flow-action-info {
-        display: flex;
-        flex-direction: column;
-        min-width: 0;
-      }
-
-      .flow-action-info strong {
-        font-size: 13px;
-        font-weight: 600;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-
-      .flow-action-info small {
-        font-size: 11px;
-        color: var(--foreground-tertiary, #888);
-        white-space: nowrap;
-      }
-
-      /* 5. Saudação Dinâmica e Frase Inspiradora Interativa */
-      .flow-greeting-container {
-        display: flex;
-        flex-direction: column;
-        gap: 8px;
-        width: 100%;
-      }
-
-      .flow-greeting-top {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-      }
-
-      .flow-greeting-text {
-        font-size: 26px;
-        font-weight: 700;
-        letter-spacing: -0.02em;
-        color: var(--foreground, #ffffff);
-      }
-
-      .flow-shortcut-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        background: rgba(255, 149, 0, 0.12);
-        border: 1px solid rgba(255, 149, 0, 0.3);
-        border-radius: 8px;
-        padding: 2px 8px;
-      }
-
-      .flow-key-badge {
-        font-size: 13px;
-        font-weight: 700;
-        color: #ff9500;
-      }
-
-      .flow-key-sep {
-        font-size: 12px;
-        color: rgba(255, 149, 0, 0.6);
-      }
-
-      .flow-greeting-sub {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 6px 12px;
-        background: rgba(255, 255, 255, 0.03);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 999px;
-        width: fit-content;
-        cursor: pointer;
-        transition: all 0.2s ease;
-      }
-
-      .flow-greeting-sub:hover {
-        background: rgba(255, 255, 255, 0.06);
-        border-color: rgba(255, 255, 255, 0.15);
-      }
-
-      .flow-quote-tag {
-        font-size: 11px;
-        font-weight: 700;
-        color: #c084fc;
-        background: rgba(192, 132, 252, 0.15);
-        padding: 2px 6px;
-        border-radius: 6px;
-        transition: opacity 0.15s ease;
-      }
-
-      .flow-quote-text {
-        font-size: 13px;
-        color: var(--foreground-secondary, #b3b3b3);
-        font-weight: 400;
-        transition: opacity 0.15s ease;
-      }
-
-      .flow-quote-roll-btn {
-        background: none;
-        border: none;
-        font-size: 12px;
-        cursor: pointer;
-        opacity: 0.6;
-        transition: transform 0.2s ease, opacity 0.2s ease;
-      }
-
-      .flow-greeting-sub:hover .flow-quote-roll-btn {
-        opacity: 1;
-        transform: rotate(45deg);
+      /* Keycaps de atalho autênticas do Wispr Flow (Laranja sutil) */
+      [class*="keycap"],
+      .fF06U3Z_Rk6O038_5k5k,
+      kbd {
+        background: #ea580c !important;
+        color: #ffffff !important;
+        font-weight: 700 !important;
+        font-size: 15px !important;
+        padding: 2px 7px !important;
+        border-radius: 6px !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.35) !important;
+        border: none !important;
       }
 
       /* 6. Container do Histórico do Dia ("TODAY") */

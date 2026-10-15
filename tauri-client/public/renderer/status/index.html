@@ -588,11 +588,8 @@
             </div>
           `;
 
-          const restingLogo = document.getElementById("restingLogoBtn");
           const restingGrip = document.getElementById("restingDragHandle");
-
           if (restingGrip) {
-            enableDraggable(restingGrip);
             restingGrip.addEventListener("dblclick", (e) => {
               e.stopPropagation();
               if (window.flowNative && window.flowNative.triggerWindowMove) {
@@ -600,101 +597,53 @@
               }
             });
           }
-
-          enableFullBubbleDrag(thoughtBubble, () => {
-            renderBubble("menu");
-          });
         }
       }
 
-      function enableDraggable(handleElement) {
-        if (!handleElement) return;
+      // Controlador unificado de arraste suave (Linux Wayland & X11)
+      let isDragging = false;
+      let dragStartX = 0;
+      let dragStartY = 0;
+      let dragHasMoved = false;
 
-        let isDragging = false;
-        let startX = 0;
-        let startY = 0;
-
-        const onDown = (e) => {
-          if (e.button !== 0) return;
+      window.addEventListener("pointerdown", (e) => {
+        if (e.button !== 0) return;
+        if (e.target.closest("button") || e.target.closest(".pill-btn")) return;
+        if (thoughtBubble && thoughtBubble.contains(e.target)) {
           isDragging = true;
-          startX = e.screenX;
-          startY = e.screenY;
-          try { handleElement.setPointerCapture(e.pointerId); } catch (_) {}
-          e.stopPropagation();
-        };
+          dragHasMoved = false;
+          dragStartX = e.screenX;
+          dragStartY = e.screenY;
+          document.body.style.pointerEvents = "auto";
+        }
+      });
 
-        const onMove = (e) => {
-          if (!isDragging) return;
-          const dx = e.screenX - startX;
-          const dy = e.screenY - startY;
-          if (dx !== 0 || dy !== 0) {
-            startX = e.screenX;
-            startY = e.screenY;
-            if (window.flowNative && typeof window.flowNative.moveStatus === "function") {
-              window.flowNative.moveStatus(dx, dy);
-            }
+      window.addEventListener("pointermove", (e) => {
+        if (!isDragging) return;
+        const dx = e.screenX - dragStartX;
+        const dy = e.screenY - dragStartY;
+        if (Math.hypot(dx, dy) > 2) {
+          dragHasMoved = true;
+        }
+        if (dragHasMoved && (dx !== 0 || dy !== 0)) {
+          dragStartX = e.screenX;
+          dragStartY = e.screenY;
+          if (window.flowNative && typeof window.flowNative.moveStatus === "function") {
+            window.flowNative.moveStatus(dx, dy);
           }
-        };
+        }
+      });
 
-        const onUp = (e) => {
-          if (!isDragging) return;
-          isDragging = false;
-          try { handleElement.releasePointerCapture(e.pointerId); } catch (_) {}
-        };
-
-        handleElement.addEventListener("pointerdown", onDown);
-        handleElement.addEventListener("pointermove", onMove);
-        handleElement.addEventListener("pointerup", onUp);
-        handleElement.addEventListener("pointercancel", onUp);
-      }
-
-      function enableFullBubbleDrag(bubbleElement, onClick) {
-        if (!bubbleElement) return;
-
-        let isDragging = false;
-        let hasMoved = false;
-        let startX = 0;
-        let startY = 0;
-
-        const onDown = (e) => {
-          if (e.button !== 0 || currentStatus !== "resting") return;
-          isDragging = true;
-          hasMoved = false;
-          startX = e.screenX;
-          startY = e.screenY;
-          try { bubbleElement.setPointerCapture(e.pointerId); } catch (_) {}
-        };
-
-        const onMove = (e) => {
-          if (!isDragging || currentStatus !== "resting") return;
-          const dx = e.screenX - startX;
-          const dy = e.screenY - startY;
-          if (Math.hypot(dx, dy) > 4) {
-            hasMoved = true;
+      window.addEventListener("pointerup", (e) => {
+        if (!isDragging) return;
+        isDragging = false;
+        document.body.style.pointerEvents = "none";
+        if (!dragHasMoved && currentStatus === "resting") {
+          if (Date.now() - lastStateChangeTime > 200) {
+            renderBubble("menu");
           }
-          if (hasMoved && (dx !== 0 || dy !== 0)) {
-            startX = e.screenX;
-            startY = e.screenY;
-            if (window.flowNative && typeof window.flowNative.moveStatus === "function") {
-              window.flowNative.moveStatus(dx, dy);
-            }
-          }
-        };
-
-        const onUp = (e) => {
-          if (!isDragging) return;
-          isDragging = false;
-          try { bubbleElement.releasePointerCapture(e.pointerId); } catch (_) {}
-          if (!hasMoved && currentStatus === "resting") {
-            onClick(e);
-          }
-        };
-
-        bubbleElement.onpointerdown = onDown;
-        bubbleElement.onpointermove = onMove;
-        bubbleElement.onpointerup = onUp;
-        bubbleElement.onpointercancel = onUp;
-      }
+        }
+      });
 
       // Helper robusto para cliques em ambientes Linux/Electron com suporte a drag
       function bindAction(element, callback) {

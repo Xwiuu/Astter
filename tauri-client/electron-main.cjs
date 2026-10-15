@@ -1,6 +1,8 @@
 const { app, BrowserWindow, Tray, Menu, globalShortcut, ipcMain, screen, nativeImage, clipboard } = require('electron');
 const path = require('path');
 const http = require('http');
+const fs = require('fs');
+const { exec } = require('child_process');
 const memory = require('./memory-manager.cjs');
 
 // Configure application name and WM_CLASS for Linux KDE Plasma
@@ -198,30 +200,72 @@ function openScratchpadWindow(noteData) {
   });
 }
 
-function positionKWinWindow(title, x, y) {
-  const kwinScript = `
-    let wins = workspace.stackingOrder;
-    for (let i = 0; i < wins.length; i++) {
-      if (wins[i].caption === "${title}") {
-        wins[i].frameGeometry = {
-          x: ${Math.round(x)},
-          y: ${Math.round(y)},
-          width: wins[i].width,
-          height: wins[i].height
-        };
-        break;
-      }
+let currentCapsuleX = 0;
+let currentCapsuleY = 0;
+let isKWinMoving = false;
+let pendingKWinMove = null;
+
+function positionKWinWindowAsync(title, x, y) {
+  pendingKWinMove = { title, x: Math.round(x), y: Math.round(y) };
+  if (isKWinMoving) return;
+
+  const runNext = () => {
+    if (!pendingKWinMove) {
+      isKWinMoving = false;
+      return;
     }
-  `;
-  const scriptName = `pos_${Date.now()}`;
-  const tmpPath = path.join('/tmp', `${scriptName}.js`);
+    isKWinMoving = true;
+    const item = pendingKWinMove;
+    pendingKWinMove = null;
+
+    const kwinScript = `
+      let wins = workspace.windowList();
+      for (let i = 0; i < wins.length; i++) {
+        if (wins[i].caption === "${item.title}") {
+          wins[i].frameGeometry = {
+            x: ${item.x},
+            y: ${item.y},
+            width: wins[i].width,
+            height: wins[i].height
+          };
+          break;
+        }
+      }
+    `;
+    const scriptName = `pos_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    const tmpPath = path.join('/tmp', `${scriptName}.js`);
+    fs.writeFile(tmpPath, kwinScript, (err) => {
+      if (err) {
+        runNext();
+        return;
+      }
+      const cmd = `qdbus-qt6 org.kde.KWin /Scripting org.kde.kwin.Scripting.loadScript "${tmpPath}" "${scriptName}" && qdbus-qt6 org.kde.KWin /Scripting org.kde.kwin.Scripting.start && qdbus-qt6 org.kde.KWin /Scripting org.kde.kwin.Scripting.unloadScript "${scriptName}"`;
+      exec(cmd, () => {
+        try { fs.unlink(tmpPath, () => {}); } catch (_) {}
+        runNext();
+      });
+    });
+  };
+
+  runNext();
+}
+
+function moveCapsule(dx, dy) {
+  if (!statusWindow || statusWindow.isDestroyed()) return;
+  currentCapsuleX = Math.round(currentCapsuleX + dx);
+  currentCapsuleY = Math.round(currentCapsuleY + dy);
+
+  // 1. Move no Electron (X11 / fallback)
   try {
-    const fs = require('fs');
-    const { execSync } = require('child_process');
-    fs.writeFileSync(tmpPath, kwinScript);
-    execSync(`qdbus-qt6 org.kde.KWin /Scripting org.kde.kwin.Scripting.loadScript "${tmpPath}" "${scriptName}" && qdbus-qt6 org.kde.KWin /Scripting org.kde.kwin.Scripting.start`);
-    try { fs.unlinkSync(tmpPath); } catch (_) {}
-  } catch (err) {}
+    statusWindow.setPosition(currentCapsuleX, currentCapsuleY);
+    statusWindow.setAlwaysOnTop(true, 'screen-saver', 1);
+    statusWindow.moveTop();
+  } catch (_) {}
+
+  // 2. Move no KWin Wayland (KDE Plasma 6)
+  if (process.platform === 'linux') {
+    positionKWinWindowAsync('Flow Capsule', currentCapsuleX, currentCapsuleY);
+  }
 }
 
 function createStatusWindow() {
@@ -229,6 +273,8 @@ function createStatusWindow() {
   const { x: scrX, y: scrY, width: scrW, height: scrH } = targetDisplay.workArea;
   const capsuleX = Math.round(scrX + (scrW - 220) / 2);
   const capsuleY = Math.round(scrY + scrH - 65);
+  currentCapsuleX = capsuleX;
+  currentCapsuleY = capsuleY;
 
   statusWindow = new BrowserWindow({
     width: 220,
@@ -259,7 +305,7 @@ function createStatusWindow() {
     statusWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
     statusWindow.moveTop();
     setTimeout(() => {
-      positionKWinWindow('Flow Capsule', capsuleX, capsuleY);
+      positionKWinWindowAsync('Flow Capsule', capsuleX, capsuleY);
     }, 350);
     console.log('✓ [Flow] Cápsula flutuante visível em:', statusWindow.getPosition());
   });
@@ -499,23 +545,19 @@ ipcMain.on('flow:trigger-window-move', () => {
   if (statusWindow && !statusWindow.isDestroyed()) {
     statusWindow.focus();
     try {
-      const { execSync } = require('child_process');
-      execSync('qdbus-qt6 org.kde.kglobalaccel /component/kwin invokeShortcut "Window Move"');
+      exec('qdbus-qt6 org.kde.kglobalaccel /component/kwin invokeShortcut "Window Move"');
     } catch (_) {}
   }
 });
 
 ipcMain.on('flow:move-status', (event, { dx, dy }) => {
-  if (!statusWindow || statusWindow.isDestroyed()) return;
-  const [x, y] = statusWindow.getPosition();
-  statusWindow.setPosition(Math.round(x + dx), Math.round(y + dy));
-  statusWindow.setAlwaysOnTop(true, 'screen-saver', 1);
-  statusWindow.moveTop();
+  moveCapsule(dx, dy);
 });
 
 ipcMain.on('flow:set-status-bounds', (event, { width, height, expandUpwards = true }) => {
   if (!statusWindow) return;
-  const [currentX, currentY] = statusWindow.getPosition();
+  const currentX = currentCapsuleX || statusWindow.getPosition()[0];
+  const currentY = currentCapsuleY || statusWindow.getPosition()[1];
   const [currentW, currentH] = statusWindow.getSize();
 
   let newY = currentY;
@@ -529,12 +571,19 @@ ipcMain.on('flow:set-status-bounds', (event, { width, height, expandUpwards = tr
   newX = Math.max(10, Math.min(newX, scrW - width - 10));
   newY = Math.max(10, Math.min(newY, scrH - height - 10));
 
+  currentCapsuleX = newX;
+  currentCapsuleY = newY;
+
   statusWindow.setBounds({
     x: newX,
     y: newY,
     width,
     height
   });
+
+  if (process.platform === 'linux') {
+    positionKWinWindowAsync('Flow Capsule', newX, newY);
+  }
 });
 
 ipcMain.on('flow:copy-to-clipboard', (event, payload) => {
