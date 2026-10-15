@@ -431,16 +431,222 @@
         if (channel === "billing:fetchStatus") return { tier: "pro", isTrial: false };
         if (channel === "billing:fetchDetails") return {};
         if (channel === "connector:getConnectors") return [];
-        if (channel === "notes:get") return rootState.notes;
-        if (channel.startsWith("history:get") || channel.startsWith("history:fetch") || channel === "history:getLastTranscripts") return [];
-        if (channel === "history:initializeStatistics") return rootState.prefs.cache.statistics;
-        if (channel === "insights:getStats") return rootState.insightsStats;
-        if (channel === "insights:getHeatmap") return rootState.heatmapStats.data;
+        // ==================== NOTAS (Persistência em Markdown & SQLite) ====================
+        if (channel === "notes:get") {
+          const id = args[0]?.id || args[0];
+          if (id && typeof id === "string") {
+            if (window.flowNative?.memory) {
+              const note = await window.flowNative.memory.getNoteById(id);
+              if (note) return note;
+            }
+            return (rootState.notes || []).find((n) => n.id === id) || null;
+          }
+          if (window.flowNative?.memory) {
+            const list = await window.flowNative.memory.getNotes();
+            if (list && list.length > 0) rootState.notes = list;
+          }
+          return rootState.notes || [];
+        }
+        if (channel === "notes:create" || channel === "notes:edit") {
+          const noteData = args[0] || {};
+          let saved = noteData;
+          if (window.flowNative?.memory) {
+            saved = await window.flowNative.memory.saveNote(noteData);
+            rootState.notes = await window.flowNative.memory.getNotes();
+          } else {
+            const id = noteData.id || "note-" + Date.now();
+            saved = { ...noteData, id, modifiedAt: Date.now() };
+            rootState.notes = [saved, ...(rootState.notes || []).filter((n) => n.id !== id)];
+          }
+          listeners.forEach((fn) => { try { fn(rootState); } catch (_) {} });
+          return saved;
+        }
+        if (channel === "notes:delete") {
+          const id = args[0]?.id || args[0];
+          if (window.flowNative?.memory && id) {
+            await window.flowNative.memory.deleteNote(id);
+            rootState.notes = await window.flowNative.memory.getNotes();
+          } else {
+            rootState.notes = (rootState.notes || []).filter((n) => n.id !== id);
+          }
+          listeners.forEach((fn) => { try { fn(rootState); } catch (_) {} });
+          return true;
+        }
+        if (channel === "notes:pin") {
+          const id = args[0]?.id;
+          const pinned = args[0]?.pinned;
+          if (window.flowNative?.memory && id) {
+            await window.flowNative.memory.pinNote(id, pinned);
+            rootState.notes = await window.flowNative.memory.getNotes();
+          }
+          listeners.forEach((fn) => { try { fn(rootState); } catch (_) {} });
+          return true;
+        }
+        if (channel === "notes:refresh" || channel === "notes:hardRefresh") {
+          if (window.flowNative?.memory) {
+            rootState.notes = await window.flowNative.memory.getNotes();
+            listeners.forEach((fn) => { try { fn(rootState); } catch (_) {} });
+          }
+          return true;
+        }
+
+        // ==================== HISTÓRICO HOME (memory/dictations/*.md) ====================
+        if (channel === "history:getLastTranscripts") {
+          const params = args[0] || {};
+          if (window.flowNative?.memory) {
+            return await window.flowNative.memory.getTranscripts(params);
+          }
+          return [];
+        }
+        if (channel === "history:getTranscript" || channel === "history:getTranscriptAllColumns") {
+          const id = args[0]?.transcriptEntityId || args[0];
+          if (window.flowNative?.memory && id) {
+            return await window.flowNative.memory.getTranscriptById(id);
+          }
+          return null;
+        }
+        if (channel === "history:deleteTranscript") {
+          const id = args[0]?.transcriptEntityId || args[0];
+          if (window.flowNative?.memory && id) {
+            await window.flowNative.memory.deleteTranscript(id);
+            emitIpc("history:needsUpdate");
+          }
+          return true;
+        }
+        if (channel === "history:deleteAllTranscripts" || channel === "history:archiveAll") {
+          if (window.flowNative?.memory) {
+            await window.flowNative.memory.deleteAllTranscripts();
+            emitIpc("history:needsUpdate");
+          }
+          return true;
+        }
+        if (channel === "history:initializeStatistics") {
+          if (window.flowNative?.memory) {
+            const st = await window.flowNative.memory.getInsightsStats();
+            return {
+              totalWords: st.total_words,
+              wordsToday: st.total_words,
+              totalDuration: st.total_duration_ms,
+              averageWPM: st.words_per_minute,
+              weekStreak: st.current_streak,
+              dayStreak: st.current_streak,
+              lastTranscriptTimestamp: new Date(),
+              totalApps: ["Konsole", "Chrome", "VSCode"]
+            };
+          }
+          return rootState.prefs.cache.statistics;
+        }
+        if (channel === "history:getTopApps") {
+          return ["Konsole", "VSCode", "Chrome", "Terminal"];
+        }
+        if (channel === "history:getBulkAppWordCounts") {
+          return {};
+        }
+
+        // ==================== INSIGHTS & ESTATÍSTICAS ====================
+        if (channel === "insights:getStats") {
+          if (window.flowNative?.memory) {
+            const st = await window.flowNative.memory.getInsightsStats();
+            rootState.insightsStats = { data: st, error: false };
+            return rootState.insightsStats;
+          }
+          return rootState.insightsStats;
+        }
+        if (channel === "insights:getHeatmap") {
+          if (window.flowNative?.memory) {
+            const hm = await window.flowNative.memory.getHeatmapStats();
+            rootState.heatmapStats = { data: hm, error: false };
+            return rootState.heatmapStats.data;
+          }
+          return rootState.heatmapStats.data;
+        }
+
+        // ==================== DICIONÁRIO & SNIPPETS ====================
+        if (channel === "memory:initializeDictionary") return true;
+        if (channel === "memory:getStrippedSnippets") {
+          if (window.flowNative?.memory) {
+            return await window.flowNative.memory.getSnippets();
+          }
+          return [];
+        }
+        if (channel === "memory:addManualWord" || channel === "memory:addManualTeamWord") {
+          if (window.flowNative?.memory) {
+            await window.flowNative.memory.addDictionaryWord(args[0] || {});
+            rootState.dictionaryWords = await window.flowNative.memory.getDictionaryWords();
+            listeners.forEach((fn) => { try { fn(rootState); } catch (_) {} });
+          }
+          return { success: true };
+        }
+        if (channel === "memory:editManualWord" || channel === "memory:editManualTeamWord") {
+          if (window.flowNative?.memory) {
+            await window.flowNative.memory.editDictionaryWord(args[0] || {});
+            rootState.dictionaryWords = await window.flowNative.memory.getDictionaryWords();
+            listeners.forEach((fn) => { try { fn(rootState); } catch (_) {} });
+          }
+          return true;
+        }
+        if (channel === "memory:removeManualWord" || channel === "memory:removeManualWords" || channel === "memory:removeManualTeamWord") {
+          const phrase = args[0]?.word || args[0]?.phrase || args[0];
+          if (window.flowNative?.memory && phrase) {
+            await window.flowNative.memory.removeDictionaryWord(phrase);
+            rootState.dictionaryWords = await window.flowNative.memory.getDictionaryWords();
+            listeners.forEach((fn) => { try { fn(rootState); } catch (_) {} });
+          }
+          return true;
+        }
+        if (channel === "memory:starWord") {
+          const phrase = args[0]?.word || args[0]?.phrase || args[0];
+          const isStarred = args[0]?.isStarred ?? true;
+          if (window.flowNative?.memory && phrase) {
+            await window.flowNative.memory.starDictionaryWord(phrase, isStarred);
+            rootState.dictionaryWords = await window.flowNative.memory.getDictionaryWords();
+            listeners.forEach((fn) => { try { fn(rootState); } catch (_) {} });
+          }
+          return true;
+        }
+        if (channel === "memory:syncDictionary") {
+          if (window.flowNative?.memory) {
+            rootState.dictionaryWords = await window.flowNative.memory.getDictionaryWords();
+            listeners.forEach((fn) => { try { fn(rootState); } catch (_) {} });
+          }
+          return true;
+        }
+
+        // ==================== RASCUNHO / SCRATCHPAD ====================
+        if (channel === "scratchpad:open" || channel === "scratchpad:openWithNote") {
+          if (window.electron?.ipc?.send) {
+            window.electron.ipc.send("flow:open-scratchpad", args[0]);
+          }
+          return true;
+        }
+        if (channel === "scratchpad:getRecentNotes") {
+          if (window.flowNative?.memory) {
+            const list = await window.flowNative.memory.getNotes();
+            return { notes: list || [], hasMore: false };
+          }
+          return { notes: rootState.notes || [], hasMore: false };
+        }
+        if (channel === "scratchpad:saveNote") {
+          const noteData = args[0] || {};
+          let noteId = noteData.noteId;
+          if (window.flowNative?.memory) {
+            const saved = await window.flowNative.memory.saveNote({
+              id: noteId,
+              title: noteData.title,
+              content: noteData.content
+            });
+            await window.flowNative.memory.saveScratchpad(noteData);
+            rootState.notes = await window.flowNative.memory.getNotes();
+            listeners.forEach((fn) => { try { fn(rootState); } catch (_) {} });
+            noteId = saved?.id || noteId;
+          }
+          return { noteId };
+        }
+
         if (channel === "calendar:getUpcoming" || channel.startsWith("calendar:")) return { events: [] };
         if (channel === "meetingRecorder:getRecentMeetings") return { meetings: [], hasMore: false, nextCursor: null };
         if (channel === "meetingRecorder:getTodayMeetingStats") return { meetingCount: 0, wordCount: 0, durationSec: 0, peopleCount: 0 };
         if (channel.startsWith("meetingRecorder:")) return { meetings: [], hasMore: false, nextCursor: null };
-        if (channel === "memory:getStrippedSnippets" || channel.startsWith("memory:")) return [];
         if (channel.startsWith("scratchpad:")) return [];
         if (channel.startsWith("todos:")) return [];
         if (channel.startsWith("notetakerChats:")) return [];
@@ -747,23 +953,51 @@
           }
 
           const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
-          const newNote = {
-            id: "note-" + Date.now(),
-            title: text.slice(0, 36) + (text.length > 36 ? "..." : ""),
-            content: text,
-            contentPreview: text.slice(0, 100),
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-            modifiedAt: Date.now()
-          };
-          rootState.notes = [newNote, ...(rootState.notes || [])];
 
-          if (rootState.prefs?.cache?.statistics) {
-            rootState.prefs.cache.statistics.totalWords = (rootState.prefs.cache.statistics.totalWords || 0) + wordCount;
-            rootState.prefs.cache.statistics.wordsToday = (rootState.prefs.cache.statistics.wordsToday || 0) + wordCount;
-          }
-          if (rootState.insightsStats?.data) {
-            rootState.insightsStats.data.total_words = (rootState.insightsStats.data.total_words || 0) + wordCount;
+          if (window.flowNative && window.flowNative.memory) {
+            try {
+              // 1. Salva a transcrição no histórico (.md em memory/dictations/ e SQLite db.db)
+              await window.flowNative.memory.saveTranscript({
+                text,
+                formattedText: text,
+                app: rootState.userContext?.appName || "Konsole",
+                duration: 2.0,
+                words: wordCount
+              });
+
+              // 2. Salva como nota Markdown (.md em memory/notes/)
+              await window.flowNative.memory.saveNote({
+                title: text.slice(0, 36) + (text.length > 36 ? "..." : ""),
+                content: text
+              });
+
+              // 3. Atualiza estado e estatísticas
+              rootState.notes = await window.flowNative.memory.getNotes();
+              const stats = await window.flowNative.memory.getInsightsStats();
+              if (stats) {
+                rootState.insightsStats = { data: stats, error: false };
+                if (rootState.prefs?.cache?.statistics) {
+                  rootState.prefs.cache.statistics.totalWords = stats.total_words;
+                  rootState.prefs.cache.statistics.wordsToday = (rootState.prefs.cache.statistics.wordsToday || 0) + wordCount;
+                }
+              }
+
+              // 4. Emite evento para a Home atualizar a lista ao vivo instantaneamente!
+              emitIpc("history:needsUpdate");
+            } catch (err) {
+              console.warn("⚠️ [Bridge Memory Save Error]:", err);
+            }
+          } else {
+            const newNote = {
+              id: "note-" + Date.now(),
+              title: text.slice(0, 36) + (text.length > 36 ? "..." : ""),
+              content: text,
+              contentPreview: text.slice(0, 100),
+              createdAt: Date.now(),
+              updatedAt: Date.now(),
+              modifiedAt: Date.now()
+            };
+            rootState.notes = [newNote, ...(rootState.notes || [])];
           }
 
           listeners.forEach((fn) => {
@@ -881,6 +1115,41 @@
         console.log("⚡ [Flow PTT Stop] Tecla solta! Finalizando gravação...");
         toggleVoiceRecording(false);
       });
+    }
+    if (window.flowNative.onHistoryNeedsUpdate) {
+      window.flowNative.onHistoryNeedsUpdate(() => {
+        console.log("⚡ [Bridge] Recebido history:needsUpdate do processo nativo!");
+        emitIpc("history:needsUpdate");
+      });
+    }
+    if (window.flowNative.memory) {
+      (async () => {
+        try {
+          const [savedNotes, savedWords, savedStats, savedHeatmap] = await Promise.all([
+            window.flowNative.memory.getNotes(),
+            window.flowNative.memory.getDictionaryWords(),
+            window.flowNative.memory.getInsightsStats(),
+            window.flowNative.memory.getHeatmapStats()
+          ]);
+          if (savedNotes && savedNotes.length > 0) rootState.notes = savedNotes;
+          if (savedWords && savedWords.length > 0) rootState.dictionaryWords = savedWords;
+          if (savedStats) {
+            rootState.insightsStats = { data: savedStats, error: false };
+            if (rootState.prefs?.cache?.statistics) {
+              rootState.prefs.cache.statistics.totalWords = savedStats.total_words;
+              rootState.prefs.cache.statistics.wordsToday = savedStats.total_words;
+              rootState.prefs.cache.statistics.averageWPM = savedStats.words_per_minute;
+              rootState.prefs.cache.statistics.weekStreak = savedStats.current_streak;
+              rootState.prefs.cache.statistics.dayStreak = savedStats.current_streak;
+            }
+          }
+          if (savedHeatmap) rootState.heatmapStats = { data: savedHeatmap, error: false };
+          listeners.forEach((fn) => { try { fn(rootState); } catch (_) {} });
+          console.log("✓ [Flow Bridge] Memória persistente carregada com sucesso (.md e SQLite)!");
+        } catch (err) {
+          console.warn("⚠️ [Bridge Initial Memory Sync]:", err);
+        }
+      })();
     }
   }
 

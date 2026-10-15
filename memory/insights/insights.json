@@ -1,0 +1,18 @@
+{
+  "words_per_minute": 174,
+  "total_words": 9,
+  "current_streak": 1,
+  "total_duration_ms": 3100,
+  "desktop_total_words": 9,
+  "mobile_total_words": 0,
+  "desktop_total_apps_used": 1,
+  "desktop_usage": [
+    {
+      "key": "konsole",
+      "category": "Konsole",
+      "percentage": 100,
+      "word_count": 9,
+      "dictation_count": 1
+    }
+  ]
+}

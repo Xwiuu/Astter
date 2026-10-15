@@ -24,3 +24,5 @@ test_*
 
 # Análises e extrações locais
 analysis/
+memory/*.db-shm
+memory/*.db-wal

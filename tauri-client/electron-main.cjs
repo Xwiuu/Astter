@@ -1,6 +1,7 @@
 const { app, BrowserWindow, Tray, Menu, globalShortcut, ipcMain, screen, nativeImage, clipboard } = require('electron');
 const path = require('path');
 const http = require('http');
+const memory = require('./memory-manager.cjs');
 
 // Configure application name and WM_CLASS for Linux KDE Plasma
 app.setName('flow-desktop');
@@ -10,6 +11,7 @@ app.commandLine.appendSwitch('ozone-platform-hint', 'auto');
 
 let hubWindow = null;
 let statusWindow = null;
+let scratchpadWindow = null;
 let tray = null;
 let isQuitting = false;
 
@@ -138,6 +140,61 @@ function createHubWindow() {
 
   hubWindow.on('closed', () => {
     hubWindow = null;
+  });
+}
+
+function openScratchpadWindow(noteData) {
+  if (scratchpadWindow && !scratchpadWindow.isDestroyed()) {
+    scratchpadWindow.show();
+    scratchpadWindow.focus();
+    if (noteData) {
+      scratchpadWindow.webContents.send('scratchpad:load-note', noteData);
+    }
+    return;
+  }
+  const iconPath = path.join(__dirname, 'assets/icons/flow-256.png');
+  const targetDisplay = getTargetDisplay();
+  const { x: scrX, y: scrY, width: scrW, height: scrH } = targetDisplay.workArea;
+  const w = Math.min(840, scrW - 60);
+  const h = Math.min(680, scrH - 60);
+  const x = Math.round(scrX + (scrW - w) / 2);
+  const y = Math.round(scrY + (scrH - h) / 2);
+
+  scratchpadWindow = new BrowserWindow({
+    width: w,
+    height: h,
+    x,
+    y,
+    minWidth: 480,
+    minHeight: 400,
+    backgroundColor: '#121212',
+    icon: iconPath,
+    title: 'Flow Notes & Scratchpad',
+    show: true,
+    autoHideMenuBar: true,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.cjs'),
+      nodeIntegration: false,
+      contextIsolation: true,
+      sandbox: false
+    }
+  });
+
+  scratchpadWindow.loadURL('http://localhost:1420/renderer/scratchpad/index.html');
+  scratchpadWindow.once('ready-to-show', () => {
+    scratchpadWindow.show();
+    scratchpadWindow.focus();
+    if (noteData) {
+      setTimeout(() => {
+        if (scratchpadWindow && !scratchpadWindow.isDestroyed()) {
+          scratchpadWindow.webContents.send('scratchpad:load-note', noteData);
+        }
+      }, 300);
+    }
+  });
+
+  scratchpadWindow.on('closed', () => {
+    scratchpadWindow = null;
   });
 }
 
@@ -536,6 +593,23 @@ ipcMain.handle('flow:transcribe-audio', async (event, base64Data) => {
         } else {
           const text = stdout.trim();
           console.log('✨ [Flow Groq Whisper]:', text);
+
+          // Salva automaticamente o ditado em Markdown e no SQLite db.db!
+          if (text) {
+            try {
+              memory.saveTranscript({
+                text,
+                app: 'Konsole',
+                duration: 2.0
+              });
+              if (hubWindow && !hubWindow.isDestroyed()) {
+                hubWindow.webContents.send('history:needsUpdate');
+              }
+            } catch (mErr) {
+              console.warn('⚠️ [Memory] Erro ao salvar transcrição:', mErr);
+            }
+          }
+
           resolve(text);
         }
       });
@@ -544,6 +618,56 @@ ipcMain.handle('flow:transcribe-audio', async (event, base64Data) => {
     console.error('❌ [Flow Transcription Exception]:', err);
     return '';
   }
+});
+
+// ==========================================
+// FLOW MEMORY PERSISTENCE HANDLERS (SQLite + .md)
+// ==========================================
+ipcMain.handle('flow:memory-get-notes', async () => memory.getNotes());
+ipcMain.handle('flow:memory-get-note-by-id', async (e, id) => memory.getNoteById(id));
+ipcMain.handle('flow:memory-save-note', async (e, note) => {
+  const saved = memory.saveNote(note);
+  if (hubWindow && !hubWindow.isDestroyed()) {
+    hubWindow.webContents.send('notes:updated', saved);
+  }
+  return saved;
+});
+ipcMain.handle('flow:memory-delete-note', async (e, id) => {
+  const ok = memory.deleteNote(id);
+  if (hubWindow && !hubWindow.isDestroyed()) {
+    hubWindow.webContents.send('notes:updated', { id, deleted: true });
+  }
+  return ok;
+});
+ipcMain.handle('flow:memory-pin-note', async (e, id, pinned) => memory.pinNote(id, pinned));
+
+ipcMain.handle('flow:memory-save-transcript', async (e, t) => {
+  const saved = memory.saveTranscript(t);
+  if (hubWindow && !hubWindow.isDestroyed()) {
+    hubWindow.webContents.send('history:needsUpdate');
+  }
+  return saved;
+});
+ipcMain.handle('flow:memory-get-transcripts', async (e, params) => memory.getTranscripts(params));
+ipcMain.handle('flow:memory-get-transcript-by-id', async (e, id) => memory.getTranscriptById(id));
+ipcMain.handle('flow:memory-delete-transcript', async (e, id) => memory.deleteTranscript(id));
+ipcMain.handle('flow:memory-delete-all-transcripts', async () => memory.deleteAllTranscripts());
+
+ipcMain.handle('flow:memory-get-dictionary', async () => memory.getDictionaryWords());
+ipcMain.handle('flow:memory-add-dictionary', async (e, params) => memory.addDictionaryWord(params));
+ipcMain.handle('flow:memory-remove-dictionary', async (e, phrase) => memory.removeDictionaryWord(phrase));
+ipcMain.handle('flow:memory-edit-dictionary', async (e, params) => memory.editDictionaryWord(params));
+ipcMain.handle('flow:memory-star-dictionary', async (e, phrase, isStarred) => memory.starDictionaryWord(phrase, isStarred));
+ipcMain.handle('flow:memory-get-snippets', async () => memory.getSnippets());
+
+ipcMain.handle('flow:memory-get-scratchpad', async () => memory.getScratchpad());
+ipcMain.handle('flow:memory-save-scratchpad', async (e, params) => memory.saveScratchpad(params));
+
+ipcMain.handle('flow:memory-get-insights-stats', async () => memory.getInsightsStats());
+ipcMain.handle('flow:memory-get-heatmap-stats', async () => memory.getHeatmapStats());
+
+ipcMain.on('flow:open-scratchpad', (event, noteData) => {
+  openScratchpadWindow(noteData);
 });
 
 const { spawn } = require('child_process');
