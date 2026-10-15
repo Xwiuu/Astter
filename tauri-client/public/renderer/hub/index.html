@@ -36,24 +36,273 @@
       /* POLIMENTO DE DESIGN: CARDS DO HISTÓRICO (WISPR FLOW STYLE) */
       /* ========================================================= */
 
-      /* 1. Proporção equilibrada entre colunas no Home */
+      /* 1. Layout Home em Grid Perfeito: Linha 1 (Hero + Stats/Ações), Linha 2 (Histórico Full Width) */
       .XMJ_6PMjMR7MHdLGKSmg {
-        display: flex !important;
-        gap: 24px !important;
+        display: grid !important;
+        grid-template-columns: minmax(0, 1.4fr) minmax(280px, 1fr) !important;
+        gap: 20px !important;
         width: 100% !important;
+        align-items: start !important;
       }
 
       .Ie9MKK9GFDyYL1OSYrnH {
-        flex: 1 1 auto !important;
-        min-width: 0 !important;
+        display: contents !important;
       }
 
+      /* Hero Card (primeiro filho de primary) ocupa coluna 1 */
+      .Ie9MKK9GFDyYL1OSYrnH > *:first-child {
+        grid-column: 1 !important;
+        grid-row: 1 !important;
+      }
+
+      /* Coluna Lateral ocupa coluna 2 e preenche o espaço */
       .P6_OMvwcuAdnpN8LgZN2 {
-        width: 250px !important;
-        flex-shrink: 0 !important;
+        grid-column: 2 !important;
+        grid-row: 1 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 16px !important;
+        width: 100% !important;
+        position: static !important;
       }
 
-      /* 2. Container agrupador dos cards do histórico ("TODAY") */
+      /* Histórico de Ditados (segundo filho de primary) ocupa toda a largura (1 a -1) na Linha 2 */
+      .Ie9MKK9GFDyYL1OSYrnH > *:last-child,
+      .w0iVlRH_I6_ohznmpvC7 {
+        grid-column: 1 / -1 !important;
+        grid-row: 2 !important;
+        width: 100% !important;
+        margin-top: 4px !important;
+      }
+
+      /* 2. Hero Banner Card: Visual Moderno de Gradiente Escuro (Adeus foto feia) */
+      .dSOOfnylM15Uu1YyfVOg {
+        background: linear-gradient(135deg, rgba(32, 26, 52, 0.95) 0%, rgba(18, 18, 24, 0.98) 100%) !important;
+        border: 1px solid rgba(168, 85, 247, 0.28) !important;
+        border-radius: 18px !important;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.12) !important;
+        padding: 28px !important;
+      }
+
+      /* Oculta foto genérica escura do banner */
+      .hsHlMpb9XkJWQWvA6i8N {
+        display: none !important;
+      }
+
+      /* Tipografia moderna do banner */
+      .lczbmgKEV6CR4cBYgGbL,
+      .dSOOfnylM15Uu1YyfVOg h2,
+      .dSOOfnylM15Uu1YyfVOg strong {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+        font-weight: 700 !important;
+        color: #ffffff !important;
+      }
+
+      /* 3. Card Stack de Estatísticas (Produtividade) */
+      .uyWSY8H5oOE07y_Z6Zf9 {
+        background: linear-gradient(135deg, rgba(26, 26, 32, 0.92) 0%, rgba(16, 16, 20, 0.98) 100%) !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 16px !important;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35) !important;
+      }
+
+      .vAYjeCe3S0tkbzZdWkld {
+        background: transparent !important;
+        padding: 20px !important;
+      }
+
+      /* 4. Widget de Ações Rápidas (Interatividade Total na Home) */
+      .flow-quick-widget {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        background: linear-gradient(135deg, rgba(26, 26, 32, 0.85) 0%, rgba(16, 16, 20, 0.92) 100%);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 16px;
+        padding: 18px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+      }
+
+      .flow-widget-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .flow-widget-title {
+        font-size: 13px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--foreground-tertiary, #888);
+      }
+
+      .flow-live-badge {
+        font-size: 11px;
+        font-weight: 600;
+        padding: 2px 8px;
+        background: rgba(34, 197, 94, 0.15);
+        color: #4ade80;
+        border-radius: 999px;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+      }
+
+      .flow-actions-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .flow-action-card {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 12px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.07);
+        border-radius: 12px;
+        cursor: pointer;
+        color: var(--foreground, #fff);
+        text-align: left;
+        transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .flow-action-card:hover {
+        background: rgba(255, 255, 255, 0.07);
+        border-color: rgba(255, 255, 255, 0.18);
+        transform: translateY(-2px);
+      }
+
+      .flow-action-card.flow-action-mic {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.05) 100%);
+        border-color: rgba(239, 68, 68, 0.3);
+      }
+
+      .flow-action-card.flow-action-mic:hover {
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(220, 38, 38, 0.12) 100%);
+        border-color: rgba(239, 68, 68, 0.5);
+      }
+
+      .flow-action-icon {
+        font-size: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+
+      .flow-action-info {
+        display: flex;
+        flex-direction: column;
+        min-width: 0;
+      }
+
+      .flow-action-info strong {
+        font-size: 13px;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .flow-action-info small {
+        font-size: 11px;
+        color: var(--foreground-tertiary, #888);
+        white-space: nowrap;
+      }
+
+      /* 5. Saudação Dinâmica e Frase Inspiradora Interativa */
+      .flow-greeting-container {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        width: 100%;
+      }
+
+      .flow-greeting-top {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .flow-greeting-text {
+        font-size: 26px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: var(--foreground, #ffffff);
+      }
+
+      .flow-shortcut-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        background: rgba(255, 149, 0, 0.12);
+        border: 1px solid rgba(255, 149, 0, 0.3);
+        border-radius: 8px;
+        padding: 2px 8px;
+      }
+
+      .flow-key-badge {
+        font-size: 13px;
+        font-weight: 700;
+        color: #ff9500;
+      }
+
+      .flow-key-sep {
+        font-size: 12px;
+        color: rgba(255, 149, 0, 0.6);
+      }
+
+      .flow-greeting-sub {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 999px;
+        width: fit-content;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+
+      .flow-greeting-sub:hover {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.15);
+      }
+
+      .flow-quote-tag {
+        font-size: 11px;
+        font-weight: 700;
+        color: #c084fc;
+        background: rgba(192, 132, 252, 0.15);
+        padding: 2px 6px;
+        border-radius: 6px;
+        transition: opacity 0.15s ease;
+      }
+
+      .flow-quote-text {
+        font-size: 13px;
+        color: var(--foreground-secondary, #b3b3b3);
+        font-weight: 400;
+        transition: opacity 0.15s ease;
+      }
+
+      .flow-quote-roll-btn {
+        background: none;
+        border: none;
+        font-size: 12px;
+        cursor: pointer;
+        opacity: 0.6;
+        transition: transform 0.2s ease, opacity 0.2s ease;
+      }
+
+      .flow-greeting-sub:hover .flow-quote-roll-btn {
+        opacity: 1;
+        transform: rotate(45deg);
+      }
+
+      /* 6. Container do Histórico do Dia ("TODAY") */
       .AN1USUzTy5epkTPkSDoz {
         width: 100% !important;
         border: 1px solid rgba(255, 255, 255, 0.08) !important;
@@ -64,13 +313,13 @@
         box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
       }
 
-      /* 3. Item / Linha individual de transcrição: compacto, elegante ("quadradinho") */
+      /* Linha individual de transcrição: formato elegante horizontal */
       .mXGWBr9uMflE1xSNLbTB {
         display: flex !important;
         align-items: center !important;
         position: relative !important;
-        min-height: 50px !important;
-        padding: 8px 12px !important;
+        min-height: 52px !important;
+        padding: 10px 14px !important;
         border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
         transition: background-color 0.15s ease !important;
       }
@@ -84,12 +333,12 @@
         background-color: rgba(255, 255, 255, 0.04) !important;
       }
 
-      /* 4. Horário do ditado */
+      /* Horário do ditado */
       .alQdYJz4yHW2_oKYW69A {
         width: auto !important;
-        min-width: 58px !important;
-        max-width: 72px !important;
-        padding: 4px 10px 4px 0 !important;
+        min-width: 60px !important;
+        max-width: 76px !important;
+        padding: 4px 12px 4px 0 !important;
         font-size: 12px !important;
         font-weight: 500 !important;
         color: var(--foreground-tertiary, #888888) !important;
@@ -97,7 +346,7 @@
         flex-shrink: 0 !important;
       }
 
-      /* 5. Texto transcrito: quebra de palavras 100% natural, sem letras cortadas */
+      /* Texto transcrito: fluido, quebra 100% natural */
       .yJxHrBRsaQTXswCM3nVw {
         display: flex !important;
         flex-direction: column !important;
@@ -121,7 +370,7 @@
         line-height: 20px !important;
       }
 
-      /* 6. Botões de ação flutuantes à direita - não esmagam o texto */
+      /* Botões de ação flutuantes à direita */
       .Sv6kBp4RJhyMoyYN0W1w {
         position: absolute !important;
         right: 12px !important;
@@ -138,7 +387,6 @@
         z-index: 10 !important;
       }
 
-      /* Dar espaço à direita no item para não sobrepor texto em hover */
       .mXGWBr9uMflE1xSNLbTB:hover .yJxHrBRsaQTXswCM3nVw,
       .mXGWBr9uMflE1xSNLbTB.yi4s5cmMKea0zOpwSJNa .yJxHrBRsaQTXswCM3nVw {
         padding-right: 110px !important;

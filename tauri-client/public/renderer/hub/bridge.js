@@ -80,15 +80,146 @@
       });
     };
 
+    let currentPhraseIdx = 0;
+    const INSPIRATIONAL_PHRASES = [
+      { text: "Ditado com Whisper Turbo pronto para ouvir", tag: "⚡ Ultra Rápido" },
+      { text: "Pressione Ctrl + Win para ditar em qualquer janela", tag: "🎙️ Atalho Global" },
+      { text: "Fale naturalmente; o Flow pontua tudo na velocidade da fala", tag: "✨ IA Inteligente" },
+      { text: "Você fala até 3x mais rápido do que consegue digitar", tag: "🚀 Produtividade" },
+      { text: "Suas notas e ditados estão salvos 100% offline em Markdown", tag: "🔒 Privacidade Total" },
+      { text: "Pool com 3 chaves Groq Whisper ativo com tolerância a falhas", tag: "🛡️ Alta Disponibilidade" }
+    ];
+
+    function getGreeting() {
+      const h = new Date().getHours();
+      if (h >= 5 && h < 12) return "Bom dia, Wiu ☀️";
+      if (h >= 12 && h < 18) return "Boa tarde, Wiu 🚀";
+      return "Boa noite, Wiu ✨";
+    }
+
+    const enhanceHomeDashboard = () => {
+      // 1. Título e Saudação Dinâmica e Interativa
+      const titleH1 = document.querySelector(".Mu4Nuel0L0Bs0mqj2yVP h1, [class*='titleRow'] h1");
+      if (titleH1 && !titleH1.dataset.enhanced) {
+        titleH1.dataset.enhanced = "true";
+        const greeting = getGreeting();
+        const phrase = INSPIRATIONAL_PHRASES[currentPhraseIdx];
+
+        titleH1.innerHTML = `
+          <div class="flow-greeting-container">
+            <div class="flow-greeting-top">
+              <span class="flow-greeting-text">${greeting}</span>
+              <div class="flow-shortcut-pill">
+                <span class="flow-key-badge">Ctrl</span>
+                <span class="flow-key-sep">+</span>
+                <span class="flow-key-badge">Win</span>
+              </div>
+            </div>
+            <div class="flow-greeting-sub" id="flowQuoteBanner" title="Clique para alternar frase inspiradora">
+              <span class="flow-quote-tag">${phrase.tag}</span>
+              <span class="flow-quote-text" id="flowQuoteText">${phrase.text}</span>
+              <button class="flow-quote-roll-btn" title="Nova frase">🔄</button>
+            </div>
+          </div>
+        `;
+
+        const banner = document.getElementById("flowQuoteBanner");
+        if (banner) {
+          banner.onclick = (e) => {
+            e.stopPropagation();
+            currentPhraseIdx = (currentPhraseIdx + 1) % INSPIRATIONAL_PHRASES.length;
+            const p = INSPIRATIONAL_PHRASES[currentPhraseIdx];
+            const textEl = document.getElementById("flowQuoteText");
+            const tagEl = banner.querySelector(".flow-quote-tag");
+            if (textEl && tagEl) {
+              textEl.style.opacity = "0";
+              tagEl.style.opacity = "0";
+              setTimeout(() => {
+                textEl.textContent = p.text;
+                tagEl.textContent = p.tag;
+                textEl.style.opacity = "1";
+                tagEl.style.opacity = "1";
+              }, 150);
+            }
+          };
+        }
+      }
+
+      // 2. Injeta Widget de Ações Rápidas na coluna lateral
+      const asideCol = document.querySelector(".P6_OMvwcuAdnpN8LgZN2, [class*='aside']");
+      if (asideCol && !document.getElementById("flow-quick-actions-widget")) {
+        const widget = document.createElement("div");
+        widget.id = "flow-quick-actions-widget";
+        widget.className = "flow-quick-widget";
+        widget.innerHTML = `
+          <div class="flow-widget-header">
+            <span class="flow-widget-title">⚡ Ações Rápidas</span>
+            <span class="flow-live-badge">🟢 Online</span>
+          </div>
+          <div class="flow-actions-grid">
+            <button class="flow-action-card flow-action-mic" id="btnActionMic" title="Gravar voz imediatamente">
+              <div class="flow-action-icon">🎙️</div>
+              <div class="flow-action-info">
+                <strong>Gravar Voz</strong>
+                <small>Ctrl + Win</small>
+              </div>
+            </button>
+            <button class="flow-action-card" id="btnActionScratchpad" title="Abrir bloco de rascunho rápido">
+              <div class="flow-action-icon">📝</div>
+              <div class="flow-action-info">
+                <strong>Rascunho</strong>
+                <small>Scratchpad .md</small>
+              </div>
+            </button>
+            <button class="flow-action-card" id="btnActionDictionary" title="Gerenciar vocabulário e gírias">
+              <div class="flow-action-icon">📚</div>
+              <div class="flow-action-info">
+                <strong>Dicionário</strong>
+                <small>Vocabulário</small>
+              </div>
+            </button>
+            <button class="flow-action-card" id="btnActionInsights" title="Ver estatísticas de produtividade">
+              <div class="flow-action-icon">📊</div>
+              <div class="flow-action-info">
+                <strong>Insights</strong>
+                <small>Velocidade & WPM</small>
+              </div>
+            </button>
+          </div>
+        `;
+        asideCol.appendChild(widget);
+
+        document.getElementById("btnActionMic")?.addEventListener("click", () => {
+          if (window.flowNative?.triggerDictation) {
+            window.flowNative.triggerDictation();
+          }
+        });
+        document.getElementById("btnActionScratchpad")?.addEventListener("click", () => {
+          document.querySelector('button[data-testid="sidebar-item-Scratchpad"]')?.click();
+        });
+        document.getElementById("btnActionDictionary")?.addEventListener("click", () => {
+          document.querySelector('button[data-testid="sidebar-item-Dictionary"]')?.click();
+        });
+        document.getElementById("btnActionInsights")?.addEventListener("click", () => {
+          document.querySelector('button[data-testid="sidebar-item-Insights"]')?.click();
+        });
+      }
+    };
+
+    const runHubEnhancements = () => {
+      cleanSidebarMenus();
+      enhanceHomeDashboard();
+    };
+
     if (document.readyState === "loading") {
       window.addEventListener("DOMContentLoaded", () => {
-        cleanSidebarMenus();
-        const obs = new MutationObserver(cleanSidebarMenus);
+        runHubEnhancements();
+        const obs = new MutationObserver(runHubEnhancements);
         obs.observe(document.body, { childList: true, subtree: true });
       });
     } else {
-      cleanSidebarMenus();
-      const obs = new MutationObserver(cleanSidebarMenus);
+      runHubEnhancements();
+      const obs = new MutationObserver(runHubEnhancements);
       obs.observe(document.body, { childList: true, subtree: true });
     }
   }
