@@ -51,6 +51,11 @@ const triggerServer = http.createServer((req, res) => {
     toggleHub();
     res.writeHead(200, { 'Content-Type': 'text/plain' });
     res.end('HUB_TOGGLED\n');
+  } else if (req.url === '/reload') {
+    if (hubWindow && !hubWindow.isDestroyed()) hubWindow.reload();
+    if (statusWindow && !statusWindow.isDestroyed()) statusWindow.reload();
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('RELOADED\n');
   } else {
     res.writeHead(404);
     res.end();

@@ -4,6 +4,34 @@
     <meta charset="UTF-8"/>
     <title>Flow</title>
     <link rel="icon" type="image/png" href="/assets/icons/flow-64.png"/>
+    <style>
+      /* Polimento de interface: Ocultar itens de marketing e menus desnecessários */
+      /* 1. "Invite your team" */
+      button[data-testid="sidebar-item-Team"],
+      li:has(> button[data-testid="sidebar-item-Team"]) {
+        display: none !important;
+      }
+
+      /* 2. "Get a free month" / Refer a friend */
+      button[data-testid="sidebar-item-Referral"],
+      li:has(> button[data-testid="sidebar-item-Referral"]) {
+        display: none !important;
+      }
+
+      /* 3. Desafio de indicação estudantil */
+      button[data-testid="sidebar-item-StudentReferralChallenge"],
+      li:has(> button[data-testid="sidebar-item-StudentReferralChallenge"]) {
+        display: none !important;
+      }
+
+      /* 4. Banner "Flow on mobile 📱" e outros cards promocionais CTA */
+      .G1p6L9gN5rfb40n5pO8w,
+      div:has(> .G1p6L9gN5rfb40n5pO8w),
+      [class*="activeTitleContainer"],
+      div:has(> [class*="activeTitleContainer"]) {
+        display: none !important;
+      }
+    </style>
     <script src="./bridge.js"></script>
     <script defer="defer" src="../vendor/index.js"></script>
     <script defer="defer" src="../hub/index.js"></script>

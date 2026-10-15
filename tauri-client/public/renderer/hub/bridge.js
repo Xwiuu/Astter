@@ -32,6 +32,60 @@
     }
   });
 
+  // Polimento do Hub: Remove banners de marketing e menus de convite/indicação
+  if (!window.location.pathname.includes("/status/")) {
+    const cleanSidebarMenus = () => {
+      // 1. Ocultar botões indesejados da barra lateral (Team, Referral, Student)
+      const testIds = [
+        'button[data-testid="sidebar-item-Team"]',
+        'button[data-testid="sidebar-item-Referral"]',
+        'button[data-testid="sidebar-item-StudentReferralChallenge"]'
+      ];
+      testIds.forEach((sel) => {
+        document.querySelectorAll(sel).forEach((el) => {
+          const li = el.closest("li") || el;
+          li.style.setProperty("display", "none", "important");
+        });
+      });
+
+      // 2. Banner card "Flow on mobile" ou qualquer CTA de marketing
+      document.querySelectorAll('.G1p6L9gN5rfb40n5pO8w, [class*="activeTitleContainer"]').forEach((el) => {
+        const card = el.closest('[class*="bottomSection"] > div') || el.parentElement || el;
+        card.style.setProperty("display", "none", "important");
+      });
+
+      // 3. Fallback inteligente por texto
+      document.querySelectorAll("p, span, div, button").forEach((el) => {
+        if (el.children.length === 0 && el.textContent) {
+          const txt = el.textContent.trim().toLowerCase();
+          if (
+            txt.includes("flow on mobile") ||
+            txt.includes("use flow on the go") ||
+            txt === "invite your team" ||
+            txt === "get a free month"
+          ) {
+            const container = el.closest("li") || el.closest(".G1p6L9gN5rfb40n5pO8w") || el.closest('[class*="bottomSection"] > div') || el.parentElement;
+            if (container && container !== document.body && container !== document.documentElement) {
+              container.style.setProperty("display", "none", "important");
+            }
+          }
+        }
+      });
+    };
+
+    if (document.readyState === "loading") {
+      window.addEventListener("DOMContentLoaded", () => {
+        cleanSidebarMenus();
+        const obs = new MutationObserver(cleanSidebarMenus);
+        obs.observe(document.body, { childList: true, subtree: true });
+      });
+    } else {
+      cleanSidebarMenus();
+      const obs = new MutationObserver(cleanSidebarMenus);
+      obs.observe(document.body, { childList: true, subtree: true });
+    }
+  }
+
   // Diagnóstico visual de erros na tela
   window.addEventListener("error", (e) => {
     const el = document.createElement("pre");
@@ -393,7 +447,8 @@
         if (channel.startsWith("meetingShare:")) return { rows: [], hasMore: false };
         if (channel.startsWith("userVoicePreferences:")) return [];
         if (channel.startsWith("remoteNotification:")) return [];
-        if (channel.startsWith("referral:")) return { referrals: [], code: "FLOWLINUX" };
+        if (channel.startsWith("notification:")) return false;
+        if (channel.startsWith("referral:")) return { referrals: [], code: "" };
         if (channel === "extensionSettings:getExtensionList" || channel.startsWith("extensionSettings:getCustom") || channel.startsWith("extensionSettings:getSubprocess")) return [];
         if (channel.startsWith("extensionKeybind:")) return [];
         if (channel.startsWith("extensionSettings:")) return {};
