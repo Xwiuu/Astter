@@ -126,9 +126,12 @@
 
       /* ==================== ESTADO 1: RESTING (Grip + Logo) ==================== */
       .thought-bubble.state-resting {
-        width: 58px;
-        min-width: 58px;
-        padding: 0 6px 0 4px;
+        width: 46px;
+        min-width: 46px;
+        height: 32px;
+        min-height: 32px;
+        border-radius: 10px;
+        padding: 0 4px;
         cursor: pointer !important;
       }
 
@@ -419,10 +422,12 @@
 
       let currentStatus = "resting";
       let audioScale = 1;
+      let lastStateChangeTime = 0;
 
       // Renderiza o interior da cápsula com base no estado REA
       function renderBubble(status) {
         currentStatus = status;
+        lastStateChangeTime = Date.now();
         thoughtBubble.className = "thought-bubble";
 
         if (status === "active_ptt" || status === "active" || status === "listening") {
@@ -530,10 +535,10 @@
           if (mic) {
             bindAction(mic, (e) => {
               console.log("🎙️ [Capsule] Botão de microfone acionado!");
-              if (window.flowNative && typeof window.flowNative.triggerDictation === "function") {
+              if (typeof toggleRecording === "function") {
+                toggleRecording();
+              } else if (window.flowNative && typeof window.flowNative.triggerDictation === "function") {
                 window.flowNative.triggerDictation();
-              } else if (typeof window.__flowToggleDictation === "function") {
-                window.__flowToggleDictation();
               }
             });
           }
@@ -592,29 +597,6 @@
             });
           }
 
-          // Permitir clicar em qualquer ponto da cápsula descansando para abrir opções
-          let restingStartPos = null;
-          let restingStartTime = 0;
-
-          thoughtBubble.onpointerdown = (e) => {
-            if (currentStatus !== "resting" || e.button !== 0) return;
-            if (restingGrip && restingGrip.contains(e.target)) return;
-            restingStartPos = { x: e.clientX, y: e.clientY };
-            restingStartTime = Date.now();
-          };
-
-          thoughtBubble.onpointerup = (e) => {
-            if (currentStatus !== "resting" || e.button !== 0 || !restingStartPos) return;
-            if (restingGrip && restingGrip.contains(e.target)) return;
-            const dist = Math.hypot(e.clientX - restingStartPos.x, e.clientY - restingStartPos.y);
-            const elapsed = Date.now() - restingStartTime;
-            restingStartPos = null;
-            if (dist < 10 && elapsed < 600) {
-              e.stopPropagation();
-              renderBubble("menu");
-            }
-          };
-
           thoughtBubble.onclick = (e) => {
             if (currentStatus !== "resting") return;
             if (restingGrip && restingGrip.contains(e.target)) return;
@@ -639,7 +621,7 @@
         let lastTrigger = 0;
         const trigger = (e) => {
           const now = Date.now();
-          if (now - lastTrigger < 250) return;
+          if (now - lastTrigger < 300) return;
           lastTrigger = now;
           if (e) {
             try { e.stopPropagation(); } catch (_) {}
@@ -648,37 +630,20 @@
           callback(e);
         };
 
-        let startPos = null;
-        let startTime = 0;
-
-        element.addEventListener("pointerdown", (e) => {
-          if (e.button !== 0) return;
-          startPos = { x: e.clientX, y: e.clientY };
-          startTime = Date.now();
-        });
-
-        element.addEventListener("pointerup", (e) => {
-          if (e.button !== 0 || !startPos) return;
-          const dist = Math.hypot(e.clientX - startPos.x, e.clientY - startPos.y);
-          const elapsed = Date.now() - startTime;
-          startPos = null;
-          if (dist < 10 && elapsed < 600) {
-            trigger(e);
-          }
-        });
-
         element.addEventListener("click", (e) => {
           trigger(e);
         });
       }
 
-      // Clique fora recolhe o menu
+      // Clique fora recolhe o menu com proteção contra eventos simultâneos ao abrir
       window.addEventListener("pointerdown", (e) => {
+        if (Date.now() - lastStateChangeTime < 350) return;
         if (currentStatus === "menu" && !thoughtBubble.contains(e.target)) {
           renderBubble("resting");
         }
       });
       window.addEventListener("click", (e) => {
+        if (Date.now() - lastStateChangeTime < 350) return;
         if (currentStatus === "menu" && !thoughtBubble.contains(e.target)) {
           renderBubble("resting");
         }

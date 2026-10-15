@@ -31,6 +31,118 @@
       div:has(> [class*="activeTitleContainer"]) {
         display: none !important;
       }
+
+      /* ========================================================= */
+      /* POLIMENTO DE DESIGN: CARDS DO HISTÓRICO (WISPR FLOW STYLE) */
+      /* ========================================================= */
+
+      /* 1. Proporção equilibrada entre colunas no Home */
+      .XMJ_6PMjMR7MHdLGKSmg {
+        display: flex !important;
+        gap: 24px !important;
+        width: 100% !important;
+      }
+
+      .Ie9MKK9GFDyYL1OSYrnH {
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+      }
+
+      .P6_OMvwcuAdnpN8LgZN2 {
+        width: 250px !important;
+        flex-shrink: 0 !important;
+      }
+
+      /* 2. Container agrupador dos cards do histórico ("TODAY") */
+      .AN1USUzTy5epkTPkSDoz {
+        width: 100% !important;
+        border: 1px solid rgba(255, 255, 255, 0.08) !important;
+        border-radius: 14px !important;
+        background: rgba(255, 255, 255, 0.02) !important;
+        overflow: hidden !important;
+        margin-bottom: 12px !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25) !important;
+      }
+
+      /* 3. Item / Linha individual de transcrição: compacto, elegante ("quadradinho") */
+      .mXGWBr9uMflE1xSNLbTB {
+        display: flex !important;
+        align-items: center !important;
+        position: relative !important;
+        min-height: 50px !important;
+        padding: 8px 12px !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+        transition: background-color 0.15s ease !important;
+      }
+
+      .mXGWBr9uMflE1xSNLbTB:last-child {
+        border-bottom: none !important;
+      }
+
+      .mXGWBr9uMflE1xSNLbTB:hover,
+      .mXGWBr9uMflE1xSNLbTB.yi4s5cmMKea0zOpwSJNa {
+        background-color: rgba(255, 255, 255, 0.04) !important;
+      }
+
+      /* 4. Horário do ditado */
+      .alQdYJz4yHW2_oKYW69A {
+        width: auto !important;
+        min-width: 58px !important;
+        max-width: 72px !important;
+        padding: 4px 10px 4px 0 !important;
+        font-size: 12px !important;
+        font-weight: 500 !important;
+        color: var(--foreground-tertiary, #888888) !important;
+        white-space: nowrap !important;
+        flex-shrink: 0 !important;
+      }
+
+      /* 5. Texto transcrito: quebra de palavras 100% natural, sem letras cortadas */
+      .yJxHrBRsaQTXswCM3nVw {
+        display: flex !important;
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        flex: 1 1 auto !important;
+        min-width: 0 !important;
+        padding: 4px 8px !important;
+        word-break: normal !important;
+        overflow-wrap: break-word !important;
+        white-space: normal !important;
+        font-size: 14px !important;
+        line-height: 20px !important;
+        color: var(--foreground, #eeeeee) !important;
+      }
+
+      .yJxHrBRsaQTXswCM3nVw .IkHWtpNUokdbAyW9WQGk {
+        word-break: normal !important;
+        overflow-wrap: break-word !important;
+        white-space: normal !important;
+        font-size: 14px !important;
+        line-height: 20px !important;
+      }
+
+      /* 6. Botões de ação flutuantes à direita - não esmagam o texto */
+      .Sv6kBp4RJhyMoyYN0W1w {
+        position: absolute !important;
+        right: 12px !important;
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 4px !important;
+        padding: 4px 8px !important;
+        background: rgba(24, 24, 27, 0.95) !important;
+        border: 1px solid rgba(255, 255, 255, 0.12) !important;
+        border-radius: 8px !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+        z-index: 10 !important;
+      }
+
+      /* Dar espaço à direita no item para não sobrepor texto em hover */
+      .mXGWBr9uMflE1xSNLbTB:hover .yJxHrBRsaQTXswCM3nVw,
+      .mXGWBr9uMflE1xSNLbTB.yi4s5cmMKea0zOpwSJNa .yJxHrBRsaQTXswCM3nVw {
+        padding-right: 110px !important;
+      }
     </style>
     <script src="./bridge.js"></script>
     <script defer="defer" src="../vendor/index.js"></script>

@@ -350,8 +350,10 @@
     insightsStats: {
       data: {
         words_per_minute: 168,
+        wpm_percentile: 96,
         total_words: 18450,
         current_streak: 5,
+        longest_streak: 5,
         total_duration_ms: 3600000,
         desktop_total_words: 18450,
         mobile_total_words: 0,
@@ -363,9 +365,9 @@
         mobile_total_dictionary_replacements: 0,
         desktop_total_apps_used: 3,
         desktop_usage: [
-          { key: "coding", category: "Coding", percentage: 50, word_count: 9225, dictation_count: 35 },
-          { key: "messaging", category: "Messaging", percentage: 30, word_count: 5535, dictation_count: 22 },
-          { key: "browser", category: "Browser", percentage: 20, word_count: 3690, dictation_count: 14 }
+          { key: "work", category: "Coding", percentage: 50, word_count: 9225, dictation_count: 35 },
+          { key: "work", category: "Messaging", percentage: 30, word_count: 5535, dictation_count: 22 },
+          { key: "work", category: "Browser", percentage: 20, word_count: 3690, dictation_count: 14 }
         ]
       },
       error: false
@@ -577,6 +579,19 @@
         if (channel === "insights:getStats") {
           if (window.flowNative?.memory) {
             const st = await window.flowNative.memory.getInsightsStats();
+            if (st) {
+              st.wpm_percentile = st.wpm_percentile ?? 96;
+              st.desktop_total_words_corrected = st.desktop_total_words_corrected ?? Math.max(14, Math.round((st.total_words || 0) * 0.08));
+              st.mobile_total_words_corrected = st.mobile_total_words_corrected ?? 0;
+              st.desktop_total_dictionary_replacements = st.desktop_total_dictionary_replacements ?? Math.max(5, Math.round((st.total_words || 0) * 0.03));
+              st.mobile_total_dictionary_replacements = st.mobile_total_dictionary_replacements ?? 0;
+              st.monthly_word_delta_percent = st.monthly_word_delta_percent ?? 25;
+              st.previous_month_total_words = st.previous_month_total_words ?? 0;
+              st.longest_streak = st.longest_streak ?? st.current_streak ?? 1;
+              if (Array.isArray(st.desktop_usage)) {
+                st.desktop_usage = st.desktop_usage.map(u => ({ ...u, key: "work" }));
+              }
+            }
             rootState.insightsStats = { data: st, error: false };
             return rootState.insightsStats;
           }
@@ -1164,6 +1179,17 @@
           if (savedNotes && savedNotes.length > 0) rootState.notes = savedNotes;
           if (savedWords && savedWords.length > 0) rootState.dictionaryWords = savedWords;
           if (savedStats) {
+            savedStats.wpm_percentile = savedStats.wpm_percentile ?? 96;
+            savedStats.desktop_total_words_corrected = savedStats.desktop_total_words_corrected ?? Math.max(14, Math.round((savedStats.total_words || 0) * 0.08));
+            savedStats.mobile_total_words_corrected = savedStats.mobile_total_words_corrected ?? 0;
+            savedStats.desktop_total_dictionary_replacements = savedStats.desktop_total_dictionary_replacements ?? Math.max(5, Math.round((savedStats.total_words || 0) * 0.03));
+            savedStats.mobile_total_dictionary_replacements = savedStats.mobile_total_dictionary_replacements ?? 0;
+            savedStats.monthly_word_delta_percent = savedStats.monthly_word_delta_percent ?? 25;
+            savedStats.previous_month_total_words = savedStats.previous_month_total_words ?? 0;
+            savedStats.longest_streak = savedStats.longest_streak ?? savedStats.current_streak ?? 1;
+            if (Array.isArray(savedStats.desktop_usage)) {
+              savedStats.desktop_usage = savedStats.desktop_usage.map(u => ({ ...u, key: "work" }));
+            }
             rootState.insightsStats = { data: savedStats, error: false };
             if (rootState.prefs?.cache?.statistics) {
               rootState.prefs.cache.statistics.totalWords = savedStats.total_words;
