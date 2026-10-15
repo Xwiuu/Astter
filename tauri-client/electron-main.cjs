@@ -465,17 +465,26 @@ function quitFlow() {
 
 // IPC Handlers
 ipcMain.on('flow:toggle-hub', toggleHub);
+ipcMain.on('flow:dictation-trigger', triggerDictation);
 ipcMain.on('flow:open-settings', () => {
-  if (!hubWindow) {
+  const navigateToSettings = () => {
+    if (hubWindow && !hubWindow.isDestroyed() && hubWindow.webContents) {
+      hubWindow.webContents.executeJavaScript(`
+        if (window.zubridge && window.zubridge.dispatch) {
+          window.zubridge.dispatch("SET_PREFS", { user: { selectedTab: "settings" } });
+        }
+      `).catch(() => {});
+    }
+  };
+
+  if (!hubWindow || hubWindow.isDestroyed()) {
     createHubWindow();
+    setTimeout(navigateToSettings, 800);
   } else {
     hubWindow.show();
     hubWindow.focus();
-    hubWindow.webContents.executeJavaScript(`
-      if (window.zubridge && window.zubridge.dispatch) {
-        window.zubridge.dispatch("SET_PREFS", { user: { selectedTab: "settings" } });
-      }
-    `).catch(() => {});
+    navigateToSettings();
+    setTimeout(navigateToSettings, 200);
   }
 });
 ipcMain.on('flow:toggle-status', toggleStatus);

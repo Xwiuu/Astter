@@ -45,8 +45,8 @@
 
       /* PÍLULA FLUTUANTE REA (Wispr Flow Authentic Minimalist) */
       .thought-bubble {
-        -webkit-app-region: drag !important;
-        cursor: grab !important;
+        -webkit-app-region: no-drag !important;
+        cursor: default !important;
         user-select: none;
         position: relative;
         height: 30px;
@@ -69,22 +69,19 @@
         pointer-events: auto !important;
       }
 
-      .thought-bubble:active {
-        cursor: grabbing !important;
-      }
-
       .drag-handle {
         -webkit-app-region: drag !important;
         cursor: grab !important;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        color: rgba(255, 255, 255, 0.4);
+        color: rgba(255, 255, 255, 0.45);
         padding: 0 4px 0 2px;
         height: 100%;
         user-select: none;
         flex-shrink: 0;
         transition: color 0.15s ease;
+        pointer-events: auto !important;
       }
 
       .drag-handle:hover {
@@ -98,6 +95,7 @@
 
       .drag-handle svg {
         display: block;
+        pointer-events: none;
       }
 
       /* GLOW HOVER RING (Wispr Flow signature conic glow) */
@@ -128,17 +126,17 @@
 
       /* ==================== ESTADO 1: RESTING (Grip + Logo) ==================== */
       .thought-bubble.state-resting {
-        width: 54px;
-        min-width: 54px;
+        width: 58px;
+        min-width: 58px;
         padding: 0 6px 0 4px;
-        cursor: grab !important;
+        cursor: pointer !important;
       }
 
       .resting-logo {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 24px;
+        width: 26px;
         height: 100%;
         -webkit-app-region: no-drag !important;
         cursor: pointer !important;
@@ -150,6 +148,7 @@
         height: 16px;
         filter: drop-shadow(0 0 5px rgba(255, 255, 235, 0.45));
         transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+        pointer-events: none;
       }
 
       .thought-bubble.state-resting:hover .flow-symbol-svg {
@@ -158,12 +157,13 @@
 
       /* ==================== ESTADO 1B: MENU (Grip + Mic + Logo + Settings) ==================== */
       .thought-bubble.state-menu {
-        width: 126px;
-        min-width: 126px;
-        padding: 0 6px 0 4px;
-        background: rgba(18, 18, 22, 0.94);
-        border-color: rgba(255, 255, 255, 0.15);
+        width: 136px;
+        min-width: 136px;
+        padding: 0 8px 0 6px;
+        background: rgba(18, 18, 22, 0.96);
+        border-color: rgba(255, 255, 255, 0.16);
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        cursor: default !important;
       }
 
       .menu-content {
@@ -172,11 +172,14 @@
         justify-content: space-between;
         width: 100%;
         height: 100%;
+        gap: 6px;
+        -webkit-app-region: no-drag !important;
+        pointer-events: auto !important;
         animation: menuFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) both;
       }
 
       @keyframes menuFadeIn {
-        from { opacity: 0; transform: scale(0.9); }
+        from { opacity: 0; transform: scale(0.92); }
         to { opacity: 1; transform: scale(1); }
       }
 
@@ -190,49 +193,59 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        cursor: pointer;
-        -webkit-app-region: no-drag;
+        cursor: pointer !important;
+        -webkit-app-region: no-drag !important;
+        pointer-events: auto !important;
         transition: all 0.14s cubic-bezier(0.16, 1, 0.3, 1);
         flex-shrink: 0;
       }
 
+      .pill-btn svg {
+        pointer-events: none;
+      }
+
       .pill-btn:hover {
-        transform: scale(1.12);
-        background: rgba(255, 255, 255, 0.2);
+        transform: scale(1.14);
+        background: rgba(255, 255, 255, 0.22);
         color: #FFFFFF;
       }
 
       .pill-btn:active {
-        transform: scale(0.94);
+        transform: scale(0.92);
       }
 
       .pill-btn.mic-btn:hover {
-        background: rgba(255, 69, 58, 0.28);
+        background: rgba(255, 69, 58, 0.32);
         color: #FF453A;
-        box-shadow: 0 0 10px rgba(255, 69, 58, 0.4);
+        box-shadow: 0 0 10px rgba(255, 69, 58, 0.45);
       }
 
       .pill-btn.settings-btn:hover {
-        background: rgba(167, 139, 250, 0.25);
+        background: rgba(167, 139, 250, 0.3);
         color: #C4B5FD;
-        box-shadow: 0 0 10px rgba(167, 139, 250, 0.35);
+        box-shadow: 0 0 10px rgba(167, 139, 250, 0.4);
       }
 
       .menu-center-logo {
-        width: 18px;
-        height: 18px;
+        width: 20px;
+        height: 20px;
         display: flex;
         align-items: center;
         justify-content: center;
-        cursor: pointer;
-        -webkit-app-region: no-drag;
+        cursor: pointer !important;
+        -webkit-app-region: no-drag !important;
+        pointer-events: auto !important;
         transition: transform 0.14s ease, opacity 0.14s ease;
         flex-shrink: 0;
       }
 
+      .menu-center-logo svg {
+        pointer-events: none;
+      }
+
       .menu-center-logo:hover {
-        transform: scale(1.1);
-        opacity: 0.8;
+        transform: scale(1.15);
+        opacity: 0.85;
       }
 
 
@@ -501,6 +514,10 @@
           const logo = document.getElementById("menuLogoBtn");
           const menuGrip = document.getElementById("menuDragHandle");
 
+          thoughtBubble.onclick = null;
+          thoughtBubble.onpointerdown = null;
+          thoughtBubble.onpointerup = null;
+
           if (menuGrip) {
             menuGrip.addEventListener("dblclick", (e) => {
               e.stopPropagation();
@@ -511,20 +528,22 @@
           }
 
           if (mic) {
-            mic.addEventListener("click", (e) => {
-              e.stopPropagation();
-              if (typeof window.__flowToggleDictation === "function") {
+            bindAction(mic, (e) => {
+              console.log("🎙️ [Capsule] Botão de microfone acionado!");
+              if (window.flowNative && typeof window.flowNative.triggerDictation === "function") {
+                window.flowNative.triggerDictation();
+              } else if (typeof window.__flowToggleDictation === "function") {
                 window.__flowToggleDictation();
               }
             });
           }
 
           if (settings) {
-            settings.addEventListener("click", (e) => {
-              e.stopPropagation();
-              if (window.flowNative && window.flowNative.openSettings) {
+            bindAction(settings, (e) => {
+              console.log("⚙️ [Capsule] Abrindo configurações do Flow...");
+              if (window.flowNative && typeof window.flowNative.openSettings === "function") {
                 window.flowNative.openSettings();
-              } else if (window.flowNative && window.flowNative.toggleHub) {
+              } else if (window.flowNative && typeof window.flowNative.toggleHub === "function") {
                 window.flowNative.toggleHub();
               }
               renderBubble("resting");
@@ -532,8 +551,8 @@
           }
 
           if (logo) {
-            logo.addEventListener("click", (e) => {
-              e.stopPropagation();
+            bindAction(logo, (e) => {
+              console.log("✕ [Capsule] Fechando menu para resting");
               renderBubble("resting");
             });
           }
@@ -564,14 +583,45 @@
           `;
 
           const restingLogo = document.getElementById("restingLogoBtn");
+          const restingGrip = document.getElementById("restingDragHandle");
+
           if (restingLogo) {
-            restingLogo.addEventListener("click", (e) => {
-              e.stopPropagation();
+            bindAction(restingLogo, (e) => {
+              console.log("⚡ [Capsule Logo] Abrindo menu...");
               renderBubble("menu");
             });
           }
 
-          const restingGrip = document.getElementById("restingDragHandle");
+          // Permitir clicar em qualquer ponto da cápsula descansando para abrir opções
+          let restingStartPos = null;
+          let restingStartTime = 0;
+
+          thoughtBubble.onpointerdown = (e) => {
+            if (currentStatus !== "resting" || e.button !== 0) return;
+            if (restingGrip && restingGrip.contains(e.target)) return;
+            restingStartPos = { x: e.clientX, y: e.clientY };
+            restingStartTime = Date.now();
+          };
+
+          thoughtBubble.onpointerup = (e) => {
+            if (currentStatus !== "resting" || e.button !== 0 || !restingStartPos) return;
+            if (restingGrip && restingGrip.contains(e.target)) return;
+            const dist = Math.hypot(e.clientX - restingStartPos.x, e.clientY - restingStartPos.y);
+            const elapsed = Date.now() - restingStartTime;
+            restingStartPos = null;
+            if (dist < 10 && elapsed < 600) {
+              e.stopPropagation();
+              renderBubble("menu");
+            }
+          };
+
+          thoughtBubble.onclick = (e) => {
+            if (currentStatus !== "resting") return;
+            if (restingGrip && restingGrip.contains(e.target)) return;
+            e.stopPropagation();
+            renderBubble("menu");
+          };
+
           if (restingGrip) {
             restingGrip.addEventListener("dblclick", (e) => {
               e.stopPropagation();
@@ -583,7 +633,51 @@
         }
       }
 
+      // Helper robusto para cliques em ambientes Linux/Electron com suporte a drag
+      function bindAction(element, callback) {
+        if (!element) return;
+        let lastTrigger = 0;
+        const trigger = (e) => {
+          const now = Date.now();
+          if (now - lastTrigger < 250) return;
+          lastTrigger = now;
+          if (e) {
+            try { e.stopPropagation(); } catch (_) {}
+            try { e.preventDefault(); } catch (_) {}
+          }
+          callback(e);
+        };
+
+        let startPos = null;
+        let startTime = 0;
+
+        element.addEventListener("pointerdown", (e) => {
+          if (e.button !== 0) return;
+          startPos = { x: e.clientX, y: e.clientY };
+          startTime = Date.now();
+        });
+
+        element.addEventListener("pointerup", (e) => {
+          if (e.button !== 0 || !startPos) return;
+          const dist = Math.hypot(e.clientX - startPos.x, e.clientY - startPos.y);
+          const elapsed = Date.now() - startTime;
+          startPos = null;
+          if (dist < 10 && elapsed < 600) {
+            trigger(e);
+          }
+        });
+
+        element.addEventListener("click", (e) => {
+          trigger(e);
+        });
+      }
+
       // Clique fora recolhe o menu
+      window.addEventListener("pointerdown", (e) => {
+        if (currentStatus === "menu" && !thoughtBubble.contains(e.target)) {
+          renderBubble("resting");
+        }
+      });
       window.addEventListener("click", (e) => {
         if (currentStatus === "menu" && !thoughtBubble.contains(e.target)) {
           renderBubble("resting");
@@ -600,7 +694,6 @@
         const level = e.detail || 0;
         const wrap = document.getElementById("waveWrap");
         if (wrap) {
-          // Escala suave de 0.8 a 2.5x dependendo da amplitude da voz
           const s = Math.min(2.5, Math.max(0.7, 0.8 + level * 2.8));
           wrap.style.setProperty("--audio-scale", s);
         }
@@ -612,13 +705,20 @@
         if (currentStatus === "menu") {
           menuLeaveTimer = setTimeout(() => {
             if (currentStatus === "menu") renderBubble("resting");
-          }, 4000);
+          }, 3500);
         }
       });
       thoughtBubble.addEventListener("mouseenter", () => {
         if (menuLeaveTimer) {
           clearTimeout(menuLeaveTimer);
           menuLeaveTimer = null;
+        }
+      });
+
+      // Ao perder foco da janela, volta ao modo resting se estava no menu
+      window.addEventListener("blur", () => {
+        if (currentStatus === "menu") {
+          renderBubble("resting");
         }
       });
 
