@@ -158,15 +158,86 @@
         transform: scale(1.15);
       }
 
-      /* ==================== ESTADO 1B: MENU (Grip + Mic + Logo + Settings) ==================== */
+      /* ==================== ESTADO 1B: MENU (Grip + Mic + Meeting + Logo + Settings) ==================== */
       .thought-bubble.state-menu {
-        width: 136px;
-        min-width: 136px;
+        width: 168px;
+        min-width: 168px;
         padding: 0 8px 0 6px;
         background: rgba(18, 18, 22, 0.96);
         border-color: rgba(255, 255, 255, 0.16);
         box-shadow: 0 8px 24px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.15);
         cursor: default !important;
+      }
+
+      /* ==================== ESTADO 5: REUNIÃO ATIVA (Granola / Dual Channel) ==================== */
+      .thought-bubble.state-meeting {
+        width: 200px;
+        min-width: 200px;
+        padding: 0 8px;
+        background: rgba(18, 18, 22, 0.96);
+        border-color: rgba(239, 68, 68, 0.45);
+        box-shadow: 0 0 16px rgba(239, 68, 68, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      }
+
+      .meeting-content {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        gap: 6px;
+      }
+
+      .meeting-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #ef4444;
+        animation: recPulse 1.2s infinite;
+        flex-shrink: 0;
+      }
+
+      @keyframes recPulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.3; transform: scale(1.2); }
+      }
+
+      .meeting-time {
+        font-family: monospace;
+        font-size: 11px;
+        font-weight: 600;
+        color: #fca5a5;
+      }
+
+      .meeting-speaker-pill {
+        font-size: 10px;
+        color: #f97316;
+        background: rgba(249, 115, 22, 0.15);
+        padding: 1px 6px;
+        border-radius: 4px;
+        max-width: 68px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .stop-meeting-btn {
+        background: rgba(239, 68, 68, 0.2);
+        border: 1px solid rgba(239, 68, 68, 0.5);
+        color: #ef4444;
+        border-radius: 4px;
+        width: 18px;
+        height: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 9px;
+        padding: 0;
+        transition: all 0.15s ease;
+      }
+      .stop-meeting-btn:hover {
+        background: #ef4444;
+        color: #ffffff;
       }
 
       .menu-content {
@@ -495,6 +566,14 @@
                   <line x1="12" x2="12" y1="19" y2="22"/>
                 </svg>
               </button>
+              <button class="pill-btn meeting-btn" id="menuMeetingBtn" title="Gravar Reunião / Granola" style="color: #f97316;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+                  <line x1="16" x2="16" y1="2" y2="6"/>
+                  <line x1="8" x2="8" y1="2" y2="6"/>
+                  <line x1="3" x2="21" y1="10" y2="10"/>
+                </svg>
+              </button>
               <div class="menu-center-logo" id="menuLogoBtn" title="Fechar menu">
                 <svg class="flow-symbol-svg" viewBox="0 0 187 187" fill="none">
                   <rect width="187" height="187" rx="40" fill="#1A1A1A"/>
@@ -515,6 +594,7 @@
           `;
 
           const mic = document.getElementById("menuMicBtn");
+          const meetingBtn = document.getElementById("menuMeetingBtn");
           const settings = document.getElementById("menuSettingsBtn");
           const logo = document.getElementById("menuLogoBtn");
           const menuGrip = document.getElementById("menuDragHandle");
@@ -524,7 +604,6 @@
           thoughtBubble.onpointerup = null;
 
           if (menuGrip) {
-            enableDraggable(menuGrip);
             menuGrip.addEventListener("dblclick", (e) => {
               e.stopPropagation();
               if (window.flowNative && window.flowNative.triggerWindowMove) {
@@ -540,6 +619,15 @@
                 toggleRecording();
               } else if (window.flowNative && typeof window.flowNative.triggerDictation === "function") {
                 window.flowNative.triggerDictation();
+              }
+            });
+          }
+
+          if (meetingBtn) {
+            bindAction(meetingBtn, () => {
+              console.log("🎙️ [Capsule] Botão de reunião acionado!");
+              if (window.flowNative?.meeting?.start) {
+                window.flowNative.meeting.start();
               }
             });
           }
@@ -560,6 +648,26 @@
             bindAction(logo, (e) => {
               console.log("✕ [Capsule] Fechando menu para resting");
               renderBubble("resting");
+            });
+          }
+        } else if (status === "meeting_recording") {
+          // ==================== REUNIÃO GRAVANDO (Dual Channel / Granola) ====================
+          thoughtBubble.classList.add("state-meeting");
+          bubbleInner.innerHTML = `
+            <div class="meeting-content">
+              <span class="meeting-dot"></span>
+              <span class="meeting-time" id="capsuleMeetingTimer">00:00</span>
+              <span class="meeting-speaker-pill" id="capsuleSpeakerPill">Você</span>
+              <button class="stop-meeting-btn" id="capsuleStopBtn" title="Finalizar Reunião">■</button>
+            </div>
+          `;
+          const stopBtn = document.getElementById("capsuleStopBtn");
+          if (stopBtn) {
+            bindAction(stopBtn, () => {
+              console.log("⏹️ [Capsule] Finalizando gravação da reunião...");
+              if (window.flowNative?.meeting?.stop) {
+                window.flowNative.meeting.stop();
+              }
             });
           }
         } else {
@@ -724,6 +832,37 @@
           window.flowNative.toggleHub();
         }
       });
+
+      // Escuta eventos de Reunião (Granola Dual Channel)
+      if (window.flowNative && window.flowNative.meeting) {
+        let meetingTimerInterval = null;
+        let meetingSeconds = 0;
+
+        window.flowNative.meeting.onStarted((data) => {
+          renderBubble("meeting_recording");
+          meetingSeconds = 0;
+          clearInterval(meetingTimerInterval);
+          meetingTimerInterval = setInterval(() => {
+            meetingSeconds++;
+            const m = Math.floor(meetingSeconds / 60).toString().padStart(2, "0");
+            const s = (meetingSeconds % 60).toString().padStart(2, "0");
+            const el = document.getElementById("capsuleMeetingTimer");
+            if (el) el.textContent = `${m}:${s}`;
+          }, 1000);
+        });
+
+        window.flowNative.meeting.onFinished(() => {
+          clearInterval(meetingTimerInterval);
+          renderBubble("completed");
+        });
+
+        window.flowNative.meeting.onActiveSpeaker((data) => {
+          const pill = document.getElementById("capsuleSpeakerPill");
+          if (pill && data && data.speaker) {
+            pill.textContent = data.speaker;
+          }
+        });
+      }
 
       // Inicializa
       renderBubble("resting");

@@ -22,6 +22,7 @@ const DIRS = {
   scratchpad: path.join(BASE_DIR, 'scratchpad'),
   dictionary: path.join(BASE_DIR, 'dictionary'),
   snippets: path.join(BASE_DIR, 'snippets'),
+  meetings: path.join(BASE_DIR, 'meetings'),
   insights: path.join(BASE_DIR, 'insights')
 };
 
@@ -93,6 +94,21 @@ db.exec(`
   CREATE TABLE IF NOT EXISTS insights_meta (
     key TEXT PRIMARY KEY,
     value TEXT
+  );
+
+  CREATE TABLE IF NOT EXISTS meetings (
+    id TEXT PRIMARY KEY,
+    title TEXT NOT NULL,
+    summary TEXT,
+    actionItems TEXT,
+    keyTakeaways TEXT,
+    attendees TEXT,
+    durationMs INTEGER DEFAULT 0,
+    durationFormatted TEXT,
+    notesMarkdown TEXT,
+    transcripts TEXT,
+    createdAt INTEGER NOT NULL,
+    filePath TEXT
   );
 `);
 
@@ -729,6 +745,83 @@ if (notesCount === 0) {
   });
 }
 
+// ==========================================
+// 6. REUNIÕES (memory/meetings/*.md)
+// ==========================================
+
+function getMeetings() {
+  try {
+    const rows = db.prepare('SELECT * FROM meetings ORDER BY createdAt DESC').all();
+    return rows.map(r => ({
+      ...r,
+      actionItems: r.actionItems ? JSON.parse(r.actionItems) : [],
+      keyTakeaways: r.keyTakeaways ? JSON.parse(r.keyTakeaways) : [],
+      attendees: r.attendees ? JSON.parse(r.attendees) : [],
+      transcripts: r.transcripts ? JSON.parse(r.transcripts) : []
+    }));
+  } catch (e) {
+    console.error('Error fetching meetings:', e);
+    return [];
+  }
+}
+
+function getMeetingById(id) {
+  try {
+    const r = db.prepare('SELECT * FROM meetings WHERE id = ?').get(id);
+    if (!r) return null;
+    return {
+      ...r,
+      actionItems: r.actionItems ? JSON.parse(r.actionItems) : [],
+      keyTakeaways: r.keyTakeaways ? JSON.parse(r.keyTakeaways) : [],
+      attendees: r.attendees ? JSON.parse(r.attendees) : [],
+      transcripts: r.transcripts ? JSON.parse(r.transcripts) : []
+    };
+  } catch (_) {
+    return null;
+  }
+}
+
+function saveMeeting(m) {
+  try {
+    const stmt = db.prepare(`
+      INSERT OR REPLACE INTO meetings
+      (id, title, summary, actionItems, keyTakeaways, attendees, durationMs, durationFormatted, notesMarkdown, transcripts, createdAt, filePath)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `);
+    stmt.run(
+      m.id,
+      m.title || 'Reunião Sem Título',
+      m.summary || '',
+      JSON.stringify(m.actionItems || []),
+      JSON.stringify(m.keyTakeaways || []),
+      JSON.stringify(m.attendees || []),
+      m.durationMs || 0,
+      m.durationFormatted || '00:00',
+      m.notesMarkdown || '',
+      JSON.stringify(m.transcripts || []),
+      m.createdAt || Date.now(),
+      m.filePath || ''
+    );
+    return m;
+  } catch (e) {
+    console.error('Error saving meeting in db:', e);
+    return m;
+  }
+}
+
+function deleteMeeting(id) {
+  try {
+    const m = getMeetingById(id);
+    if (m && m.filePath && fs.existsSync(m.filePath)) {
+      try { fs.unlinkSync(m.filePath); } catch (_) {}
+    }
+    db.prepare('DELETE FROM meetings WHERE id = ?').run(id);
+    return true;
+  } catch (_) {
+    return false;
+  }
+}
+
 module.exports = {
   DIRS,
   getNotes,
@@ -750,5 +843,9 @@ module.exports = {
   getScratchpad,
   saveScratchpad,
   getInsightsStats,
-  getHeatmapStats
+  getHeatmapStats,
+  getMeetings,
+  getMeetingById,
+  saveMeeting,
+  deleteMeeting
 };

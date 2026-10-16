@@ -35,6 +35,9 @@ contextBridge.exposeInMainWorld('flowNative', {
   onHistoryNeedsUpdate: (callback) => {
     ipcRenderer.on('history:needsUpdate', () => callback());
   },
+  onOpenNotetaker: (callback) => {
+    ipcRenderer.on('flow:open-notetaker', (_, page) => callback(page));
+  },
   memory: {
     getNotes: () => ipcRenderer.invoke('flow:memory-get-notes'),
     getNoteById: (id) => ipcRenderer.invoke('flow:memory-get-note-by-id', id),
@@ -55,6 +58,22 @@ contextBridge.exposeInMainWorld('flowNative', {
     getScratchpad: () => ipcRenderer.invoke('flow:memory-get-scratchpad'),
     saveScratchpad: (params) => ipcRenderer.invoke('flow:memory-save-scratchpad', params),
     getInsightsStats: () => ipcRenderer.invoke('flow:memory-get-insights-stats'),
-    getHeatmapStats: () => ipcRenderer.invoke('flow:memory-get-heatmap-stats')
+    getHeatmapStats: () => ipcRenderer.invoke('flow:memory-get-heatmap-stats'),
+    getMeetings: () => ipcRenderer.invoke('flow:memory-get-meetings')
+  },
+  openGranolaWindow: () => ipcRenderer.send('flow:open-granola-window'),
+  meeting: {
+    start: (options) => ipcRenderer.invoke('flow:start-meeting-recording', options),
+    stop: () => ipcRenderer.invoke('flow:stop-meeting-recording'),
+    getStatus: () => ipcRenderer.invoke('flow:get-meeting-status'),
+    renameSpeaker: (oldName, newName) => ipcRenderer.send('flow:meeting-rename-speaker', { oldName, newName }),
+    addAttendee: (name) => ipcRenderer.send('flow:meeting-add-attendee', { name }),
+    onStarted: (cb) => { ipcRenderer.on('flow:meeting-started', (_, p) => cb(p)); },
+    onFinished: (cb) => { ipcRenderer.on('flow:meeting-finished', (_, p) => cb(p)); },
+    onActiveSpeaker: (cb) => { ipcRenderer.on('flow:meeting-active-speaker', (_, p) => cb(p)); },
+    onAudioVolume: (cb) => { ipcRenderer.on('flow:meeting-audio-volume', (_, p) => cb(p)); },
+    onTranscriptTurn: (cb) => { ipcRenderer.on('flow:meeting-transcript-turn', (_, p) => cb(p)); },
+    onSpeakersUpdated: (cb) => { ipcRenderer.on('flow:meeting-speakers-updated', (_, p) => cb(p)); }
   }
 });
+

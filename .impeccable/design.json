@@ -1,0 +1,156 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-16T00:00:00Z",
+  "title": "Flow — Granola Notetaker",
+  "extensions": {
+    "colorMeta": {
+      "canvas": {
+        "displayName": "Canvas",
+        "role": "Page background",
+        "canonical": true,
+        "tonalRamp": ["#2b2b2e", "#3d3d41", "#4f4f53", "#616166", "#727277", "#848488", "#96969a", "#a8a8ac"]
+      },
+      "surface": {
+        "displayName": "Surface",
+        "role": "Card / hover step 1",
+        "canonical": true,
+        "tonalRamp": ["#28282b", "#343438", "#404044", "#4c4c50", "#58585c", "#646468", "#707074", "#7c7c80"]
+      },
+      "surface-raised": {
+        "displayName": "Surface raised",
+        "role": "Topmost background step",
+        "canonical": true,
+        "tonalRamp": ["#2d2d30", "#39393d", "#454549", "#515155", "#5d5d61", "#69696d", "#757579", "#818185"]
+      },
+      "bubble-other": {
+        "displayName": "Transcript bubble (other)",
+        "role": "Transcript-only surface",
+        "canonical": true,
+        "tonalRamp": ["#414146", "#4a4a4f", "#535359", "#5c5c62", "#65656b", "#6e6e74", "#77777d", "#808086"]
+      },
+      "bubble-self": {
+        "displayName": "Transcript bubble (self)",
+        "role": "Transcript-only surface",
+        "canonical": true,
+        "tonalRamp": ["#313136", "#38383e", "#3f3f45", "#46464c", "#4d4d53", "#54545a", "#5b5b61", "#626268"]
+      },
+      "ink-primary": {
+        "displayName": "Ink primary",
+        "role": "Primary text / primary button fill",
+        "canonical": true,
+        "tonalRamp": ["#f4f4f5", "#ececee", "#e4e5e7", "#dcdde0", "#d4d5d9", "#cccdd2", "#c4c5cb", "#bcbdc4"]
+      },
+      "ink-secondary": {
+        "displayName": "Ink secondary",
+        "role": "Body text",
+        "canonical": true,
+        "tonalRamp": ["#b8b8bf", "#afafb7", "#a6a6af", "#9d9da7", "#94949f", "#8b8b97", "#82828f", "#797987"]
+      },
+      "ink-tertiary": {
+        "displayName": "Ink tertiary",
+        "role": "Metadata / gutter marks",
+        "canonical": true,
+        "tonalRamp": ["#8b8b92", "#82828a", "#797982", "#70707a", "#676772", "#5e5e6a", "#555562", "#4c4c5a"]
+      },
+      "accent-teal": {
+        "displayName": "Accent teal",
+        "role": "Focus, selection, enhanced state — the only interactive chroma",
+        "canonical": true,
+        "tonalRamp": ["#0e3d46", "#124f5c", "#156172", "#197387", "#1d859d", "#2097b3", "#22a9c9", "#22bbdf"]
+      },
+      "status-lime": {
+        "displayName": "Status lime",
+        "role": "Confirmation glyph only",
+        "canonical": true,
+        "tonalRamp": ["#1e2e05", "#283d07", "#324c09", "#3c5b0b", "#466a0d", "#50790f", "#5a8811", "#649713"]
+      },
+      "avatar-violet": {
+        "displayName": "Avatar violet",
+        "role": "Note-row avatar block fill only",
+        "canonical": true,
+        "tonalRamp": ["#231a3d", "#2d214d", "#37285e", "#412f6e", "#4b367f", "#553d8f", "#5f44a0", "#694bb0"]
+      },
+      "danger-red": {
+        "displayName": "Danger red",
+        "role": "Destructive actions only",
+        "canonical": true,
+        "tonalRamp": ["#3d1111", "#4d1616", "#5e1b1b", "#6e2020", "#7f2525", "#8f2a2a", "#a02f2f", "#b03434"]
+      },
+      "hairline": {
+        "displayName": "Hairline",
+        "role": "Translucent white border, adapts over any surface step",
+        "canonical": true
+      },
+      "hairline-strong": {
+        "displayName": "Hairline strong",
+        "role": "Emphasized translucent border",
+        "canonical": true
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Page display", "usage": "Page-level titles only, EB Garamond" },
+      "title": { "displayName": "Note title", "usage": "Editable heading of an open note, EB Garamond" },
+      "section-heading": { "displayName": "Section heading", "usage": "Headings inside note body, EB Garamond with #-gutter" },
+      "body": { "displayName": "Body", "usage": "All readable UI text, Figtree 15px/1.65" },
+      "label": { "displayName": "Label", "usage": "Controls, metadata, timestamps; tabular numerals via .tnum" }
+    },
+    "shadows": {
+      "policy": "none",
+      "note": "No drop shadows anywhere. Depth is purely tonal: canvas → surface → surface-raised, plus translucent hairlines. Hover steps one level up the ramp; it never lifts."
+    },
+    "motion": {
+      "easing": "cubic-bezier(0.16, 1, 0.3, 1)",
+      "micro": "0.15s — hover/color/background transitions on controls",
+      "pageEnter": "0.18s — view fade-in with 4px translateY rise",
+      "note": "View entry is the only page-level motion. Respects prefers-reduced-motion."
+    },
+    "breakpoints": {
+      "desktop": ">= 1024px — full 760px centered column, 32px side insets",
+      "tablet": "640–1023px — column narrows, side insets reduce to 20px",
+      "mobile": "< 640px — single column fills width, dock pill remains fixed"
+    }
+  },
+  "components": [
+    {
+      "name": "ds-pill-button",
+      "title": "Primary pill button",
+      "snippet": "<button class=\"ds-pill-button\">Nova nota</button>\n<style>\n.ds-pill-button {\n  background: var(--text, #f4f4f5);\n  color: #131315;\n  border: none;\n  border-radius: 9999px;\n  padding: 7px 16px;\n  font: 600 12px/1.4 \"Figtree\", -apple-system, BlinkMacSystemFont, sans-serif;\n  cursor: pointer;\n  transition: opacity 0.15s cubic-bezier(0.16, 1, 0.3, 1);\n}\n.ds-pill-button:hover { opacity: 0.88; }\n.ds-pill-button:focus-visible {\n  outline: 2px solid var(--teal, #22d3ee);\n  outline-offset: 2px;\n  border-radius: 9999px;\n}\n</style>"
+    },
+    {
+      "name": "ds-ghost-pill",
+      "title": "Ghost / invite pill button",
+      "snippet": "<button class=\"ds-ghost-pill\">Convidar</button>\n<style>\n.ds-ghost-pill {\n  background: transparent;\n  color: var(--text-2, #b8b8bf);\n  border: 1px solid var(--line, rgba(255,255,255,0.08));\n  border-radius: 9999px;\n  padding: 7px 14px;\n  font: 400 12px/1.4 \"Figtree\", -apple-system, BlinkMacSystemFont, sans-serif;\n  cursor: pointer;\n  transition: background-color 0.15s cubic-bezier(0.16, 1, 0.3, 1), color 0.15s cubic-bezier(0.16, 1, 0.3, 1);\n}\n.ds-ghost-pill:hover {\n  background: var(--surface-2, #242427);\n  color: var(--text, #f4f4f5);\n}\n.ds-ghost-pill:focus-visible {\n  outline: 2px solid var(--teal, #22d3ee);\n  outline-offset: 2px;\n  border-radius: 4px;\n}\n</style>"
+    },
+    {
+      "name": "ds-icon-btn",
+      "title": "Icon button (30×30)",
+      "snippet": "<button class=\"ds-icon-btn\" aria-label=\"Fechar\">\n  <svg width=\"14\" height=\"14\" viewBox=\"0 0 14 14\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.5\" stroke-linecap=\"round\"><path d=\"M3 3l8 8M11 3l-8 8\"/></svg>\n</button>\n<style>\n.ds-icon-btn {\n  width: 30px;\n  height: 30px;\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  background: transparent;\n  color: var(--text-2, #b8b8bf);\n  border: 1px solid var(--line, rgba(255,255,255,0.08));\n  border-radius: 8px;\n  cursor: pointer;\n  transition: background-color 0.15s cubic-bezier(0.16, 1, 0.3, 1), color 0.15s cubic-bezier(0.16, 1, 0.3, 1);\n}\n.ds-icon-btn:hover {\n  background: var(--surface-2, #242427);\n  color: var(--text, #f4f4f5);\n}\n.ds-icon-btn:focus-visible {\n  outline: 2px solid var(--teal, #22d3ee);\n  outline-offset: 2px;\n  border-radius: 4px;\n}\n</style>"
+    },
+    {
+      "name": "ds-note-row",
+      "title": "Note list row (avatar, title, meta, customer pill)",
+      "snippet": "<div class=\"ds-note-row\">\n  <span class=\"ds-avatar\">F</span>\n  <span class=\"ds-row-text\">\n    <span class=\"ds-row-title\">Reunião de produto — Q4</span>\n    <span class=\"ds-row-meta tnum\">14 out 2026 · 6 participantes</span>\n  </span>\n  <span class=\"ds-customer-pill\"><svg width=\"11\" height=\"11\" viewBox=\"0 0 12 12\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\"><path d=\"M2.5 6.5l2.5 2.5 4.5-6\"/></svg> Fluxo</span>\n</div>\n<style>\n.ds-note-row {\n  display: flex;\n  align-items: center;\n  gap: 12px;\n  padding: 10px 12px;\n  border-radius: 10px;\n  background: transparent;\n  cursor: pointer;\n  transition: background-color 0.15s cubic-bezier(0.16, 1, 0.3, 1);\n}\n.ds-note-row:hover { background: var(--surface, #1f1f22); }\n.ds-avatar {\n  flex: none;\n  width: 32px;\n  height: 32px;\n  display: inline-flex;\n  align-items: center;\n  justify-content: center;\n  background: var(--violet, #7c3aed);\n  color: #fff;\n  font: 600 13px/1 \"Figtree\", sans-serif;\n  border-radius: 8px;\n}\n.ds-row-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }\n.ds-row-title {\n  font: 500 13.5px/1.4 \"Figtree\", sans-serif;\n  color: var(--text, #f4f4f5);\n  white-space: nowrap;\n  overflow: hidden;\n  text-overflow: ellipsis;\n}\n.ds-row-meta { font: 400 12px/1.4 \"Figtree\", sans-serif; color: var(--text-3, #8b8b92); }\n.ds-customer-pill {\n  flex: none;\n  display: inline-flex;\n  align-items: center;\n  gap: 5px;\n  padding: 4px 10px;\n  border: 1px solid var(--line, rgba(255,255,255,0.08));\n  border-radius: 9999px;\n  background: var(--surface-2, #242427);\n  font: 400 11.5px/1.4 \"Figtree\", sans-serif;\n  color: var(--text-2, #b8b8bf);\n}\n.ds-customer-pill svg { color: var(--lime, #84cc16); }\n.tnum { font-variant-numeric: tabular-nums; }\n</style>"
+    },
+    {
+      "name": "ds-badge-chip",
+      "title": "Badge chip (neutral and enhanced-teal variants)",
+      "snippet": "<span class=\"ds-badge-chip\">Reunião</span>\n<span class=\"ds-badge-chip ds-chip-enhanced\">\n  <svg width=\"11\" height=\"11\" viewBox=\"0 0 12 12\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.4\" stroke-linejoin=\"round\"><path d=\"M6 1.2l1.3 3.1 3.1 1.3-3.1 1.3L6 10.8 4.7 7.7 1.6 6.4l3.1-1.3z\"/></svg>\n  Resumo melhorado\n</span>\n<style>\n.ds-badge-chip {\n  display: inline-flex;\n  align-items: center;\n  gap: 6px;\n  padding: 5px 12px;\n  border: 1px solid var(--line, rgba(255,255,255,0.08));\n  border-radius: 9999px;\n  background: var(--surface, #1f1f22);\n  font: 400 12.5px/1.4 \"Figtree\", sans-serif;\n  color: var(--text-2, #b8b8bf);\n  cursor: pointer;\n  transition: background-color 0.15s cubic-bezier(0.16, 1, 0.3, 1), color 0.15s cubic-bezier(0.16, 1, 0.3, 1);\n}\n.ds-badge-chip:hover { background: var(--surface-2, #242427); color: var(--text, #f4f4f5); }\n.ds-chip-enhanced {\n  color: var(--teal, #22d3ee);\n  border-color: rgba(34, 211, 238, 0.25);\n  background: rgba(34, 211, 238, 0.08);\n}\n.ds-chip-enhanced:hover { background: rgba(34, 211, 238, 0.14); color: var(--teal, #22d3ee); }\n</style>"
+    },
+    {
+      "name": "ds-transcript-bubble",
+      "title": "Transcript bubble (other speaker and self variants)",
+      "snippet": "<div class=\"ds-bubble\">\n  <span class=\"ds-speaker\" style=\"color: #e07a5f\">Ana</span>\n  <p class=\"ds-bubble-text\">A gente validou o fluxo de login com três usuários ontem.</p>\n  <span class=\"ds-bubble-time tnum\">10:24</span>\n</div>\n<div class=\"ds-bubble ds-bubble-self\">\n  <span class=\"ds-speaker\" style=\"color: #38bdf8\">Você</span>\n  <p class=\"ds-bubble-text\">Perfeito, vou anotar isso como próximo passo.</p>\n  <span class=\"ds-bubble-time tnum\">10:25</span>\n</div>\n<style>\n.ds-bubble {\n  max-width: 640px;\n  padding: 10px 14px 8px;\n  border-radius: 12px;\n  background: var(--bubble-other, #38383c);\n}\n.ds-bubble-self { background: var(--bubble-self, #2a2a2e); }\n.ds-speaker { display: block; font: 600 12px/1.4 \"Figtree\", sans-serif; margin-bottom: 3px; }\n.ds-bubble-text {\n  margin: 0;\n  font: 400 14.5px/1.55 \"Figtree\", sans-serif;\n  color: var(--text-2, #b8b8bf);\n}\n.ds-bubble-time { display: block; margin-top: 4px; font: 400 10.5px/1.3 \"Figtree\", sans-serif; color: var(--text-3, #8b8b92); }\n.tnum { font-variant-numeric: tabular-nums; }\n</style>"
+    },
+    {
+      "name": "ds-serif-title",
+      "title": "Serif note title (editable heading)",
+      "snippet": "<h1 class=\"ds-serif-title\">Reunião de produto — Q4</h1>\n<style>\n.ds-serif-title {\n  margin: 0;\n  font: 500 32px/1.2 \"EB Garamond\", Georgia, serif;\n  letter-spacing: -0.01em;\n  color: var(--text, #f4f4f5);\n}\n.ds-serif-title:focus-visible {\n  outline: 2px solid var(--teal, #22d3ee);\n  outline-offset: 2px;\n  border-radius: 4px;\n}\n</style>"
+    },
+    {
+      "name": "ds-gutter-heading",
+      "title": "Note body line with #-gutter heading and bullet variants",
+      "snippet": "<div class=\"ds-body ds-body-heading\">Próximos passos</div>\n<div class=\"ds-body\">Linha de corpo normal, sem marcador.</div>\n<div class=\"ds-body ds-body-bullet\"><span class=\"ds-bullet-owner\">Ana</span> — valida o protótipo até sexta.</div>\n<style>\n.ds-body {\n  position: relative;\n  font: 400 15px/1.65 \"Figtree\", sans-serif;\n  color: var(--text-2, #b8b8bf);\n  padding-left: 30px;\n}\n.ds-body-heading {\n  margin-top: 18px;\n  font: 600 21px/1.3 \"EB Garamond\", Georgia, serif;\n  color: var(--text, #f4f4f5);\n}\n.ds-body-heading::before,\n.ds-body-bullet::before {\n  position: absolute;\n  left: 2px;\n  top: 0;\n  color: var(--text-3, #8b8b92);\n  font: 400 13px/1.9 \"Figtree\", sans-serif;\n}\n.ds-body-heading::before { content: \"#\"; opacity: 0.5; }\n.ds-body-bullet { padding-left: 52px; }\n.ds-body-bullet::before { content: \"•\"; left: 34px; opacity: 1; }\n.ds-bullet-owner { color: var(--text-3, #8b8b92); font-style: italic; }\n</style>"
+    }
+  ],
+  "narrative": "# Design System: Flow — Granola Notetaker\n\n## Overview\n\nCreative North Star: **\"The quiet notebook.\"** The interface reproduces Granola's dark, near-black editorial world — a serif display voice over a sans body, chrome that recedes so the note itself is the product. Every surface is a muted charcoal layer on a #161618 canvas; color is rationed to one teal accent, two status signals, and the speaker palette inside the transcript.\n\nKey Characteristics:\n- Near-black canvas with two-step tonal surfaces; no pure black, no pure gray.\n- Serif (EB Garamond) reserved exclusively for titles and headings; Figtree carries all UI text.\n- Single accent (teal) for focus, selection, and \"enhanced\" states; everything else stays neutral.\n- Pills for anything you click, soft cards for anything you read.\n\n**The Receding Chrome Rule.** If an element draws the eye before the note content does, it is too loud. Buttons are transparent with hairline borders until hovered; only the one primary action per view gets a filled shape.\n\n## Colors\n\nThe palette is a flat neutral ramp with three chromatic exceptions. Neutrals are warm-leaning near-blacks; text is an off-white ramp, never #fff in body copy.\n\n- **Canvas / surface / raised** (#161618 → #1f1f22 → #242427): the only three background levels. Elevation is expressed by stepping up this ramp, not by shadows.\n- **Hairlines** (rgba(255,255,255,0.08), strong 0.16): translucent white borders replace opaque grays so lines adapt over any surface step.\n- **Ink ramp**: primary #f4f4f5, secondary #b8b8bf, tertiary #8b8b92. Tertiary carries metadata, timestamps, and gutter marks.\n- **Accent teal** #22d3ee: focus rings, text selection (at 28% alpha), and the enhanced-summary chip (tinted 8%/14% fills, 25% border).\n- **Status**: lime #84cc16 for confirmations, red #ef4444 for destructive, violet #7c3aed only as the avatar block fill.\n- **Speaker palette**: six assigned hues (#e07a5f, #a3e635, #38bdf8, #f472b6, #bbf236, …) allocated by first-appearance order and cached per speaker; used nowhere else.\n\n**The One Accent Rule.** Teal is the only interactive color. A second chromatic hue in chrome (not transcript) is a defect, not a variety.\n\n**The Bubble Is Not a Surface Rule.** Transcript bubbles (#38383c others, #2a2a2e self) exist only in the transcript; they never become page backgrounds.\n\n## Typography\n\nTwo families, a strict division of labor: EB Garamond (variable, loaded wght 100–900 with italics) is display-only; Figtree (variable) is everything else.\n\n- **Page title** (display token): EB Garamond 34px / 500, -0.02em, line-height 1.1.\n- **Note title** (title token): EB Garamond 32px / 500, -0.01em, line-height 1.2 — the editable heading of an open note.\n- **Section heading** (inside notes): EB Garamond 21px / 600.\n- **Body**: Figtree 15px, line-height 1.65, ink secondary.\n- **Labels / metadata**: Figtree 12–13px, ink tertiary, tabular numerals via a `tnum` utility for every timestamp, duration, and attendee count.\n\n**The Serif Is Silence Rule.** Serif type marks content a user reads; sans marks controls a user operates. A serif button label or a sans page title is out of world.\n\n**The Tabular Numbers Rule.** Any number that changes (timers, dates, counts) uses font-variant-numeric: tabular-nums so the layout never jitters.\n\n## Layout\n\nOne scrolling column, max-width 760px, centered in a page inset of 24px top / 32px sides / 110px bottom. The generous bottom inset clears the floating dock. Views enter with a 0.18s fade and 4px rise — the only page-level motion.\n\n- **List rows**: flex, 12px gap, 10px 12px padding, 10px radius, hover steps one surface level.\n- **Badges and pills**: flex with 8px gaps, wrapping allowed.\n- **Note body gutter**: a reserved 30px left lane (52px for bullets) where markers (# and •) sit at left 2px and left 34px respectively.\n\n**The Fixed Dock Rule.** The bottom dock is position:fixed at bottom 18px with pointer-events none on the container and auto on the pill itself — the page scrolls beneath it, never through it.\n\n## Elevation & Depth\n\nNo drop shadows. Depth is tonal: canvas → surface → surface-raised, plus translucent hairlines. Hover almost always means \"one step up the ramp,\" never \"lift.\" The scroll layer under the fixed dock is hinted only by the 110px bottom padding.\n\n**The Flat By Default Rule.** If it doesn't move or stack, it has no elevation. Shadow is not available as a decoration in this world.\n\n## Shapes\n\nFour radii only: cards 14px, list rows 10px, icon buttons/avatars 8px, pills 9999px. Anything clickable with text is a pill; anything that contains content is a card. No other radii appear.\n\n## Components\n\n- **Primary button**: ink-primary fill, #131315 text, 7px 16px, pill, weight 600. One per view (\"New Note\").\n- **Ghost/invite button**: transparent, hairline border, 7px 14px, pill; hover paints surface-raised.\n- **Icon button**: 30×30, 1px hairline, 8px radius; hover paints surface-raised.\n- **Note row**: full-width flex — 32px violet avatar block (8px radius), title (13.5px, ellipsis), 12px tertiary meta line, optional customer pill on the right.\n- **Customer pill**: 4px 10px, hairline border, surface-raised fill; lime check or tertiary × as the state glyph.\n- **Badge chip**: 5px 12px, hairline border, surface fill, 12.5px secondary text. The enhanced variant swaps to the teal system (teal text, 25% teal border, 8% teal fill, 14% on hover).\n- **Transcript bubble**: grouped per speaker; others on bubble-other, the current user (\"Você\") on bubble-self, with the speaker's palette color as the name/initial mark. Time dividers and a scroll-to-latest control live in the same drawer.\n- **Selection & focus**: ::selection at 28% teal; :focus-visible is a 2px teal ring, 2px offset, 4px radius. Scrollbars are 6px transparent tracks with 12%-white thumbs.\n\n**The Hover Is A Surface Rule.** Interactive hover feedback is a background step on the tonal ramp (or a text-color lift), never a border-color change, transform, or shadow.\n\n## Do's and Don'ts\n\n- Do keep every heading inside a note serif and every control sans.\n- Do render time, date, and count text in tabular numerals.\n- Do confine color to teal-in-chrome and the speaker palette-in-transcript.\n- Don't introduce new radii; the set is 14 / 10 / 8 / pill, closed.\n- Don't use shadows or gradients for elevation — step the surface ramp.\n- Don't promote bubble colors or the violet avatar fill to general backgrounds.\n- Don't fill more than one button per view; the rest stay ghost or icon-only."
+}

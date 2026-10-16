@@ -217,7 +217,7 @@
     notetakerAttributeNamesEnabled: true,
     notetakerAutoDetectParticipantNamesEnabled: true,
     notetakerSplitScreenJoinEnabled: false,
-    notetakerOpenWindowOnRecord: true,
+    notetakerOpenWindowOnRecord: false,
     notetakerMenuBarMeetingEnabled: true,
     uiLocale: "en",
     cloudSync: true,
@@ -405,12 +405,121 @@
         if (payload.user) Object.assign(rootState.prefs.user, payload.user);
         if (payload.cache) Object.assign(rootState.prefs.cache, payload.cache);
       }
+      if ((action === "hub:openPage" || action === "openPage") && payload) {
+        const page = typeof payload === "string" ? payload : (payload?.page || payload?.hubPage);
+        rootState.navigationState = {
+          current: { hubPage: page },
+          canGoBack: page !== "Dictation",
+          canGoForward: false
+        };
+      }
+      if (action === "navigation:addEntry" && payload) {
+        rootState.navigationState = {
+          current: payload,
+          canGoBack: true,
+          canGoForward: false
+        };
+      }
+      if (action === "navigation:goBack") {
+        rootState.navigationState = {
+          current: { hubPage: "Dictation" },
+          canGoBack: false,
+          canGoForward: true
+        };
+      }
+      if (action === "navigation:goForward") {
+        rootState.navigationState = {
+          current: { hubPage: "Notetaker" },
+          canGoBack: true,
+          canGoForward: false
+        };
+      }
       listeners.forEach((fn) => {
         try { fn(rootState); } catch (e) { console.error(e); }
       });
+      updateGranolaEmbed();
       return {};
     }
   };
+
+  // Abre o Notetaker dentro do hub quando o main process pede (flow:open-notetaker)
+  window.flowNative?.onOpenNotetaker?.((page) => window.zubridge.dispatch("hub:openPage", page || "Notetaker"));
+
+  // Sincroniza o embed do Granola na aba Notetaker
+  function updateGranolaEmbed() {
+    const currentPage = rootState.navigationState?.current?.hubPage || rootState.navigationState?.current?.page;
+    const isNotetaker = currentPage === "Notetaker" || currentPage === "Notes" || currentPage === "Meetings";
+    let iframe = document.getElementById("granola-hub-embed");
+
+    if (isNotetaker) {
+      const sidebarNav = document.querySelector('[data-testid="main-navigation"]');
+      const sidebarEl = sidebarNav ? sidebarNav.closest('div') : null;
+      const sidebarWidth = sidebarEl ? Math.round(sidebarEl.getBoundingClientRect().width) || 200 : 200;
+
+      if (!iframe) {
+        iframe = document.createElement("iframe");
+        iframe.id = "granola-hub-embed";
+        iframe.src = "../granola/index.html";
+        iframe.style.cssText = `
+          position: absolute;
+          top: 0;
+          left: ${sidebarWidth}px;
+          right: 0;
+          bottom: 0;
+          width: calc(100% - ${sidebarWidth}px);
+          height: 100%;
+          border: none;
+          background: #18181b;
+          z-index: 100;
+        `;
+        document.body.appendChild(iframe);
+      } else {
+        iframe.style.left = `${sidebarWidth}px`;
+        iframe.style.width = `calc(100% - ${sidebarWidth}px)`;
+        iframe.style.display = "block";
+      }
+    } else {
+      if (iframe) {
+        iframe.style.display = "none";
+      }
+    }
+  }
+
+  listeners.add(updateGranolaEmbed);
+  window.addEventListener("resize", updateGranolaEmbed);
+
+  // Intercepta cliques nos itens da barra lateral para garantir navegação instantânea entre Ditados e Granola
+  document.addEventListener("click", (e) => {
+    const notetakerBtn = e.target.closest('[data-testid="sidebar-item-Notetaker"]') ||
+                         e.target.closest('[data-testid="sidebar-item-Notes"]') ||
+                         e.target.closest('#poc-hub-target') ||
+                         (e.target.closest('button, li') && (e.target.closest('button, li').textContent || '').match(/(Notetaker|Reuniões|Notes|Scratchpad)/i));
+    if (notetakerBtn) {
+      console.log("⚡ [Hub] Sidebar Notetaker clicado!");
+      rootState.navigationState = {
+        current: { hubPage: "Notetaker" },
+        canGoBack: true,
+        canGoForward: false
+      };
+      listeners.forEach((fn) => { try { fn(rootState); } catch (_) {} });
+      updateGranolaEmbed();
+    }
+
+    const homeBtn = e.target.closest('[data-testid="sidebar-item-Dictation"]') ||
+                    e.target.closest('[data-testid="sidebar-item-Home"]') ||
+                    (e.target.closest('button, li') && (e.target.closest('button, li').textContent || '').match(/(Home|Ditados|Recentes)/i));
+    if (homeBtn) {
+      console.log("⚡ [Hub] Sidebar Home clicado!");
+      rootState.navigationState = {
+        current: { hubPage: "Dictation" },
+        canGoBack: false,
+        canGoForward: true
+      };
+      listeners.forEach((fn) => { try { fn(rootState); } catch (_) {} });
+      updateGranolaEmbed();
+    }
+  }, true);
+
 
   window.__zubridge_subscriptionValidator = {
     isSubscribedToKey: async () => true,

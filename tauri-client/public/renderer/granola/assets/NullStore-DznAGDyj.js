@@ -1,0 +1,2 @@
+try{let e=typeof window<`u`?window:typeof global<`u`?global:typeof globalThis<`u`?globalThis:typeof self<`u`?self:{},t=new e.Error().stack;t&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[t]=`c6d904e6-31a4-482f-bac9-00bc509c2061`,e._sentryDebugIdIdentifier=`sentry-dbid-c6d904e6-31a4-482f-bac9-00bc509c2061`)}catch{}import{_ as e}from"./popupTriggerMap-ByyXB_fU.js";var t=class extends e{setState(e){}update(e){}set(e,t){}notifyAll(){}};export{t};
+//# sourceMappingURL=NullStore-DznAGDyj.js.map

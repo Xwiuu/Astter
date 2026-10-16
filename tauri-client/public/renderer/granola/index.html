@@ -1,0 +1,1814 @@
+<!doctype html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Granola - AI Notepad</title>
+  <style>
+    @font-face {
+      font-family: "EBGaramond";
+      src: url("../../assets/fonts/EBGaramond/EBGaramond-VariableFont_wght.ttf") format("truetype");
+      font-weight: 100 900;
+      font-style: normal;
+    }
+    @font-face {
+      font-family: "EBGaramond";
+      src: url("../../assets/fonts/EBGaramond/EBGaramond-Italic-VariableFont_wght.ttf") format("truetype");
+      font-weight: 100 900;
+      font-style: italic;
+    }
+    @font-face {
+      font-family: "Figtree";
+      src: url("../../assets/fonts/Figtree/Figtree-VariableFont_wght.ttf") format("truetype");
+      font-weight: 100 900;
+      font-style: normal;
+    }
+
+    :root {
+      --bg: #161618;
+      --surface: #1f1f22;
+      --surface-2: #242427;
+      --bubble-other: #38383c;
+      --bubble-self: #2a2a2e;
+      --line: rgba(255, 255, 255, 0.08);
+      --line-strong: rgba(255, 255, 255, 0.16);
+      --text: #f4f4f5;
+      --text-2: #b8b8bf;
+      --text-3: #8b8b92;
+      --teal: #22d3ee;
+      --lime: #84cc16;
+      --violet: #7c3aed;
+      --red: #ef4444;
+      --radius-card: 14px;
+      --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: "Figtree", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      height: 100vh;
+      width: 100vw;
+      overflow: hidden;
+      display: flex;
+      user-select: none;
+    }
+
+    ::selection {
+      background: rgba(34, 211, 238, 0.28);
+      color: var(--text);
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.12);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.25);
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--teal);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+
+    .serif {
+      font-family: "EBGaramond", Georgia, serif;
+    }
+
+    .tnum {
+      font-variant-numeric: tabular-nums;
+    }
+
+    #app-container {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .granola-main {
+      flex: 1;
+      height: 100%;
+      overflow-y: auto;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 32px 110px 32px;
+    }
+
+    .granola-view {
+      width: 100%;
+      max-width: 760px;
+      display: none;
+      animation: fadeIn 0.18s var(--ease) both;
+    }
+
+    .granola-view.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ---------- Dashboard ---------- */
+
+    .top-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    .top-header h1 {
+      font-family: "EBGaramond", Georgia, serif;
+      font-size: 34px;
+      font-weight: 500;
+      letter-spacing: -0.02em;
+      line-height: 1.1;
+    }
+
+    .header-date {
+      color: var(--text-3);
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .nav-arrows {
+      display: flex;
+      gap: 4px;
+      margin-left: 4px;
+    }
+
+    .icon-btn {
+      width: 30px;
+      height: 30px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: transparent;
+      color: var(--text-2);
+      cursor: pointer;
+      transition: background 0.15s var(--ease), color 0.15s var(--ease);
+    }
+    .icon-btn:hover {
+      background: var(--surface-2);
+      color: var(--text);
+    }
+    .icon-btn svg {
+      width: 15px;
+      height: 15px;
+    }
+
+    .header-spacer {
+      flex: 1;
+    }
+
+    .btn-invite {
+      padding: 7px 14px;
+      border-radius: 9999px;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--text-2);
+      font-family: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      transition: background 0.15s var(--ease), color 0.15s var(--ease);
+    }
+    .btn-invite:hover {
+      background: var(--surface-2);
+      color: var(--text);
+    }
+
+    .btn-new-note {
+      padding: 7px 16px;
+      border-radius: 9999px;
+      border: none;
+      background: var(--text);
+      color: #131315;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: opacity 0.15s var(--ease), transform 0.15s var(--ease);
+    }
+    .btn-new-note:hover {
+      opacity: 0.9;
+    }
+    .btn-new-note:active {
+      transform: scale(0.98);
+    }
+    .btn-new-note svg {
+      width: 13px;
+      height: 13px;
+    }
+
+    .dashed-divider {
+      border: none;
+      border-top: 1px dashed var(--line-strong);
+      margin: 18px 0;
+    }
+
+    .coming-up-card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-card);
+      padding: 6px 0;
+    }
+
+    .calendar-row {
+      display: flex;
+      gap: 16px;
+      padding: 12px 18px;
+      align-items: flex-start;
+    }
+
+    .calendar-date {
+      width: 44px;
+      flex-shrink: 0;
+      text-align: center;
+    }
+    .calendar-date .day-num {
+      font-family: "EBGaramond", Georgia, serif;
+      font-size: 22px;
+      font-weight: 500;
+      line-height: 1;
+    }
+    .calendar-date .day-label {
+      font-size: 11px;
+      color: var(--text-3);
+      margin-top: 2px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .calendar-events {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .calendar-empty {
+      color: var(--text-3);
+      font-size: 13px;
+      padding: 4px 0;
+    }
+
+    .event-item {
+      border-left: 2px solid var(--line-strong);
+      padding: 6px 12px;
+      border-radius: 0 8px 8px 0;
+      background: var(--surface-2);
+      cursor: pointer;
+      transition: background 0.15s var(--ease);
+    }
+    .event-item:hover {
+      background: #2b2b2f;
+    }
+    .event-item.event-active {
+      border-left-color: var(--teal);
+    }
+    .event-title {
+      font-size: 13.5px;
+      font-weight: 500;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .event-time {
+      font-size: 12px;
+      color: var(--text-3);
+      margin-top: 2px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .suggested-banner {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-card);
+      padding: 14px 18px;
+      cursor: pointer;
+      transition: background 0.15s var(--ease);
+    }
+    .suggested-banner:hover {
+      background: var(--surface-2);
+    }
+
+    .mail-badge {
+      width: 34px;
+      height: 34px;
+      flex-shrink: 0;
+      border-radius: 8px;
+      background: #2a2a2e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-2);
+    }
+    .mail-badge svg {
+      width: 17px;
+      height: 17px;
+    }
+
+    .suggested-body {
+      flex: 1;
+      min-width: 0;
+    }
+    .suggested-line1 {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 13.5px;
+      font-weight: 500;
+    }
+    .suggested-line2 {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-3);
+      margin-top: 3px;
+    }
+    .meeting-tag {
+      font-size: 11px;
+      letter-spacing: 0.04em;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      background: rgba(34, 211, 238, 0.12);
+      color: var(--teal);
+      border: 1px solid rgba(34, 211, 238, 0.25);
+    }
+
+    .avatar-stack {
+      display: flex;
+    }
+    .mini-avatar {
+      width: 22px;
+      height: 22px;
+      border-radius: 9999px;
+      border: 2px solid var(--surface);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 600;
+      color: #131315;
+      margin-left: -6px;
+    }
+    .mini-avatar:first-child {
+      margin-left: 0;
+    }
+
+    .section-title {
+      font-size: 11.5px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      color: var(--text-3);
+      margin: 22px 0 10px 2px;
+    }
+
+    .note-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.15s var(--ease);
+    }
+    .note-row:hover {
+      background: var(--surface);
+    }
+
+    .purple-avatar-box {
+      width: 32px;
+      height: 32px;
+      flex-shrink: 0;
+      border-radius: 8px;
+      background: var(--violet);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .note-row-body {
+      flex: 1;
+      min-width: 0;
+    }
+    .note-row-title {
+      font-size: 13.5px;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .note-row-meta {
+      font-size: 12px;
+      color: var(--text-3);
+      margin-top: 1px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .customer-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      border: 1px solid var(--line);
+      background: var(--surface-2);
+      font-size: 11.5px;
+      color: var(--text-2);
+      flex-shrink: 0;
+    }
+    .customer-pill svg {
+      width: 12px;
+      height: 12px;
+    }
+    .customer-pill .pill-check {
+      color: var(--lime);
+    }
+    .customer-pill .pill-x {
+      color: var(--text-3);
+      cursor: pointer;
+    }
+    .customer-pill .pill-x:hover {
+      color: var(--text);
+    }
+
+    /* ---------- Note editor ---------- */
+
+    .note-detail-nav {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .note-title-input {
+      font-family: "EBGaramond", Georgia, serif;
+      font-size: 32px;
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      line-height: 1.2;
+      color: var(--text);
+      outline: none;
+      border: none;
+      background: transparent;
+      width: 100%;
+      margin-bottom: 10px;
+      user-select: text;
+    }
+    .note-title-input:empty::before {
+      content: "Nova nota";
+      color: var(--text-3);
+    }
+
+    .badges-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
+
+    .badge-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 12px;
+      border-radius: 9999px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      font-size: 12.5px;
+      color: var(--text-2);
+      transition: background 0.15s var(--ease), color 0.15s var(--ease);
+    }
+    .badge-chip:hover {
+      background: var(--surface-2);
+      color: var(--text);
+    }
+    .badge-chip svg {
+      width: 13px;
+      height: 13px;
+    }
+    .badge-chip.chip-enhanced {
+      color: var(--teal);
+      border-color: rgba(34, 211, 238, 0.25);
+      background: rgba(34, 211, 238, 0.08);
+    }
+    .badge-chip.chip-enhanced:hover {
+      background: rgba(34, 211, 238, 0.14);
+      color: var(--teal);
+    }
+    .badge-chip .chip-sub {
+      color: var(--text-3);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .note-body {
+      outline: none;
+      user-select: text;
+      cursor: text;
+      padding-bottom: 40px;
+    }
+
+    .body-line {
+      font-size: 15px;
+      line-height: 1.65;
+      color: var(--text-2);
+      padding: 2px 0 2px 30px;
+      position: relative;
+    }
+
+    .body-heading {
+      font-family: "EBGaramond", Georgia, serif;
+      font-size: 21px;
+      font-weight: 600;
+      color: var(--text);
+      margin-top: 18px;
+      letter-spacing: -0.01em;
+    }
+
+    .body-heading::before,
+    .body-bullet::before,
+    .body-para::before {
+      content: "#";
+      position: absolute;
+      left: 2px;
+      color: var(--text-3);
+      font-size: 13px;
+      opacity: 0.5;
+    }
+
+    .body-bullet {
+      font-size: 15px;
+      line-height: 1.6;
+      color: var(--text-2);
+      padding: 2px 0 2px 52px;
+      position: relative;
+    }
+    .body-bullet::before {
+      content: "\2022";
+      left: 34px;
+      opacity: 1;
+      font-size: 15px;
+    }
+    .body-bullet .bullet-owner {
+      color: var(--text-3);
+      font-style: italic;
+    }
+
+    .body-meta {
+      font-size: 12.5px;
+      color: var(--text-3);
+      padding: 0 0 12px 30px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ---------- Bottom dock ---------- */
+
+    .note-bottom-dock {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 18px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      pointer-events: none;
+      z-index: 60;
+    }
+    .note-bottom-dock.hidden {
+      display: none;
+    }
+
+    .dock-pill-container {
+      pointer-events: auto;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: var(--surface);
+      border: 1px solid var(--line-strong);
+      border-radius: 9999px;
+      padding: 6px;
+      box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45);
+      max-width: min(640px, calc(100vw - 48px));
+    }
+
+    .dock-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 9999px;
+      border: none;
+      background: transparent;
+      color: var(--text-2);
+      font-family: inherit;
+      font-size: 13px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 0.15s var(--ease), color 0.15s var(--ease);
+    }
+    .dock-item:hover {
+      background: var(--surface-2);
+      color: var(--text);
+    }
+    .dock-item svg {
+      width: 14px;
+      height: 14px;
+      flex-shrink: 0;
+    }
+
+    .btn-waveform-pill {
+      color: var(--lime);
+    }
+    .btn-waveform-pill:hover {
+      color: var(--text);
+    }
+
+    .dock-input {
+      border: none;
+      background: transparent;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 13px;
+      width: 170px;
+      padding: 8px 10px;
+      outline: none;
+    }
+    .dock-input::placeholder {
+      color: var(--text-3);
+    }
+    .dock-input:focus-visible {
+      outline: none;
+    }
+    .dock-search-wrap {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 6px;
+      border-radius: 9999px;
+      color: var(--text-3);
+    }
+    .dock-search-wrap:focus-within {
+      box-shadow: 0 0 0 2px rgba(34, 211, 238, 0.35);
+    }
+
+    .dock-disclaimer {
+      pointer-events: none;
+      font-size: 11px;
+      color: var(--text-3);
+      background: rgba(22, 22, 24, 0.85);
+      padding: 2px 10px;
+      border-radius: 9999px;
+    }
+
+    .eq-bars {
+      display: inline-flex;
+      align-items: flex-end;
+      gap: 2px;
+      height: 13px;
+    }
+    .eq-bar {
+      width: 2.5px;
+      height: 5px;
+      border-radius: 2px;
+      background: currentColor;
+    }
+    .eq-bars.playing .eq-bar {
+      animation: eqBounce 0.9s ease-in-out infinite;
+    }
+    .eq-bars.playing .eq-bar:nth-child(2) { animation-delay: 0.15s; }
+    .eq-bars.playing .eq-bar:nth-child(3) { animation-delay: 0.3s; }
+    .eq-bars.playing .eq-bar:nth-child(4) { animation-delay: 0.45s; }
+
+    @keyframes eqBounce {
+      0%, 100% { height: 4px; }
+      50% { height: 13px; }
+    }
+
+    /* ---------- Transcript drawer ---------- */
+
+    .transcript-drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: min(400px, 100vw);
+      background: var(--surface);
+      border-left: 1px solid var(--line);
+      display: flex;
+      flex-direction: column;
+      transform: translateX(102%);
+      transition: transform 0.24s var(--ease);
+      z-index: 80;
+    }
+    .transcript-drawer.open {
+      transform: translateX(0);
+    }
+
+    .drawer-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--line);
+      flex-shrink: 0;
+    }
+
+    .drawer-live-label {
+      flex: 1;
+      min-width: 0;
+      font-size: 12.5px;
+      color: var(--text-3);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .live-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 9999px;
+      background: var(--text-3);
+      flex-shrink: 0;
+    }
+    .drawer-live-label.live .live-dot {
+      background: var(--red);
+      animation: livePulse 1.4s ease-in-out infinite;
+    }
+    @keyframes livePulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.35; }
+    }
+
+    .drawer-actions {
+      display: flex;
+      gap: 4px;
+      flex-shrink: 0;
+    }
+
+    .drawer-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .drawer-empty {
+      color: var(--text-3);
+      font-size: 13px;
+      text-align: center;
+      margin-top: 40px;
+    }
+
+    .bubble-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-width: 92%;
+    }
+
+    .speaker-name {
+      font-size: 11.5px;
+      font-weight: 600;
+      margin-bottom: 2px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .time-divider {
+      align-self: center;
+      color: var(--text-3);
+      font-size: 11px;
+      font-variant-numeric: tabular-nums;
+      margin: 4px 0;
+    }
+
+    .scroll-latest {
+      position: absolute;
+      right: 16px;
+      bottom: 74px;
+      width: 34px;
+      height: 34px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--surface-2);
+      border: 1px solid var(--line-strong);
+      color: var(--text-2);
+      border-radius: 50%;
+      cursor: pointer;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s var(--ease);
+      z-index: 3;
+    }
+    .scroll-latest:hover { background: #2b2b2f; }
+    .scroll-latest.show { opacity: 1; pointer-events: auto; }
+    .scroll-latest svg { width: 16px; height: 16px; }
+
+    .bubble {
+      background: var(--bubble-other);
+      border-radius: 12px 12px 12px 4px;
+      padding: 9px 12px;
+      font-size: 13.5px;
+      line-height: 1.55;
+      color: var(--text);
+      user-select: text;
+      width: fit-content;
+    }
+
+    .bubble-group.self {
+      align-self: flex-end;
+      align-items: flex-end;
+    }
+    .bubble-group.self .bubble {
+      background: var(--bubble-self);
+      border-radius: 12px 12px 4px 12px;
+      border: 1px solid var(--line-strong);
+    }
+
+    .drawer-footer {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 16px;
+      border-top: 1px solid var(--line);
+      flex-shrink: 0;
+    }
+
+    .recording-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 9999px;
+      border: 1px solid var(--line-strong);
+      background: var(--surface-2);
+      color: var(--lime);
+      font-family: inherit;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s var(--ease), color 0.15s var(--ease);
+    }
+    .recording-btn:hover {
+      background: #2b2b2f;
+    }
+    .recording-btn.recording {
+      color: var(--red);
+      border-color: rgba(239, 68, 68, 0.4);
+      background: rgba(239, 68, 68, 0.12);
+    }
+
+    .level-sliders {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      min-width: 0;
+      overflow: hidden;
+      height: 20px;
+    }
+    .level-tick {
+      width: 3px;
+      height: 3px;
+      border-radius: 2px;
+      background: var(--line-strong);
+      flex-shrink: 0;
+    }
+    .level-tick.on {
+      background: var(--lime);
+    }
+
+    .language-pill {
+      padding: 6px 12px;
+      border-radius: 9999px;
+      border: 1px solid var(--line);
+      background: transparent;
+      color: var(--text-2);
+      font-family: inherit;
+      font-size: 12px;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.15s var(--ease), color 0.15s var(--ease);
+    }
+    .language-pill:hover {
+      background: var(--surface-2);
+      color: var(--text);
+    }
+
+    /* ---------- Toast ---------- */
+
+    .gr-toast {
+      position: fixed;
+      left: 50%;
+      bottom: 88px;
+      transform: translate(-50%, 12px);
+      background: var(--surface-2);
+      border: 1px solid var(--line-strong);
+      color: var(--text);
+      font-size: 13px;
+      padding: 9px 18px;
+      border-radius: 9999px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s var(--ease), transform 0.2s var(--ease);
+      z-index: 120;
+    }
+    .gr-toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    @media (max-width: 720px) {
+      .granola-main {
+        padding: 16px 16px 110px 16px;
+      }
+      .top-header h1 {
+        font-size: 28px;
+      }
+      .dock-input {
+        width: 110px;
+      }
+      .dock-item.dock-email {
+        display: none;
+      }
+      .transcript-drawer {
+        width: 100vw;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="app-container">
+    <main class="granola-main">
+
+      <!-- ================= DASHBOARD ================= -->
+      <section id="view-dashboard" class="granola-view active">
+        <header class="top-header">
+          <div>
+            <h1 class="serif">Coming up</h1>
+            <div class="header-date tnum" id="todayLabel"></div>
+          </div>
+          <div class="nav-arrows">
+            <button class="icon-btn" id="btnDayPrev" aria-label="Dia anterior">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+            </button>
+            <button class="icon-btn" id="btnDayNext" aria-label="Próximo dia">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+            </button>
+          </div>
+          <div class="header-spacer"></div>
+          <button class="btn-invite" id="btnInvite">Invite</button>
+          <button class="btn-new-note" id="btnNewNote">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+            New Note
+          </button>
+        </header>
+
+        <div class="coming-up-card" id="comingUpCard">
+          <div class="calendar-row">
+            <div class="calendar-date">
+              <div class="day-num serif tnum">15</div>
+              <div class="day-label">out</div>
+            </div>
+            <div class="calendar-events">
+              <div class="calendar-empty">Sem eventos hoje</div>
+            </div>
+          </div>
+          <hr class="dashed-divider" />
+          <div class="calendar-row">
+            <div class="calendar-date">
+              <div class="day-num serif tnum">16</div>
+              <div class="day-label">qui</div>
+            </div>
+            <div class="calendar-events">
+              <div class="event-item event-active" data-note="bracci-google" role="button" tabindex="0">
+                <div class="event-title">(Quinzenal) Bracci + Google</div>
+                <div class="event-time">13:30 &ndash; 14:00</div>
+              </div>
+              <div class="event-item" data-note="revisao-estoque" role="button" tabindex="0">
+                <div class="event-title">Revisão de estoque</div>
+                <div class="event-time">15:00 &ndash; 15:30</div>
+              </div>
+            </div>
+          </div>
+          <hr class="dashed-divider" />
+          <div class="calendar-row">
+            <div class="calendar-date">
+              <div class="day-num serif tnum">26</div>
+              <div class="day-label">seg</div>
+            </div>
+            <div class="calendar-events">
+              <div class="event-item" data-note="reuniao-ti" role="button" tabindex="0">
+                <div class="event-title">Reunião TI &mdash; infraestrutura</div>
+                <div class="event-time">10:00 &ndash; 10:45</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="suggested-banner" data-note="vex-bracci" role="button" tabindex="0" style="margin-top: 18px;">
+          <div class="mail-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          </div>
+          <div class="suggested-body">
+            <div class="suggested-line1">
+              <span class="avatar-stack">
+                <span class="mini-avatar" style="background:#e07a5f;">L</span>
+                <span class="mini-avatar" style="background:#38bdf8;">D</span>
+                <span class="mini-avatar" style="background:#3a3a3f;color:var(--text-2);">+4</span>
+              </span>
+              <span>Lucascandine2 &amp; 4 more</span>
+            </div>
+            <div class="suggested-line2">
+              <span class="meeting-tag">VEX X BRACCI</span>
+              <span>Reunião sugerida a partir do seu e-mail</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-title">Hoje</div>
+        <div id="dynamic-meetings-section" hidden>
+          <div id="dynamic-meetings-container"></div>
+        </div>
+        <div class="note-row" data-note="daily-standup" role="button" tabindex="0">
+          <div class="purple-avatar-box">A</div>
+          <div class="note-row-body">
+            <div class="note-row-title">Daily Standup &mdash; Time de Estoque</div>
+            <div class="note-row-meta">09:00 &middot; 8 min</div>
+          </div>
+          <div class="customer-pill">
+            <svg class="pill-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <svg class="pill-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </div>
+        </div>
+
+        <div class="section-title">Ontem</div>
+        <div class="note-row" data-note="vex-bracci" role="button" tabindex="0">
+          <div class="purple-avatar-box" style="background:var(--teal);color:#161618;">V</div>
+          <div class="note-row-body">
+            <div class="note-row-title">VEX x Bracci &mdash; Alinhamento Quinzenal</div>
+            <div class="note-row-meta">16:20 &middot; 34 min</div>
+          </div>
+          <div class="customer-pill">
+            <svg class="pill-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+            <svg class="pill-x" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+          </div>
+        </div>
+        <div class="note-row" data-note="reuniao-ti" role="button" tabindex="0">
+          <div class="purple-avatar-box" style="background:#e07a5f;color:#161618;">T</div>
+          <div class="note-row-body">
+            <div class="note-row-title">Call com Fornecedor Bracci</div>
+            <div class="note-row-meta">11:05 &middot; 22 min</div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= NOTE EDITOR ================= -->
+      <section id="view-editor" class="granola-view">
+        <nav class="note-detail-nav">
+          <button class="icon-btn" id="btnBackDashboard" aria-label="Voltar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          </button>
+          <button class="icon-btn" id="btnHomeDashboard" aria-label="Início">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          </button>
+          <div class="header-spacer"></div>
+          <button class="icon-btn" aria-label="Mais opções">
+            <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg>
+          </button>
+          <button class="icon-btn" aria-label="Compartilhar">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/><line x1="8" y1="16" x2="8" y2="16"/><line x1="16" y1="16" x2="16" y2="16"/></svg>
+          </button>
+          <button class="icon-btn" aria-label="Copiar link">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          </button>
+        </nav>
+
+        <div class="note-title-input serif" id="editorNoteTitle" contenteditable="true" spellcheck="false"></div>
+
+        <div class="badges-row">
+          <span class="badge-chip chip-enhanced">
+            <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l1.9 5.7a2 2 0 0 0 1.2 1.2L20.8 12l-5.7 1.9a2 2 0 0 0-1.2 1.2L12 20.8l-1.9-5.7a2 2 0 0 0-1.2-1.2L3.2 12l5.7-1.9a2 2 0 0 0 1.2-1.2L12 3z"/></svg>
+            Enhanced
+          </span>
+          <span class="badge-chip" id="editorAttendeesChip">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            <span class="chip-sub tnum" id="editorDateText">Ontem</span>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+            <span class="chip-sub" id="editorAttendeesCount">6 participantes</span>
+          </span>
+          <button class="badge-chip" id="btnAddToFolder">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg>
+            Add to folder
+          </button>
+        </div>
+
+        <div class="note-body" id="editorNoteBody" contenteditable="true" spellcheck="false"></div>
+      </section>
+    </main>
+
+    <!-- ================= BOTTOM DOCK ================= -->
+    <div class="note-bottom-dock" id="editorBottomDock">
+      <div class="dock-pill-container" id="dockPillContainer">
+        <button class="dock-item btn-waveform-pill" id="btnToggleTranscript" aria-label="Abrir transcrição">
+          <span class="eq-bars" id="dockEqBars">
+            <span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span>
+          </span>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+        </button>
+        <span class="dock-search-wrap">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input class="dock-input" id="dockAskInput" type="text" placeholder="Ask anything" aria-label="Perguntar sobre esta reunião" />
+        </span>
+        <button class="dock-item dock-email" id="btnFollowUpEmail">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+          Write follow up email
+        </button>
+      </div>
+      <div class="dock-disclaimer">Granola uses AI and can make mistakes.</div>
+    </div>
+
+    <!-- ================= TRANSCRIPT DRAWER ================= -->
+    <aside class="transcript-drawer" id="transcriptDrawer" aria-label="Transcrição">
+      <header class="drawer-header">
+        <button class="icon-btn" aria-label="Buscar na transcrição">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+        <div class="drawer-live-label" id="drawerLiveLabel">
+          <span class="live-dot"></span>
+          <span id="drawerActiveSpeaker">Transcrição</span>
+        </div>
+        <div class="drawer-actions">
+          <button class="icon-btn" aria-label="Boa anotação">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v12"/><path d="M15 5.88 14 10h5.83a2 2 0 0 1 1.92 2.56l-2.33 8A2 2 0 0 1 17.5 22H4a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2h2.76a2 2 0 0 0 1.79-1.11L12 2h0a3.13 3.13 0 0 1 3 3.88Z"/></svg>
+          </button>
+          <button class="icon-btn" id="btnCopyTranscript" aria-label="Copiar transcrição">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="14" x="8" y="8" rx="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+          </button>
+          <button class="icon-btn" id="btnMinimizeDrawer" aria-label="Fechar transcrição">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>
+      </header>
+      <div class="drawer-body" id="transcriptMessagesContainer"></div>
+      <button class="scroll-latest" id="scrollLatestBtn" type="button" aria-label="Ir para a última mensagem">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <footer class="drawer-footer">
+        <button class="recording-btn" id="drawerRecordingBtn">
+          <span class="eq-bars" id="recEqBars">
+            <span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span><span class="eq-bar"></span>
+          </span>
+          <span id="drawerRecordingText">Resume</span>
+        </button>
+        <div class="level-sliders" id="levelSliders" aria-hidden="true"></div>
+        <button class="language-pill">Multi</button>
+      </footer>
+    </aside>
+
+    <div class="gr-toast" id="gr-toast" role="status" aria-live="polite"></div>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const flowNative = window.parent?.flowNative || window.flowNative || null;
+      const nativeMeeting = flowNative?.meeting || null;
+      const nativeMemory = flowNative?.memory || null;
+
+      const SPEAKER_PALETTE = ["#e07a5f", "#a3e635", "#38bdf8", "#f472b6", "#fbbf24", "#34d399"];
+      const SELF_LABEL = "Você";
+
+      const $ = (id) => document.getElementById(id);
+      const viewDashboard = $("view-dashboard");
+      const viewEditor = $("view-editor");
+      const editorTitle = $("editorNoteTitle");
+      const editorBody = $("editorNoteBody");
+      const editorDateText = $("editorDateText");
+      const editorAttendeesCount = $("editorAttendeesCount");
+      const editorDock = $("editorBottomDock");
+      const drawer = $("transcriptDrawer");
+      const drawerBody = $("transcriptMessagesContainer");
+      const dockEqBars = $("dockEqBars");
+      const recEqBars = $("recEqBars");
+      const drawerLiveLabel = $("drawerLiveLabel");
+      const drawerActiveSpeaker = $("drawerActiveSpeaker");
+      const drawerRecordingBtn = $("drawerRecordingBtn");
+      const drawerRecordingText = $("drawerRecordingText");
+      const levelSliders = $("levelSliders");
+
+      for (let i = 0; i < 24; i++) {
+        const tick = document.createElement("span");
+        tick.className = "level-tick";
+        levelSliders.appendChild(tick);
+      }
+      const levelTicks = Array.from(levelSliders.children);
+
+      const scrollLatestBtn = $("scrollLatestBtn");
+      let pinnedToLatest = true;
+      drawerBody.addEventListener("scroll", () => {
+        const gap = drawerBody.scrollHeight - drawerBody.scrollTop - drawerBody.clientHeight;
+        pinnedToLatest = gap < 40;
+        scrollLatestBtn.classList.toggle("show", !pinnedToLatest);
+      });
+      scrollLatestBtn.addEventListener("click", () => {
+        drawerBody.scrollTo({ top: drawerBody.scrollHeight, behavior: "smooth" });
+        pinnedToLatest = true;
+        scrollLatestBtn.classList.remove("show");
+      });
+
+      const state = {
+        view: "dashboard",
+        drawerOpen: false,
+        recording: false,
+        speakerColorIndex: 0,
+        speakerColors: {},
+        currentTranscript: [],
+        currentNoteKey: null
+      };
+
+      const today = new Date();
+      $("todayLabel").textContent = today.toLocaleDateString("pt-BR", {
+        weekday: "long", day: "numeric", month: "long"
+      });
+
+      /* ---------- Toast ---------- */
+      let toastTimer = null;
+      function showToast(msg) {
+        const toast = $("gr-toast");
+        toast.textContent = msg;
+        toast.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove("show"), 2200);
+      }
+
+      /* ---------- Speaker colors ---------- */
+      function colorForSpeaker(name) {
+        if (!state.speakerColors[name]) {
+          state.speakerColors[name] = SPEAKER_PALETTE[state.speakerColorIndex % SPEAKER_PALETTE.length];
+          state.speakerColorIndex++;
+        }
+        return state.speakerColors[name];
+      }
+
+      /* ---------- Transcript rendering ---------- */
+      function nowTime() {
+        const d = new Date();
+        return String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+      }
+
+      function pushEntry(entry) {
+        state.currentTranscript.push(entry);
+        renderTranscript(state.currentTranscript);
+      }
+
+      function renderTranscript(entries) {
+        drawerBody.textContent = "";
+        if (!entries.length) {
+          const empty = document.createElement("div");
+          empty.className = "drawer-empty";
+          empty.textContent = "Nenhuma transcrição ainda.";
+          drawerBody.appendChild(empty);
+          return;
+        }
+        let lastGroup = null;
+        for (const entry of entries) {
+          const isSelf = entry.speaker === SELF_LABEL;
+          const prev = lastGroup;
+          if (prev && prev.dataset.speaker === entry.speaker && !entry.timestamp) {
+            const bubble = document.createElement("div");
+            bubble.className = "bubble";
+            bubble.textContent = entry.text;
+            prev.appendChild(bubble);
+            continue;
+          }
+          if (entry.timestamp) {
+            const divider = document.createElement("div");
+            divider.className = "time-divider";
+            divider.textContent = entry.timestamp;
+            drawerBody.appendChild(divider);
+          }
+          const group = document.createElement("div");
+          group.className = "bubble-group" + (isSelf ? " self" : "");
+          group.dataset.speaker = entry.speaker;
+
+          const name = document.createElement("div");
+          name.className = "speaker-name";
+          name.style.color = colorForSpeaker(entry.speaker);
+          name.textContent = entry.speaker;
+          group.appendChild(name);
+
+          const bubble = document.createElement("div");
+          bubble.className = "bubble";
+          bubble.textContent = entry.text;
+          group.appendChild(bubble);
+
+          drawerBody.appendChild(group);
+          lastGroup = group;
+        }
+        if (pinnedToLatest) drawerBody.scrollTop = drawerBody.scrollHeight;
+      }
+
+      const referenceTranscript = [
+        { speaker: "Você", text: "Boa, pessoal. Vamos começar alinhando o cronograma da quinzena?", timestamp: "16:20" },
+        { speaker: "Lucas", text: "Fechado. A entrega do estoque ficou pra sexta." },
+        { speaker: "Marina", text: "Preciso do acesso à planilha até quarta pra conseguir validar os números." },
+        { speaker: "Você", text: "Te passo hoje ainda. E o pedido da Bracci?" },
+        { speaker: "Bracci", text: "Confirmado pra 13:30 de quinta. O pessoal do Google entra na call também." },
+        { speaker: "Marina", text: "Perfeito, já anotei no calendário. Se mudar algo eu aviso por aqui." }
+      ];
+
+      /* ---------- Static notes ---------- */
+      const staticNotes = {
+        "vex-bracci": {
+          title: "VEX x Bracci — Alinhamento Quinzenal",
+          date: "Ontem",
+          attendees: "6 participantes",
+          transcript: referenceTranscript,
+          sections: [
+            { type: "meta", text: "Ontem, 16:20 · 34 min · 6 participantes" },
+            { type: "h", text: "Resumo Executivo" },
+            { type: "p", text: "Reunião de alinhamento quinzenal entre VEX e Bracci. Foco no cronograma de reposição de estoque, acesso às planilhas de validação e confirmação da call com o Google na quinta-feira às 13:30." },
+            { type: "h", text: "Decisões" },
+            { type: "b", text: "Entrega de estoque movida para sexta-feira.", owner: "" },
+            { type: "b", text: "Acesso à planilha concedido até quarta para validação.", owner: "" },
+            { type: "b", text: "Call com Bracci + Google confirmada: quinta, 13:30.", owner: "" },
+            { type: "h", text: "Próximos Passos" },
+            { type: "b", text: "Enviar acesso à planilha para a Marina.", owner: "Você · hoje" },
+            { type: "b", text: "Conferir números de reposição antes da call.", owner: "Lucas · sexta" },
+            { type: "b", text: "Registrar presença do Google no convite.", owner: "Marina · amanhã" }
+          ]
+        },
+        "daily-standup": {
+          title: "Daily Standup — Time de Estoque",
+          date: "Hoje",
+          attendees: "4 participantes",
+          transcript: [
+            { speaker: "Você", text: "Bom dia. Começando pelo status da reposição.", timestamp: "09:00" },
+            { speaker: "Ana", text: "Coleta de ontem fechada, sem pendências." },
+            { speaker: "Bruno", text: "Estrutura: dois SKUs abaixo do mínimo, já acionei o fornecedor." }
+          ],
+          sections: [
+            { type: "meta", text: "Hoje, 09:00 · 8 min · 4 participantes" },
+            { type: "h", text: "Resumo Executivo" },
+            { type: "p", text: "Standup diário do time de estoque. Coleta concluída sem pendências; dois SKUs abaixo do mínimo com fornecedor acionado." },
+            { type: "h", text: "Próximos Passos" },
+            { type: "b", text: "Acompanhar entrega do fornecedor.", owner: "Bruno" }
+          ]
+        },
+        "bracci-google": {
+          title: "(Quinzenal) Bracci + Google",
+          date: "Qui, 16 out",
+          attendees: "5 participantes",
+          transcript: [],
+          sections: [
+            { type: "meta", text: "Ainda não gravada — quinta, 13:30" },
+            { type: "h", text: "Pauta" },
+            { type: "b", text: "Status do pedido quinzenal.", owner: "" },
+            { type: "b", text: "Integração dos dados de sell-out.", owner: "" }
+          ]
+        },
+        "revisao-estoque": {
+          title: "Revisão de estoque",
+          date: "Qui, 16 out",
+          attendees: "3 participantes",
+          transcript: [],
+          sections: [
+            { type: "meta", text: "Ainda não gravada — quinta, 15:00" },
+            { type: "h", text: "Pauta" },
+            { type: "b", text: "Números de reposição da quinzena.", owner: "" }
+          ]
+        },
+        "reuniao-ti": {
+          title: "Reunião TI — infraestrutura",
+          date: "26 out",
+          attendees: "4 participantes",
+          transcript: [],
+          sections: [
+            { type: "meta", text: "Ainda não gravada — segunda, 10:00" },
+            { type: "h", text: "Pauta" },
+            { type: "b", text: "Revisão do plano de contingência.", owner: "" }
+          ]
+        },
+        "nova-nota": {
+          title: "",
+          date: "Hoje",
+          attendees: "1 participante",
+          transcript: [],
+          sections: []
+        }
+      };
+
+      function renderNoteSections(sections) {
+        editorBody.textContent = "";
+        for (const s of sections) {
+          const el = document.createElement("div");
+          if (s.type === "h") el.className = "body-line body-heading";
+          else if (s.type === "p") el.className = "body-line body-para";
+          else if (s.type === "b") el.className = "body-bullet";
+          else if (s.type === "meta") el.className = "body-meta";
+          el.textContent = s.text;
+          if (s.type === "b" && s.owner) {
+            const owner = document.createElement("span");
+            owner.className = "bullet-owner";
+            owner.textContent = " — " + s.owner;
+            el.appendChild(owner);
+          }
+          editorBody.appendChild(el);
+        }
+      }
+
+      /* ---------- View switching ---------- */
+      function openDashboardView() {
+        state.view = "dashboard";
+        viewEditor.classList.remove("active");
+        viewDashboard.classList.add("active");
+        editorDock.classList.add("hidden");
+      }
+
+      function openNoteView(noteKey) {
+        if (noteKey.startsWith("dynamic:")) {
+          const ok = loadDynamicMeeting(noteKey.slice(8));
+          if (ok === false) return;
+        } else {
+          const note = staticNotes[noteKey] || staticNotes["nova-nota"];
+          state.currentNoteKey = noteKey;
+          editorTitle.textContent = note.title;
+          editorDateText.textContent = note.date;
+          editorAttendeesCount.textContent = note.attendees;
+          renderNoteSections(note.sections);
+          state.currentTranscript = note.transcript.slice();
+          renderTranscript(state.currentTranscript);
+        }
+        state.view = "editor";
+        viewDashboard.classList.remove("active");
+        viewEditor.classList.add("active");
+        editorDock.classList.remove("hidden");
+        if (noteKey === "nova-nota") editorTitle.focus();
+      }
+
+      /* ---------- Dynamic (DB) meetings ---------- */
+      async function loadDynamicMeeting(meetingId) {
+        try {
+          if (!nativeMemory || typeof nativeMemory.getMeetings !== "function") return false;
+          const meetings = await nativeMemory.getMeetings();
+          const m = (meetings || []).find((x) => String(x.id) === String(meetingId));
+          if (!m) return false;
+          state.currentNoteKey = "dynamic:" + m.id;
+          editorTitle.textContent = m.title || "Reunião sem título";
+          editorDateText.textContent = formatMeetingDate(m.started_at || m.createdAt);
+          renderMeetingBody(m);
+          let turns = [];
+          if (Array.isArray(m.transcripts)) {
+            turns = m.transcripts;
+          } else {
+            try {
+              turns = JSON.parse(m.transcript_json || "[]");
+            } catch (e) {
+              turns = [];
+            }
+          }
+          state.currentTranscript = (Array.isArray(turns) ? turns : [])
+            .map((t) => ({ speaker: t.speaker || "Participante", text: t.text || "", timestamp: t.timeFormatted || t.time || undefined }))
+            .filter((t) => t.text);
+          const participants = new Set(state.currentTranscript.map((t) => t.speaker)).size;
+          editorAttendeesCount.textContent = participants > 0 ? participants + " participantes" : "sem participantes";
+          renderTranscript(state.currentTranscript);
+          return true;
+        } catch (e) {
+          return false;
+        }
+      }
+
+      function formatMeetingDate(iso) {
+        if (!iso) return "";
+        const d = new Date(iso);
+        if (isNaN(d)) return "";
+        return d.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }) +
+          ", " + d.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
+      }
+
+      function renderMeetingBody(m) {
+        const sections = [];
+        sections.push({ type: "meta", text: formatMeetingDate(m.started_at || m.createdAt) });
+        if (m.summary) {
+          sections.push({ type: "h", text: "Resumo Executivo" });
+          sections.push({ type: "p", text: String(m.summary) });
+        }
+        let takeaways = m.keyTakeaways;
+        if (typeof takeaways === "string") {
+          try { takeaways = JSON.parse(takeaways); } catch (e) { takeaways = []; }
+        }
+        if (Array.isArray(takeaways) && takeaways.length) {
+          sections.push({ type: "h", text: "Pontos Chave" });
+          for (const k of takeaways) {
+            if (!k) continue;
+            sections.push({ type: "b", text: String(typeof k === "string" ? k : (k.text || k.task || "")), owner: "" });
+          }
+        }
+        let items = m.actionItems !== undefined ? m.actionItems : m.action_items;
+        if (typeof items === "string") {
+          try { items = JSON.parse(items); } catch (e) { items = []; }
+        }
+        if (Array.isArray(items) && items.length) {
+          sections.push({ type: "h", text: "Próximos Passos" });
+          for (const item of items) {
+            const text = typeof item === "string" ? item : (item.task || item.text || "");
+            if (!text) continue;
+            sections.push({ type: "b", text: String(text), owner: item.owner ? String(item.owner) : "" });
+          }
+        }
+        renderNoteSections(sections);
+      }
+
+      async function refreshSavedMeetings() {
+        if (!nativeMemory || typeof nativeMemory.getMeetings !== "function") return;
+        try {
+          const meetings = await nativeMemory.getMeetings();
+          const list = (meetings || []).slice().reverse();
+          const section = $("dynamic-meetings-section");
+          const container = $("dynamic-meetings-container");
+          container.textContent = "";
+          if (!list.length) {
+            section.hidden = true;
+            return;
+          }
+          section.hidden = false;
+          for (const m of list) {
+            const row = document.createElement("div");
+            row.className = "note-row";
+            row.setAttribute("role", "button");
+            row.setAttribute("tabindex", "0");
+
+            const avatar = document.createElement("div");
+            avatar.className = "purple-avatar-box";
+            avatar.style.background = colorForSpeaker(m.title || "Reunião");
+            avatar.textContent = (m.title || "R").trim().charAt(0).toUpperCase();
+
+            const body = document.createElement("div");
+            body.className = "note-row-body";
+            const title = document.createElement("div");
+            title.className = "note-row-title";
+            title.textContent = m.title || "Reunião sem título";
+            const meta = document.createElement("div");
+            meta.className = "note-row-meta";
+            meta.textContent = formatMeetingDate(m.started_at || m.createdAt);
+            body.appendChild(title);
+            body.appendChild(meta);
+
+            row.appendChild(avatar);
+            row.appendChild(body);
+
+            const key = "dynamic:" + m.id;
+            row.addEventListener("click", () => openNoteView(key));
+            row.addEventListener("keydown", (e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                openNoteView(key);
+              }
+            });
+            container.appendChild(row);
+          }
+        } catch (e) {
+          /* memory unavailable — dashboard keeps static rows */
+        }
+      }
+
+      /* ---------- Drawer ---------- */
+      function setDrawerOpen(open) {
+        state.drawerOpen = open;
+        drawer.classList.toggle("open", open);
+        const chevron = $("btnToggleTranscript").querySelector("svg");
+        chevron.innerHTML = open
+          ? '<polyline points="6 9 12 15 18 9" />'
+          : '<polyline points="18 15 12 9 6 15" />';
+      }
+
+      $("btnToggleTranscript").addEventListener("click", () => setDrawerOpen(!state.drawerOpen));
+      $("btnMinimizeDrawer").addEventListener("click", () => setDrawerOpen(false));
+
+      /* ---------- Recording ---------- */
+      function setRecordingUI(active) {
+        state.recording = active;
+        dockEqBars.classList.toggle("playing", active);
+        recEqBars.classList.toggle("playing", active);
+        drawerRecordingBtn.classList.toggle("recording", active);
+        drawerRecordingText.textContent = active ? "Gravando…" : "Resume";
+        drawerLiveLabel.classList.toggle("live", active);
+        levelTicks.forEach((tick, i) => tick.classList.toggle("on", active && i < 8));
+      }
+
+      async function toggleMeetingRecording() {
+        if (!nativeMeeting) {
+          showToast("Gravação indisponível nesta tela.");
+          return;
+        }
+        try {
+          if (state.recording) {
+            await nativeMeeting.stop();
+          } else {
+            const d = new Date();
+            const title = "Reunião " + String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+            await nativeMeeting.start({ title });
+          }
+        } catch (e) {
+          showToast("Falha ao alterar a gravação.");
+        }
+      }
+      drawerRecordingBtn.addEventListener("click", toggleMeetingRecording);
+
+      function applyMeetingStatus(status) {
+        if (!status) return;
+        const active = status.active === true || status.recording === true || status.isRecording === true;
+        setRecordingUI(active);
+      }
+
+      /* ---------- Clipboard ---------- */
+      function copyTranscriptToClipboard() {
+        if (!state.currentTranscript.length) {
+          showToast("Nada para copiar ainda.");
+          return;
+        }
+        const lines = [];
+        for (const entry of state.currentTranscript) {
+          lines.push(entry.speaker + ": " + entry.text);
+        }
+        const text = lines.join("\n");
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text)
+            .then(() => showToast("Transcrição copiada."))
+            .catch(() => showToast("Falha ao copiar."));
+        } else {
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          ta.style.position = "fixed";
+          ta.style.opacity = "0";
+          document.body.appendChild(ta);
+          ta.select();
+          let ok = false;
+          try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+          document.body.removeChild(ta);
+          showToast(ok ? "Transcrição copiada." : "Falha ao copiar.");
+        }
+      }
+      $("btnCopyTranscript").addEventListener("click", copyTranscriptToClipboard);
+
+      /* ---------- Live transcript ---------- */
+      function appendLiveTurn(turn) {
+        if (!turn) return;
+        const text = typeof turn === "string" ? turn : (turn.text || "");
+        if (!text) return;
+        const speaker = (turn && turn.speaker) || "Participante";
+        pushEntry({ speaker, text, timestamp: (turn && (turn.timeFormatted || turn.time)) || nowTime() });
+        setRecordingUI(true);
+        if (!state.drawerOpen) setDrawerOpen(true);
+      }
+
+      /* ---------- Navigation ---------- */
+      $("btnBackDashboard").addEventListener("click", openDashboardView);
+      $("btnHomeDashboard").addEventListener("click", openDashboardView);
+
+      $("btnNewNote").addEventListener("click", () => openNoteView("nova-nota"));
+
+      $("btnInvite").addEventListener("click", () => showToast("Convite por link — em breve."));
+      $("btnAddToFolder").addEventListener("click", () => showToast("Adicionado às suas notas."));
+      $("btnFollowUpEmail").addEventListener("click", () => showToast("Rascunho de e-mail gerado pela IA."));
+
+      $("dockAskInput").addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && e.target.value.trim()) {
+          showToast("Pergunta enviada ao assistente.");
+          e.target.value = "";
+        }
+      });
+
+      function handleNoteActivation(el) {
+        const key = el.getAttribute("data-note");
+        if (key) openNoteView(key);
+      }
+      document.querySelectorAll("[data-note]").forEach((el) => {
+        el.addEventListener("click", () => handleNoteActivation(el));
+        el.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            handleNoteActivation(el);
+          }
+        });
+      });
+
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") {
+          if (state.drawerOpen) setDrawerOpen(false);
+          else if (state.view === "editor") openDashboardView();
+        }
+      });
+
+      /* ---------- Native bridge ---------- */
+      if (nativeMeeting) {
+        if (typeof nativeMeeting.onStarted === "function") {
+          nativeMeeting.onStarted(() => {
+            setRecordingUI(true);
+            setDrawerOpen(true);
+            state.currentTranscript = [];
+            renderTranscript(state.currentTranscript);
+          });
+        }
+        if (typeof nativeMeeting.onFinished === "function") {
+          nativeMeeting.onFinished(() => {
+            setRecordingUI(false);
+            refreshSavedMeetings();
+          });
+        }
+        if (typeof nativeMeeting.onTranscriptTurn === "function") {
+          nativeMeeting.onTranscriptTurn(appendLiveTurn);
+        }
+        if (typeof nativeMeeting.onActiveSpeaker === "function") {
+          nativeMeeting.onActiveSpeaker((info) => {
+            const name = (info && (info.speaker || info.name)) || "Transcrevendo…";
+            drawerActiveSpeaker.textContent = name;
+          });
+        }
+        if (typeof nativeMeeting.onAudioVolume === "function") {
+          nativeMeeting.onAudioVolume((data) => {
+            if (!state.recording) return;
+            const v = data && typeof data.volume === "number" ? data.volume : 0;
+            const lit = Math.min(24, Math.round(v * 24));
+            levelTicks.forEach((tick, i) => tick.classList.toggle("on", i < lit));
+          });
+        }
+        if (typeof nativeMeeting.getStatus === "function") {
+          Promise.resolve(nativeMeeting.getStatus())
+            .then(applyMeetingStatus)
+            .catch(() => {});
+        }
+      }
+
+      /* ---------- Init ---------- */
+      renderNoteSections(staticNotes["vex-bracci"].sections);
+      editorTitle.textContent = staticNotes["vex-bracci"].title;
+      state.currentTranscript = referenceTranscript.slice();
+      renderTranscript(state.currentTranscript);
+      setRecordingUI(false);
+      refreshSavedMeetings();
+    })();
+  </script>
+</body>
+</html>

@@ -14,8 +14,10 @@ app.commandLine.appendSwitch('ozone-platform-hint', 'auto');
 let hubWindow = null;
 let statusWindow = null;
 let scratchpadWindow = null;
+let granolaWindow = null;
 let tray = null;
 let isQuitting = false;
+const meetingRecorder = require('./meeting-recorder.cjs');
 
 // Ensure single instance
 const gotTheLock = app.requestSingleInstanceLock();
@@ -55,6 +57,20 @@ const triggerServer = http.createServer((req, res) => {
     toggleHub();
     res.writeHead(200, { 'Content-Type': 'text/plain' });
     res.end('HUB_TOGGLED\n');
+  } else if (req.url === '/granola') {
+    openGranolaWindow();
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('GRANOLA_OPENED\n');
+  } else if (req.url === '/meeting') {
+    if (meetingRecorder.isRecording) {
+      meetingRecorder.stop();
+      res.writeHead(200, { 'Content-Type': 'text/plain' });
+      res.end('MEETING_STOPPED\n');
+    } else {
+      meetingRecorder.start();
+      res.writeHead(200, { 'Content-Type': 'text/plain' });
+      res.end('MEETING_STARTED\n');
+    }
   } else if (req.url === '/reload') {
     if (hubWindow && !hubWindow.isDestroyed()) hubWindow.reload();
     if (statusWindow && !statusWindow.isDestroyed()) statusWindow.reload();
@@ -198,6 +214,29 @@ function openScratchpadWindow(noteData) {
   scratchpadWindow.on('closed', () => {
     scratchpadWindow = null;
   });
+}
+
+function broadcastMeeting(channel, data) {
+  [hubWindow, statusWindow, scratchpadWindow, granolaWindow].forEach(w => {
+    if (w && !w.isDestroyed()) {
+      try { w.webContents.send(channel, data); } catch (_) {}
+    }
+  });
+}
+
+meetingRecorder.on('meeting-started', (data) => broadcastMeeting('flow:meeting-started', data));
+meetingRecorder.on('meeting-finished', (data) => broadcastMeeting('flow:meeting-finished', data));
+meetingRecorder.on('active-speaker', (data) => broadcastMeeting('flow:meeting-active-speaker', data));
+meetingRecorder.on('audio-volume', (data) => broadcastMeeting('flow:meeting-audio-volume', data));
+meetingRecorder.on('transcript-turn', (data) => broadcastMeeting('flow:meeting-transcript-turn', data));
+meetingRecorder.on('speakers-updated', (data) => broadcastMeeting('flow:meeting-speakers-updated', data));
+
+function openGranolaWindow() {
+  if (hubWindow && !hubWindow.isDestroyed()) {
+    hubWindow.show();
+    hubWindow.focus();
+    hubWindow.webContents.send('flow:open-notetaker', 'Notetaker');
+  }
 }
 
 let currentCapsuleX = 0;
@@ -723,10 +762,43 @@ ipcMain.handle('flow:memory-save-scratchpad', async (e, params) => memory.saveSc
 
 ipcMain.handle('flow:memory-get-insights-stats', async () => memory.getInsightsStats());
 ipcMain.handle('flow:memory-get-heatmap-stats', async () => memory.getHeatmapStats());
+ipcMain.handle('flow:memory-get-meetings', async () => memory.getMeetings());
 
 ipcMain.on('flow:open-scratchpad', (event, noteData) => {
   openScratchpadWindow(noteData);
 });
+
+ipcMain.on('flow:open-granola-window', () => {
+  openGranolaWindow();
+});
+
+ipcMain.handle('flow:start-meeting-recording', async (event, options) => {
+  return meetingRecorder.start(options);
+});
+
+ipcMain.handle('flow:stop-meeting-recording', async () => {
+  return await meetingRecorder.stop();
+});
+
+ipcMain.handle('flow:get-meeting-status', async () => {
+  return {
+    isRecording: meetingRecorder.isRecording,
+    startTime: meetingRecorder.startTime,
+    meetingId: meetingRecorder.meetingId,
+    meetingTitle: meetingRecorder.meetingTitle,
+    attendees: meetingRecorder.attendees,
+    transcripts: meetingRecorder.transcripts
+  };
+});
+
+ipcMain.on('flow:meeting-rename-speaker', (event, { oldName, newName }) => {
+  meetingRecorder.renameSpeaker(oldName, newName);
+});
+
+ipcMain.on('flow:meeting-add-attendee', (event, { name }) => {
+  meetingRecorder.addAttendee(name);
+});
+
 
 const { spawn } = require('child_process');
 

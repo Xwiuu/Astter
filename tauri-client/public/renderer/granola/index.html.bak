@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
+    />
+    <!-- <meta
+      http-equiv="Content-Security-Policy"
+      content="child-src 'self' blob:; worker-src 'self' blob:; script-src 'self' 'unsafe-inline' https://cdn.lr-ingest.io https://cdn.lr-in.com https://cdn.lr-in-prod.com https://cdn.lr-in-prod.com https://cdn.lr-ingest.com;"
+    /> -->
+    <style>
+      /* Enable dragging for the nub */
+      body.nub {
+        -webkit-user-select: none;
+        -webkit-app-region: drag;
+      }
+
+      body.nub .disable-drag {
+        -webkit-app-region: no-drag;
+      }
+    </style>
+    <title>Granola</title>
+    <script src="./granola-bridge.js"></script>
+    <script type="module" crossorigin src="./assets/index-BfDRZ6JG.js"></script>
+    <link rel="modulepreload" crossorigin href="./assets/_sentry-release-injection-file-CIaQsB16.js">
+    <link rel="modulepreload" crossorigin href="./assets/rolldown-runtime-Ciu2z6aO.js">
+    <link rel="modulepreload" crossorigin href="./assets/react-CBDM120z.js">
+    <link rel="modulepreload" crossorigin href="./assets/preload-helper-CIHotAn6.js">
+    <link rel="modulepreload" crossorigin href="./assets/feature-flags.generated-Cvb0CweB.js">
+    <link rel="modulepreload" crossorigin href="./assets/TypeRegistry-BNxo1ytE.js">
+    <link rel="modulepreload" crossorigin href="./assets/tslib.es6-CuaVz4B7.js">
+    <link rel="modulepreload" crossorigin href="./assets/extensions-nCqr8_S4.js">
+    <link rel="modulepreload" crossorigin href="./assets/SmithyMessageEncoderStream-Dn9yWz5p.js">
+    <link rel="modulepreload" crossorigin href="./assets/types-jMWiL5tu.js">
+    <link rel="modulepreload" crossorigin href="./assets/registry-Dda-kvh9.js">
+    <link rel="modulepreload" crossorigin href="./assets/object-C0xnL_3P.js">
+    <link rel="modulepreload" crossorigin href="./assets/normalizeUuid-CgXvLbzR.js">
+    <link rel="modulepreload" crossorigin href="./assets/tracking-links-CrlnH0LZ.js">
+    <link rel="modulepreload" crossorigin href="./assets/constants-DHl2q_t3.js">
+    <link rel="modulepreload" crossorigin href="./assets/types-BfRbstE_.js">
+    <link rel="modulepreload" crossorigin href="./assets/linkify-CwsvKu2K.js">
+    <link rel="modulepreload" crossorigin href="./assets/markdown-it-task-lists-D5ZzPtMs.js">
+    <link rel="modulepreload" crossorigin href="./assets/cache-C6e1ZBrd.js">
+    <link rel="modulepreload" crossorigin href="./assets/sentry-renderer-CODpo_pO.js">
+    <link rel="modulepreload" crossorigin href="./assets/config-DoaOYBXU.js">
+    <link rel="modulepreload" crossorigin href="./assets/granola-talk-styles-C81nZlYk.js">
+    <link rel="modulepreload" crossorigin href="./assets/version-D0ngPtLv.js">
+    <link rel="stylesheet" crossorigin href="./assets/index-BCb1p1TS.css">
+  </head>
+  <body class="pii-mask antialiased">
+    <div id="root"></div>
+  </body>
+</html>

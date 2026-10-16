@@ -19,6 +19,16 @@ if [ "$1" = "--hub" ]; then
   exit 0
 fi
 
+if [ "$1" = "--granola" ]; then
+  curl -s http://127.0.0.1:1422/granola >/dev/null 2>&1 || true
+  exit 0
+fi
+
+if [ "$1" = "--meeting" ]; then
+  curl -s http://127.0.0.1:1422/meeting >/dev/null 2>&1 || true
+  exit 0
+fi
+
 if [ "$1" = "--reload" ]; then
   curl -s http://127.0.0.1:1422/reload >/dev/null 2>&1 || true
   exit 0
