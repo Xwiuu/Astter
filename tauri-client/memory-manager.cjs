@@ -461,7 +461,7 @@ function deleteAllTranscripts() {
 // ==========================================
 
 const DEFAULT_DICTIONARY = [
-  "Flow", "Wispr", "Groq", "Whisper", "Tauri", "Linux", "Wayland", "PipeWire", "Aion", "Electron"
+  "Flow", "Wispr", "Groq", "Whisper", "Tauri", "Linux", "Wayland", "PipeWire", "Astter", "Electron"
 ];
 
 function initDictionary() {
@@ -485,7 +485,7 @@ function writeDictionaryFiles() {
     const snippets = db.prepare('SELECT * FROM dictionary WHERE isSnippet = 1 ORDER BY phrase ASC').all();
 
     // Dicionário Markdown
-    let dictMd = `# Dicionário Pessoal do Aion Flow\n\nPalavras personalizadas reconhecidas com prioridade pelo modelo:\n\n`;
+    let dictMd = `# Dicionário Pessoal do Astter Flow\n\nPalavras personalizadas reconhecidas com prioridade pelo modelo:\n\n`;
     for (const w of words) {
       const star = w.isStarred ? '⭐ ' : '';
       if (w.replacement) {
@@ -497,7 +497,7 @@ function writeDictionaryFiles() {
     fs.writeFileSync(path.join(DIRS.dictionary, 'dictionary.md'), dictMd, 'utf8');
 
     // Snippets Markdown
-    let snipMd = `# Snippets e Atalhos de Texto (Aion Flow)\n\nAtalhos automáticos expandidos ao ditar:\n\n`;
+    let snipMd = `# Snippets e Atalhos de Texto (Astter Flow)\n\nAtalhos automáticos expandidos ao ditar:\n\n`;
     for (const s of snippets) {
       snipMd += `- **\`${s.phrase}\`** ➔ ${s.replacement || '(vazio)'}\n`;
     }
@@ -678,7 +678,7 @@ function updateInsightsAfterTranscript(newWords, newDurationSec, appName, dateOb
     fs.writeFileSync(insightsJsonPath, JSON.stringify(insightsData, null, 2), 'utf8');
 
     // Relatório amigável em Markdown
-    const summaryMd = `# Resumo e Memória de Produtividade (Aion Flow)
+    const summaryMd = `# Resumo e Memória de Produtividade (Astter Flow)
 
 - **Total de Palavras Ditadas:** ${totalWords.toLocaleString()}
 - **Total de Sessões de Fala:** ${totalTranscripts}

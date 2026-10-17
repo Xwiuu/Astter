@@ -48,7 +48,7 @@ class MeetingRecorder extends EventEmitter {
     const envCandidates = [
       path.join(__dirname, '.env'),
       path.join(__dirname, '../.env'),
-      path.join(os.homedir(), '.config/aion/.env')
+      path.join(os.homedir(), '.config/astter/.env')
     ];
 
     for (const envPath of envCandidates) {

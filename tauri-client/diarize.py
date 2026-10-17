@@ -42,7 +42,7 @@ def load_hf_token():
     env_candidates = [
         os.path.join(os.path.dirname(__file__), '.env'),
         os.path.join(os.path.dirname(__file__), '..', '.env'),
-        os.path.join(os.path.expanduser('~'), '.config/aion/.env'),
+        os.path.join(os.path.expanduser('~'), '.config/astter/.env'),
     ]
     for env_path in env_candidates:
         if os.path.exists(env_path):

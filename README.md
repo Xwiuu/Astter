@@ -1,12 +1,12 @@
-# Aion 🎙️⚡
+# Astter 🎙️⚡
 
-> **Aion** is a native, high-performance, open-source Linux alternative to Wispr Flow. Engineered with **Electron & Tauri**, **C (Linux uinput)**, and **Groq Whisper Large-v3** for ultra-fast push-to-talk voice dictation and auto-typing on Linux Wayland (KDE Plasma 6, GNOME, Sway, Hyprland) & X11.
+> **Astter** is a native, high-performance, open-source Linux alternative to Wispr Flow. Engineered with **Electron & Tauri**, **C (Linux uinput)**, and **Groq Whisper Large-v3** for ultra-fast push-to-talk voice dictation and auto-typing on Linux Wayland (KDE Plasma 6, GNOME, Sway, Hyprland) & X11.
 
 ---
 
-## 🌟 What is Aion?
+## 🌟 What is Astter?
 
-**Aion** brings native, system-wide, zero-latency Push-to-Talk voice dictation to Linux. Just like Wispr Flow on macOS and Windows, hold down your shortcut (`Ctrl + Win`), speak anywhere (WhatsApp Web, Brave, Chrome, VS Code, Discord, Slack, Telegram, Terminal), and release — your speech is instantly transcribed with Groq's `whisper-large-v3` and automatically typed directly into your active cursor via kernel-level virtual keyboard emulation (`/dev/uinput`).
+**Astter** brings native, system-wide, zero-latency Push-to-Talk voice dictation to Linux. Just like Wispr Flow on macOS and Windows, hold down your shortcut (`Ctrl + Win`), speak anywhere (WhatsApp Web, Brave, Chrome, VS Code, Discord, Slack, Telegram, Terminal), and release — your speech is instantly transcribed with Groq's `whisper-large-v3` and automatically typed directly into your active cursor via kernel-level virtual keyboard emulation (`/dev/uinput`).
 
 ---
 
@@ -56,7 +56,7 @@ sudo apt install -y nodejs gcc wl-clipboard pipewire-bin
 
 ### 2. Configure uinput Permissions (One-time)
 
-To allow Aion to type into your active cursor on Wayland without needing root each time:
+To allow Astter to type into your active cursor on Wayland without needing root each time:
 
 ```bash
 # Add uinput permissions rule
@@ -66,6 +66,8 @@ sudo udevadm control --reload && sudo udevadm trigger
 
 ### 3. Installation
 
+> The repository URL below still says `Aion` — that's just the current GitHub repo name, unrelated to the Astter product name.
+
 ```bash
 git clone https://github.com/Xwiuu/Aion.git
 cd Aion
@@ -74,7 +76,7 @@ cd tauri-client
 npm install
 ```
 
-### 4. Run Aion
+### 4. Run Astter
 
 ```bash
 ./launch-flow.sh

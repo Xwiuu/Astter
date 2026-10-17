@@ -32,7 +32,7 @@ def load_groq_keys():
     candidates = [
         os.path.join(os.path.dirname(__file__), '.env'),
         os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env'),
-        os.path.expanduser('~/.config/aion/.env')
+        os.path.expanduser('~/.config/astter/.env')
     ]
 
     for p in candidates:
