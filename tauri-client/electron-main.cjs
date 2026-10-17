@@ -22,7 +22,7 @@ const meetingRecorder = require('./meeting-recorder.cjs');
 // Ensure single instance
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
-  console.log('⚡ [Flow] Outra instância do Flow já está em execução.');
+  console.log('⚡ [Astter] Outra instância do Astter já está em execução.');
   app.quit();
   process.exit(0);
 }
@@ -82,7 +82,7 @@ const triggerServer = http.createServer((req, res) => {
   }
 });
 triggerServer.listen(1422, '127.0.0.1', () => {
-  console.log('✓ [Flow] Servidor de gatilho ativo em 127.0.0.1:1422');
+  console.log('✓ [Astter] Servidor de gatilho ativo em 127.0.0.1:1422');
 });
 
 function getTargetDisplay() {
@@ -145,14 +145,14 @@ function createHubWindow() {
   hubWindow.once('ready-to-show', () => {
     hubWindow.show();
     hubWindow.focus();
-    console.log('✓ [Flow] Janela principal Hub aberta com sucesso na tela ativa:', hubWindow.getPosition());
+    console.log('✓ [Astter] Janela principal Hub aberta com sucesso na tela ativa:', hubWindow.getPosition());
   });
 
   hubWindow.on('close', (event) => {
     if (!isQuitting) {
       event.preventDefault();
       hubWindow.hide();
-      console.log('⚡ [Flow] Janela Hub ocultada para a bandeja.');
+      console.log('⚡ [Astter] Janela Hub ocultada para a bandeja.');
     }
   });
 
@@ -346,7 +346,7 @@ function createStatusWindow() {
     setTimeout(() => {
       positionKWinWindowAsync('Astter Capsule', capsuleX, capsuleY);
     }, 350);
-    console.log('✓ [Flow] Cápsula flutuante visível em:', statusWindow.getPosition());
+    console.log('✓ [Astter] Cápsula flutuante visível em:', statusWindow.getPosition());
   });
 
   statusWindow.on('blur', () => {
@@ -357,7 +357,7 @@ function createStatusWindow() {
   });
 
   statusWindow.webContents.on('did-fail-load', (e, code, desc, url) => {
-    console.error('❌ [Flow] Falha ao carregar status:', desc, url);
+    console.error('❌ [Astter] Falha ao carregar status:', desc, url);
     setTimeout(() => {
       if (statusWindow && !statusWindow.isDestroyed()) {
         statusWindow.loadURL('http://localhost:1420/renderer/status/index.html');
@@ -428,7 +428,7 @@ function createTray() {
       },
       { type: 'separator' },
       {
-        label: '❌  Sair do Flow',
+        label: '❌  Sair do Astter',
         click: () => {
           quitFlow();
         }
@@ -474,7 +474,7 @@ function toggleStatus() {
 }
 
 function triggerDictation() {
-  console.log('🎙️ [Flow] Gatilho de ditado acionado via atalho global / bandeja!');
+  console.log('🎙️ [Astter] Gatilho de ditado acionado via atalho global / bandeja!');
   if (statusWindow && statusWindow.webContents) {
     if (!statusWindow.isVisible()) {
       statusWindow.show();
@@ -488,7 +488,7 @@ function triggerDictation() {
 }
 
 function startDictation() {
-  console.log('🎙️ [Flow PTT] Iniciar ditado (tecla pressionada)');
+  console.log('🎙️ [Astter PTT] Iniciar ditado (tecla pressionada)');
   if (statusWindow && statusWindow.webContents) {
     if (!statusWindow.isVisible()) {
       statusWindow.show();
@@ -502,7 +502,7 @@ function startDictation() {
 }
 
 function stopDictation() {
-  console.log('⏹️ [Flow PTT] Parar ditado (tecla solta)');
+  console.log('⏹️ [Astter PTT] Parar ditado (tecla solta)');
   if (statusWindow && statusWindow.webContents) {
     statusWindow.webContents.send('astter:dictation-stop');
   } else if (hubWindow && hubWindow.webContents) {
@@ -519,9 +519,9 @@ function startPttDaemon() {
     try {
       const { execSync } = require('child_process');
       execSync(`gcc -O2 "${pttSrc}" -o "${pttBin}"`);
-      console.log('✓ [Flow] flow-ptt compilado automaticamente com sucesso!');
+      console.log('✓ [Astter] binário nativo (flow-ptt) compilado automaticamente com sucesso!');
     } catch (e) {
-      console.warn('⚠️ [Flow] Falha ao compilar flow-ptt:', e.message);
+      console.warn('⚠️ [Astter] Falha ao compilar o binário nativo (flow-ptt):', e.message);
     }
   }
   if (fs.existsSync(pttBin)) {
@@ -529,15 +529,15 @@ function startPttDaemon() {
       const { spawn } = require('child_process');
       pttProcess = spawn(pttBin, [], { stdio: 'inherit' });
       pttProcess.on('error', (err) => {
-        console.warn('⚠️ [Flow PTT] Daemon info:', err.message);
+        console.warn('⚠️ [Astter PTT] Daemon info:', err.message);
       });
-      console.log('✓ [Flow] Daemon nativo de Push-to-Talk (Hold-to-Talk) ativo!');
+      console.log('✓ [Astter] Daemon nativo de Push-to-Talk (Hold-to-Talk) ativo!');
     } catch (e) {}
   }
 }
 
 function quitFlow() {
-  console.log('👋 [Flow] Encerrando aplicativo...');
+  console.log('👋 [Astter] Encerrando aplicativo...');
   isQuitting = true;
   if (pttProcess) {
     try { pttProcess.kill(); } catch (e) {}
@@ -646,9 +646,9 @@ ipcMain.on('astter:copy-to-clipboard', (event, payload) => {
     p1.unref();
     const p2 = spawn('wl-copy', ['-p', text], { stdio: 'ignore', detached: true });
     p2.unref();
-    console.log('📋 [Flow Clipboard] Texto colocado no Wayland clipboard e primary (wl-copy):', text.slice(0, 40));
+    console.log('📋 [Astter Clipboard] Texto colocado no Wayland clipboard e primary (wl-copy):', text.slice(0, 40));
   } catch (e) {
-    console.warn('⚠️ [Flow Clipboard] Falha ao executar wl-copy:', e);
+    console.warn('⚠️ [Astter Clipboard] Falha ao executar wl-copy:', e);
   }
 
   // Dá 60ms para o servidor Wayland registrar a nova seleção antes de simular o Ctrl+V
@@ -659,13 +659,13 @@ ipcMain.on('astter:copy-to-clipboard', (event, payload) => {
         const socketClient = net.createConnection('/tmp/flow-uinput.sock', () => {
           socketClient.write('PASTE');
           socketClient.end();
-          console.log('📋 [Flow AutoPaste] Hardware uinput Ctrl+V enviado via socket persistente!');
+          console.log('📋 [Astter AutoPaste] Hardware uinput Ctrl+V enviado via socket persistente!');
         });
         socketClient.on('error', (err) => {
-          console.warn('⚠️ [Flow AutoPaste] Socket uinput indisponível:', err.message);
+          console.warn('⚠️ [Astter AutoPaste] Socket uinput indisponível:', err.message);
         });
       } catch (err) {
-        console.error('⚠️ [Flow AutoPaste] Erro ao disparar colagem:', err);
+        console.error('⚠️ [Astter AutoPaste] Erro ao disparar colagem:', err);
       }
     }, 60);
   }
@@ -686,7 +686,7 @@ ipcMain.handle('astter:transcribe-audio', async (event, base64Data) => {
       execFile('python3', [pyScript, tmpAudioPath], { timeout: 12000 }, (error, stdout, stderr) => {
         if (error) {
           const reason = error.killed ? 'timeout' : (stderr || error.message || 'unknown_error').toString().trim().slice(0, 300);
-          console.error('❌ [Flow Groq Whisper Error]:', reason);
+          console.error('❌ [Astter Groq Whisper Error]:', reason);
           try {
             memory.saveTranscript({ text: '', app: 'Konsole', duration: 2.0, status: 'failed', failureReason: reason });
             if (hubWindow && !hubWindow.isDestroyed()) {
@@ -698,7 +698,7 @@ ipcMain.handle('astter:transcribe-audio', async (event, base64Data) => {
           resolve('');
         } else {
           const text = stdout.trim();
-          console.log('✨ [Flow Groq Whisper]:', text);
+          console.log('✨ [Astter Groq Whisper]:', text);
 
           // Salva automaticamente o ditado (ou a tentativa falha) em Markdown e no SQLite db.db!
           try {
@@ -719,7 +719,7 @@ ipcMain.handle('astter:transcribe-audio', async (event, base64Data) => {
       });
     });
   } catch (err) {
-    console.error('❌ [Flow Transcription Exception]:', err);
+    console.error('❌ [Astter Transcription Exception]:', err);
     return '';
   }
 });
@@ -826,11 +826,11 @@ function checkViteServer() {
 async function ensureViteServer() {
   const isRunning = await checkViteServer();
   if (isRunning) {
-    console.log('✓ [Flow] Servidor frontend já ativo na porta 1420.');
+    console.log('✓ [Astter] Servidor frontend já ativo na porta 1420.');
     return;
   }
 
-  console.log('🚀 [Flow] Iniciando servidor frontend interno na porta 1420...');
+  console.log('🚀 [Astter] Iniciando servidor frontend interno na porta 1420...');
   const viteBin = path.join(__dirname, 'node_modules/vite/bin/vite.js');
   const viteProcess = spawn(process.execPath, [viteBin, '--port', '1420'], {
     cwd: __dirname,
@@ -846,14 +846,14 @@ async function ensureViteServer() {
   for (let i = 0; i < 40; i++) {
     await new Promise((r) => setTimeout(r, 250));
     if (await checkViteServer()) {
-      console.log('✓ [Flow] Servidor frontend interno pronto!');
+      console.log('✓ [Astter] Servidor frontend interno pronto!');
       break;
     }
   }
 }
 
 app.whenReady().then(async () => {
-  console.log('🚀 [Flow] Inicializando Flow Desktop nativo...');
+  console.log('🚀 [Astter] Inicializando Astter Desktop nativo...');
 
   await ensureViteServer();
 
@@ -868,17 +868,17 @@ app.whenReady().then(async () => {
       triggerDictation();
     });
     if (registeredSpace) {
-      console.log('✓ [Flow] Atalho global registrado: Ctrl+Alt+Espaço');
+      console.log('✓ [Astter] Atalho global registrado: Ctrl+Alt+Espaço');
     }
 
     const registeredF8 = globalShortcut.register('F8', () => {
       triggerDictation();
     });
     if (registeredF8) {
-      console.log('✓ [Flow] Atalho global secundário registrado: F8');
+      console.log('✓ [Astter] Atalho global secundário registrado: F8');
     }
   } catch (err) {
-    console.error('⚠️ [Flow] Erro ao registrar atalhos globais:', err);
+    console.error('⚠️ [Astter] Erro ao registrar atalhos globais:', err);
   }
 
   app.on('activate', () => {

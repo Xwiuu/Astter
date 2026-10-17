@@ -4,7 +4,7 @@
 // ========================================================
 
 (function () {
-  console.log("⚡ [Flow Bridge] Inicializando ambiente Electron & Zubridge...");
+  console.log("⚡ [Astter Bridge] Inicializando ambiente Electron & Zubridge...");
 
   // Mock fetch para sentry-ipc://
   const origFetch = window.fetch;
@@ -168,7 +168,7 @@
   const defaultUser = {
     uuid: "flow-user-uuid-1",
     firstName: "Wiu",
-    lastName: "Flow",
+    lastName: "Astter",
     email: "user@flow.linux",
     avatarUrl: "",
     onboardingCompleted: true,
@@ -329,16 +329,16 @@
     notes: [
       {
         id: "note-1",
-        title: "Primeira Nota com o Flow",
-        content: "O Flow é uma alternativa livre ao Astter, agora rodando nativamente no Linux com aceleração Whisper na Groq.",
-        contentPreview: "O Flow é uma alternativa livre ao Astter, agora rodando nativamente no Linux com aceleração Whisper na Groq.",
+        title: "Primeira Nota com o Astter",
+        content: "O Astter é uma alternativa livre à Wispr Flow, agora rodando nativamente no Linux com aceleração Whisper na Groq.",
+        contentPreview: "O Astter é uma alternativa livre à Wispr Flow, agora rodando nativamente no Linux com aceleração Whisper na Groq.",
         createdAt: Date.now() - 3600000,
         updatedAt: Date.now() - 3600000,
         modifiedAt: Date.now() - 3600000
       }
     ],
     dictionaryWords: [
-      { id: "w-1", phrase: "Flow", isStarred: true, modifiedAt: Date.now() - 100000 },
+      { id: "w-1", phrase: "Astter", isStarred: true, modifiedAt: Date.now() - 100000 },
       { id: "w-2", phrase: "Groq", isStarred: false, modifiedAt: Date.now() - 200000 },
       { id: "w-3", phrase: "Whisper", isStarred: false, modifiedAt: Date.now() - 300000 },
       { id: "w-4", phrase: "Tauri", isStarred: false, modifiedAt: Date.now() - 400000 },
@@ -1030,7 +1030,7 @@
       });
       return persistentAudioStream;
     } catch (e) {
-      console.warn("⚠️ [Flow Audio] Falha ao pré-carregar microfone:", e);
+      console.warn("⚠️ [Astter Audio] Falha ao pré-carregar microfone:", e);
       return null;
     }
   }
@@ -1064,7 +1064,7 @@
       };
       mediaRecorder.start(50);
       isVoiceRecording = true;
-      console.log("🎙️ [Flow Audio] Gravação iniciada com sucesso (0ms latência)!");
+      console.log("🎙️ [Astter Audio] Gravação iniciada com sucesso (0ms latência)!");
 
       emitIpc("status:dictationStatus", "active_ptt");
       emitIpc("astter:liveTranscript", { text: "", isFinal: false });
@@ -1072,7 +1072,7 @@
       startAudioAnalyser(audioStream);
     } catch (err) {
       playFlowSound("error");
-      console.error("❌ [Flow Audio] Falha ao acessar microfone:", err);
+      console.error("❌ [Astter Audio] Falha ao acessar microfone:", err);
     }
   }
 
@@ -1087,7 +1087,7 @@
       mediaRecorder.onstop = async () => {
         // Mantemos o persistentAudioStream vivo para o próximo toque ser instantâneo!
         const audioBlob = new Blob(audioChunks, { type: "audio/webm" });
-        console.log("🎙️ [Flow Audio] Áudio capturado:", audioBlob.size, "bytes. Transcrevendo na Groq...");
+        console.log("🎙️ [Astter Audio] Áudio capturado:", audioBlob.size, "bytes. Transcrevendo na Groq...");
 
         emitIpc("status:dictationStatus", "polish_processing");
 
@@ -1098,7 +1098,7 @@
         }
         if (text && text.trim().length > 0) {
           playFlowSound("success");
-          console.log("✨ [Flow Groq Whisper] Transcrição concluída:", text);
+          console.log("✨ [Astter Groq Whisper] Transcrição concluída:", text);
 
           emitIpc("astter:liveTranscript", { text, isFinal: true });
 
@@ -1254,19 +1254,19 @@
   if (typeof window.astterNative !== "undefined") {
     if (window.astterNative.onDictationTrigger) {
       window.astterNative.onDictationTrigger(() => {
-        console.log("⚡ [Flow Native Trigger] Ditado alternado via atalho nativo do sistema!");
+        console.log("⚡ [Astter Native Trigger] Ditado alternado via atalho nativo do sistema!");
         toggleVoiceRecording();
       });
     }
     if (window.astterNative.onDictationStart) {
       window.astterNative.onDictationStart(() => {
-        console.log("⚡ [Flow PTT Start] Tecla pressionada! Iniciando gravação...");
+        console.log("⚡ [Astter PTT Start] Tecla pressionada! Iniciando gravação...");
         toggleVoiceRecording(true);
       });
     }
     if (window.astterNative.onDictationStop) {
       window.astterNative.onDictationStop(() => {
-        console.log("⚡ [Flow PTT Stop] Tecla solta! Finalizando gravação...");
+        console.log("⚡ [Astter PTT Stop] Tecla solta! Finalizando gravação...");
         toggleVoiceRecording(false);
       });
     }
@@ -1310,7 +1310,7 @@
           }
           if (savedHeatmap) rootState.heatmapStats = { data: savedHeatmap, error: false };
           listeners.forEach((fn) => { try { fn(rootState); } catch (_) {} });
-          console.log("✓ [Flow Bridge] Memória persistente carregada com sucesso (.md e SQLite)!");
+          console.log("✓ [Astter Bridge] Memória persistente carregada com sucesso (.md e SQLite)!");
         } catch (err) {
           console.warn("⚠️ [Bridge Initial Memory Sync]:", err);
         }
@@ -1318,5 +1318,5 @@
     }
   }
 
-  console.log("✓ [Flow Bridge] Bridge pronto para executar o Astter oficial com Groq Whisper!");
+  console.log("✓ [Astter Bridge] Bridge pronto para executar o Astter oficial com Groq Whisper!");
 })();
