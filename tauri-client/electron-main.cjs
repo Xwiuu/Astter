@@ -140,6 +140,16 @@ function createHubWindow() {
 
   hubWindow.loadURL('http://localhost:1420/renderer/hub/index.html');
 
+  hubWindow.webContents.on('did-fail-load', (e, code, desc, url) => {
+    if (code === -3) return; // ERR_ABORTED: navegação cancelada por um loadURL subsequente, não é falha real
+    console.error('❌ [Astter] Falha ao carregar Hub:', desc, url, '— tentando de novo em 1s...');
+    setTimeout(() => {
+      if (hubWindow && !hubWindow.isDestroyed()) {
+        hubWindow.loadURL('http://localhost:1420/renderer/hub/index.html');
+      }
+    }, 1000);
+  });
+
   hubWindow.once('ready-to-show', () => {
     hubWindow.show();
     hubWindow.focus();
@@ -841,13 +851,14 @@ async function ensureViteServer() {
     try { viteProcess.kill(); } catch (e) {}
   });
 
-  for (let i = 0; i < 40; i++) {
+  for (let i = 0; i < 80; i++) {
     await new Promise((r) => setTimeout(r, 250));
     if (await checkViteServer()) {
       console.log('✓ [Astter] Servidor frontend interno pronto!');
-      break;
+      return;
     }
   }
+  console.warn('⚠️ [Astter] Servidor frontend não respondeu em 20s — as janelas vão tentar carregar mesmo assim e reconectar sozinhas se falhar.');
 }
 
 app.whenReady().then(async () => {
