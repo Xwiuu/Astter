@@ -66,11 +66,9 @@ sudo udevadm control --reload && sudo udevadm trigger
 
 ### 3. Installation
 
-> The repository URL below still says `Aion` — that's just the current GitHub repo name, unrelated to the Astter product name.
-
 ```bash
-git clone https://github.com/Xwiuu/Aion.git
-cd Aion
+git clone https://github.com/Xwiuu/Astter.git
+cd Astter
 npm install
 cd tauri-client
 npm install
