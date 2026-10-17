@@ -238,6 +238,26 @@
       .mXGWBr9uMflE1xSNLbTB.yi4s5cmMKea0zOpwSJNa .yJxHrBRsaQTXswCM3nVw {
         padding-right: 110px !important;
       }
+
+      /* Corrige o texto dos cards de Insights quebrando no meio da palavra
+         ("correcte d", "9dictionar y") em janelas estreitas — o estilo original
+         usa overflow-wrap: anywhere numa coluna muito apertada. Quebra só entre
+         palavras, nunca no meio de uma. */
+      .ODMRs8bRaCHR7wUOwZcg {
+        word-break: normal !important;
+        overflow-wrap: normal !important;
+      }
+
+      /* "5 day streak" espremido a 73px ao lado do parágrafo "Longest streak"
+         no mesmo flex-row quebrava "streak" em "strea"/"k". Trava a largura
+         do título e deixa o irmão cair pra linha de baixo se não couber. */
+      .mQaD1P9fLvd_km3Hm6tj {
+        flex-wrap: wrap !important;
+      }
+      .DY4IxDCGNvtYqg3BkkEx {
+        flex-shrink: 0 !important;
+        white-space: nowrap !important;
+      }
     </style>
     <script src="./bridge.js"></script>
     <script defer="defer" src="../vendor/index.js"></script>

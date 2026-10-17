@@ -10,7 +10,9 @@ app.setName('astter-desktop');
 app.setDesktopName('flow-desktop');
 app.commandLine.appendSwitch('enable-features', 'GlobalShortcutsPortal');
 app.commandLine.appendSwitch('ozone-platform-hint', 'auto');
-app.disableHardwareAcceleration(); // TESTE: iframe do Notetaker renderiza preto com GPU no Wayland
+// Corrige o iframe preto do Notetaker (bug de composição de GPU com OOPIF no Wayland)
+// sem desativar a GPU inteira — só a composição, mantendo o resto acelerado.
+app.commandLine.appendSwitch('disable-gpu-compositing');
 
 let hubWindow = null;
 let statusWindow = null;
@@ -86,30 +88,25 @@ triggerServer.listen(1422, '127.0.0.1', () => {
   console.log('✓ [Astter] Servidor de gatilho ativo em 127.0.0.1:1422');
 });
 
+// Largura mínima pra caber o layout de 3 colunas do Hub sem o texto quebrar no meio da palavra
+// (a janela já tem minWidth: 900, então qualquer tela abaixo disso vira essa quebra feia).
+const MIN_USABLE_DISPLAY_WIDTH = 1000;
+
 function getTargetDisplay() {
-  try {
-    const { execSync } = require('child_process');
-    const activeName = execSync('qdbus-qt6 org.kde.KWin /KWin org.kde.KWin.activeOutputName', { encoding: 'utf8', timeout: 500 }).trim();
-    if (activeName) {
-      const displays = screen.getAllDisplays();
-      if (activeName === 'eDP-1') {
-        const match = displays.find(d => d.bounds.x === 900 || d.bounds.width === 1920);
-        if (match) return match;
-      } else if (activeName === 'HDMI-A-1') {
-        const match = displays.find(d => d.bounds.x === 0 || d.bounds.width === 900);
-        if (match) return match;
-      }
-    }
-  } catch (_) {}
+  const displays = screen.getAllDisplays();
+  const widest = displays.reduce((a, b) => (b.workArea.width > a.workArea.width ? b : a), displays[0]);
 
   try {
     const cursorPoint = screen.getCursorScreenPoint();
     if (cursorPoint && (cursorPoint.x > 0 || cursorPoint.y > 0)) {
-      return screen.getDisplayNearestPoint(cursorPoint);
+      const nearest = screen.getDisplayNearestPoint(cursorPoint);
+      // Só usa a tela do cursor se ela for larga o suficiente; senão cai pra mais larga disponível,
+      // pra nunca abrir o Hub num monitor estreito/vertical onde o layout quebra.
+      if (nearest.workArea.width >= MIN_USABLE_DISPLAY_WIDTH) return nearest;
     }
   } catch (_) {}
 
-  return screen.getAllDisplays().find(d => d.bounds.width === 1920) || screen.getPrimaryDisplay();
+  return widest || screen.getPrimaryDisplay();
 }
 
 function createHubWindow() {
