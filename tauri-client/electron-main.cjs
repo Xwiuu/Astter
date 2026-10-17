@@ -10,6 +10,7 @@ app.setName('astter-desktop');
 app.setDesktopName('flow-desktop');
 app.commandLine.appendSwitch('enable-features', 'GlobalShortcutsPortal');
 app.commandLine.appendSwitch('ozone-platform-hint', 'auto');
+app.disableHardwareAcceleration(); // TESTE: iframe do Notetaker renderiza preto com GPU no Wayland
 
 let hubWindow = null;
 let statusWindow = null;
