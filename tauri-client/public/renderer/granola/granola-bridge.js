@@ -219,11 +219,11 @@
     // Controle de Gravação de Reunião
     setDesiredTranscriptionState: (state) => {
       console.log("🎙️ [Granola] Desired Transcription State:", state);
-      if (window.parent && window.parent.flowNative?.meeting) {
+      if (window.parent && window.parent.astterNative?.meeting) {
         if (state === "transcribing" || state === "recording") {
-          window.parent.flowNative.meeting.start();
+          window.parent.astterNative.meeting.start();
         } else {
-          window.parent.flowNative.meeting.stop();
+          window.parent.astterNative.meeting.stop();
         }
       }
     },
@@ -270,8 +270,8 @@
       }
     },
     openSettings: () => {
-      if (window.parent && window.parent.flowNative) {
-        window.parent.flowNative.openSettings();
+      if (window.parent && window.parent.astterNative) {
+        window.parent.astterNative.openSettings();
       }
     },
     focusPrimaryWindow: () => {},
@@ -284,19 +284,19 @@
     if (!event.data || typeof event.data !== "object") return;
     const { type, payload } = event.data;
 
-    if (type === "flow:meeting-started") {
+    if (type === "astter:meeting-started") {
       emitEvent("meeting-transcription-state", { state: "transcribing", documentId: payload.id });
       updateMeetingTopBar(true, payload.title);
-    } else if (type === "flow:meeting-finished") {
+    } else if (type === "astter:meeting-finished") {
       emitEvent("meeting-transcription-state", { state: "idle", documentId: payload.id });
       updateMeetingTopBar(false, payload.title);
       renderFinishedMeetingInUI(payload);
-    } else if (type === "flow:active-speaker") {
+    } else if (type === "astter:active-speaker") {
       emitEvent("active-speaker", payload);
       updateActiveSpeakerPill(payload.speaker);
-    } else if (type === "flow:audio-volume") {
+    } else if (type === "astter:audio-volume") {
       emitEvent("audio-volume", payload);
-    } else if (type === "flow:transcript-turn") {
+    } else if (type === "astter:transcript-turn") {
       appendTranscriptTurnToUI(payload);
     }
   });
@@ -401,10 +401,10 @@
 
     const popoutBtn = document.getElementById("btn-popout");
     popoutBtn.addEventListener("click", () => {
-      if (window.parent && window.parent.flowNative?.openGranolaWindow) {
-        window.parent.flowNative.openGranolaWindow();
-      } else if (window.flowNative?.openGranolaWindow) {
-        window.flowNative.openGranolaWindow();
+      if (window.parent && window.parent.astterNative?.openGranolaWindow) {
+        window.parent.astterNative.openGranolaWindow();
+      } else if (window.astterNative?.openGranolaWindow) {
+        window.astterNative.openGranolaWindow();
       }
     });
 
@@ -415,8 +415,8 @@
       const novo = prompt("Digite o nome deste participante da reunião:", current);
       if (novo && novo.trim()) {
         chipRemote.textContent = novo.trim() + " ✏️";
-        if (window.parent && window.parent.flowNative?.meeting?.renameSpeaker) {
-          window.parent.flowNative.meeting.renameSpeaker(current, novo.trim());
+        if (window.parent && window.parent.astterNative?.meeting?.renameSpeaker) {
+          window.parent.astterNative.meeting.renameSpeaker(current, novo.trim());
         }
       }
     });
@@ -431,8 +431,8 @@
         span.style.cssText = "padding: 2px 8px; border-radius: 6px; background: #27272a; font-size: 11px; border: 1px solid rgba(255,255,255,0.1); cursor: pointer;";
         span.textContent = nome.trim() + " ✏️";
         btnAdd.before(span);
-        if (window.parent && window.parent.flowNative?.meeting?.addAttendee) {
-          window.parent.flowNative.meeting.addAttendee(nome.trim());
+        if (window.parent && window.parent.astterNative?.meeting?.addAttendee) {
+          window.parent.astterNative.meeting.addAttendee(nome.trim());
         }
       }
     });
@@ -441,19 +441,19 @@
   function startMeetingRecording() {
     const title = prompt("Título da Reunião (ou enter para automático):", `Reunião ${new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`);
     const payload = { title: title || `Reunião ${new Date().toLocaleDateString('pt-BR')}` };
-    if (window.parent && window.parent.flowNative?.meeting?.start) {
-      window.parent.flowNative.meeting.start(payload);
-    } else if (window.flowNative?.meeting?.start) {
-      window.flowNative.meeting.start(payload);
+    if (window.parent && window.parent.astterNative?.meeting?.start) {
+      window.parent.astterNative.meeting.start(payload);
+    } else if (window.astterNative?.meeting?.start) {
+      window.astterNative.meeting.start(payload);
     }
     updateMeetingTopBar(true, payload.title);
   }
 
   function stopMeetingRecording() {
-    if (window.parent && window.parent.flowNative?.meeting?.stop) {
-      window.parent.flowNative.meeting.stop();
-    } else if (window.flowNative?.meeting?.stop) {
-      window.flowNative.meeting.stop();
+    if (window.parent && window.parent.astterNative?.meeting?.stop) {
+      window.parent.astterNative.meeting.stop();
+    } else if (window.astterNative?.meeting?.stop) {
+      window.astterNative.meeting.stop();
     }
     updateMeetingTopBar(false);
   }

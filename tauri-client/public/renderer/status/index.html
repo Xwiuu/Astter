@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-    <title>Flow Capsule</title>
+    <title>Astter Capsule</title>
     <link rel="icon" type="image/png" href="/assets/icons/flow-64.png"/>
     <script src="../hub/bridge.js"></script>
     <style>
@@ -43,7 +43,7 @@
         pointer-events: none !important;
       }
 
-      /* PÍLULA FLUTUANTE REA (Wispr Flow Authentic Minimalist) */
+      /* PÍLULA FLUTUANTE REA (Astter Authentic Minimalist) */
       .thought-bubble {
         -webkit-app-region: no-drag !important;
         cursor: default !important;
@@ -98,7 +98,7 @@
         pointer-events: none;
       }
 
-      /* GLOW HOVER RING (Wispr Flow signature conic glow) */
+      /* GLOW HOVER RING (Astter signature conic glow) */
       .thought-bubble::after {
         content: "";
         position: absolute;
@@ -606,8 +606,8 @@
           if (menuGrip) {
             menuGrip.addEventListener("dblclick", (e) => {
               e.stopPropagation();
-              if (window.flowNative && window.flowNative.triggerWindowMove) {
-                window.flowNative.triggerWindowMove();
+              if (window.astterNative && window.astterNative.triggerWindowMove) {
+                window.astterNative.triggerWindowMove();
               }
             });
           }
@@ -617,8 +617,8 @@
               console.log("🎙️ [Capsule] Botão de microfone acionado!");
               if (typeof toggleRecording === "function") {
                 toggleRecording();
-              } else if (window.flowNative && typeof window.flowNative.triggerDictation === "function") {
-                window.flowNative.triggerDictation();
+              } else if (window.astterNative && typeof window.astterNative.triggerDictation === "function") {
+                window.astterNative.triggerDictation();
               }
             });
           }
@@ -626,19 +626,19 @@
           if (meetingBtn) {
             bindAction(meetingBtn, () => {
               console.log("🎙️ [Capsule] Botão de reunião acionado!");
-              if (window.flowNative?.meeting?.start) {
-                window.flowNative.meeting.start();
+              if (window.astterNative?.meeting?.start) {
+                window.astterNative.meeting.start();
               }
             });
           }
 
           if (settings) {
             bindAction(settings, (e) => {
-              console.log("⚙️ [Capsule] Abrindo configurações do Flow...");
-              if (window.flowNative && typeof window.flowNative.openSettings === "function") {
-                window.flowNative.openSettings();
-              } else if (window.flowNative && typeof window.flowNative.toggleHub === "function") {
-                window.flowNative.toggleHub();
+              console.log("⚙️ [Capsule] Abrindo configurações do Astter...");
+              if (window.astterNative && typeof window.astterNative.openSettings === "function") {
+                window.astterNative.openSettings();
+              } else if (window.astterNative && typeof window.astterNative.toggleHub === "function") {
+                window.astterNative.toggleHub();
               }
               renderBubble("resting");
             });
@@ -665,8 +665,8 @@
           if (stopBtn) {
             bindAction(stopBtn, () => {
               console.log("⏹️ [Capsule] Finalizando gravação da reunião...");
-              if (window.flowNative?.meeting?.stop) {
-                window.flowNative.meeting.stop();
+              if (window.astterNative?.meeting?.stop) {
+                window.astterNative.meeting.stop();
               }
             });
           }
@@ -700,8 +700,8 @@
           if (restingGrip) {
             restingGrip.addEventListener("dblclick", (e) => {
               e.stopPropagation();
-              if (window.flowNative && window.flowNative.triggerWindowMove) {
-                window.flowNative.triggerWindowMove();
+              if (window.astterNative && window.astterNative.triggerWindowMove) {
+                window.astterNative.triggerWindowMove();
               }
             });
           }
@@ -736,8 +736,8 @@
         if (dragHasMoved && (dx !== 0 || dy !== 0)) {
           dragStartX = e.screenX;
           dragStartY = e.screenY;
-          if (window.flowNative && typeof window.flowNative.moveStatus === "function") {
-            window.flowNative.moveStatus(dx, dy);
+          if (window.astterNative && typeof window.astterNative.moveStatus === "function") {
+            window.astterNative.moveStatus(dx, dy);
           }
         }
       });
@@ -788,12 +788,12 @@
       });
 
       // Escuta mudanças de status disparadas pelo Bridge
-      window.addEventListener("flow:dictationStatus", (e) => {
+      window.addEventListener("astter:dictationStatus", (e) => {
         renderBubble(e.detail);
       });
 
       // Escuta nível de áudio em tempo real para animar as barras
-      window.addEventListener("flow:audioLevel", (e) => {
+      window.addEventListener("astter:audioLevel", (e) => {
         const level = e.detail || 0;
         const wrap = document.getElementById("waveWrap");
         if (wrap) {
@@ -825,20 +825,20 @@
         }
       });
 
-      // Clique com botão direito em qualquer modo abre o Flow Hub
+      // Clique com botão direito em qualquer modo abre o Astter Hub
       thoughtBubble.addEventListener("contextmenu", (e) => {
         e.preventDefault();
-        if (window.flowNative && window.flowNative.toggleHub) {
-          window.flowNative.toggleHub();
+        if (window.astterNative && window.astterNative.toggleHub) {
+          window.astterNative.toggleHub();
         }
       });
 
       // Escuta eventos de Reunião (Granola Dual Channel)
-      if (window.flowNative && window.flowNative.meeting) {
+      if (window.astterNative && window.astterNative.meeting) {
         let meetingTimerInterval = null;
         let meetingSeconds = 0;
 
-        window.flowNative.meeting.onStarted((data) => {
+        window.astterNative.meeting.onStarted((data) => {
           renderBubble("meeting_recording");
           meetingSeconds = 0;
           clearInterval(meetingTimerInterval);
@@ -851,12 +851,12 @@
           }, 1000);
         });
 
-        window.flowNative.meeting.onFinished(() => {
+        window.astterNative.meeting.onFinished(() => {
           clearInterval(meetingTimerInterval);
           renderBubble("completed");
         });
 
-        window.flowNative.meeting.onActiveSpeaker((data) => {
+        window.astterNative.meeting.onActiveSpeaker((data) => {
           const pill = document.getElementById("capsuleSpeakerPill");
           if (pill && data && data.speaker) {
             pill.textContent = data.speaker;

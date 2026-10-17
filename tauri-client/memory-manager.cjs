@@ -461,7 +461,7 @@ function deleteAllTranscripts() {
 // ==========================================
 
 const DEFAULT_DICTIONARY = [
-  "Flow", "Wispr", "Groq", "Whisper", "Tauri", "Linux", "Wayland", "PipeWire", "Astter", "Electron"
+  "Astter", "Wispr", "Groq", "Whisper", "Tauri", "Linux", "Wayland", "PipeWire", "Electron"
 ];
 
 function initDictionary() {
@@ -485,7 +485,7 @@ function writeDictionaryFiles() {
     const snippets = db.prepare('SELECT * FROM dictionary WHERE isSnippet = 1 ORDER BY phrase ASC').all();
 
     // Dicionário Markdown
-    let dictMd = `# Dicionário Pessoal do Astter Flow\n\nPalavras personalizadas reconhecidas com prioridade pelo modelo:\n\n`;
+    let dictMd = `# Dicionário Pessoal do Astter\n\nPalavras personalizadas reconhecidas com prioridade pelo modelo:\n\n`;
     for (const w of words) {
       const star = w.isStarred ? '⭐ ' : '';
       if (w.replacement) {
@@ -497,7 +497,7 @@ function writeDictionaryFiles() {
     fs.writeFileSync(path.join(DIRS.dictionary, 'dictionary.md'), dictMd, 'utf8');
 
     // Snippets Markdown
-    let snipMd = `# Snippets e Atalhos de Texto (Astter Flow)\n\nAtalhos automáticos expandidos ao ditar:\n\n`;
+    let snipMd = `# Snippets e Atalhos de Texto (Astter)\n\nAtalhos automáticos expandidos ao ditar:\n\n`;
     for (const s of snippets) {
       snipMd += `- **\`${s.phrase}\`** ➔ ${s.replacement || '(vazio)'}\n`;
     }
@@ -678,12 +678,12 @@ function updateInsightsAfterTranscript(newWords, newDurationSec, appName, dateOb
     fs.writeFileSync(insightsJsonPath, JSON.stringify(insightsData, null, 2), 'utf8');
 
     // Relatório amigável em Markdown
-    const summaryMd = `# Resumo e Memória de Produtividade (Astter Flow)
+    const summaryMd = `# Resumo e Memória de Produtividade (Astter)
 
 - **Total de Palavras Ditadas:** ${totalWords.toLocaleString()}
 - **Total de Sessões de Fala:** ${totalTranscripts}
 - **Velocidade Média:** ~${insightsData.words_per_minute} WPM (Palavras por Minuto - Top ${100 - insightsData.wpm_percentile}%)
-- **Correções Feitas pelo Flow:** ${insightsData.desktop_total_words_corrected} correções
+- **Correções Feitas pelo Astter:** ${insightsData.desktop_total_words_corrected} correções
 - **Tempo Total em Áudio:** ${(totalDuration / 60).toFixed(1)} minutos
 - **Dias Ativos (Streak):** ${insightsData.current_streak} dias
 
@@ -773,8 +773,8 @@ const notesCount = db.prepare('SELECT COUNT(*) as c FROM notes').get().c;
 if (notesCount === 0) {
   saveNote({
     id: "note-welcome",
-    title: "Primeira Nota com o Flow",
-    content: "O Flow agora salva todas as suas notas diretamente como arquivos Markdown (.md) na pasta `memory/notes/` e com banco SQLite local em `memory/db.db`.\n\nVocê pode editar seus arquivos em qualquer editor (Obsidian, VSCode) que o Flow manterá tudo sincronizado!",
+    title: "Primeira Nota com o Astter",
+    content: "O Astter agora salva todas as suas notas diretamente como arquivos Markdown (.md) na pasta `memory/notes/` e com banco SQLite local em `memory/db.db`.\n\nVocê pode editar seus arquivos em qualquer editor (Obsidian, VSCode) que o Astter manterá tudo sincronizado!",
     pinned: true
   });
 }

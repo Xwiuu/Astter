@@ -6,7 +6,7 @@ const { exec } = require('child_process');
 const memory = require('./memory-manager.cjs');
 
 // Configure application name and WM_CLASS for Linux KDE Plasma
-app.setName('flow-desktop');
+app.setName('astter-desktop');
 app.setDesktopName('flow-desktop');
 app.commandLine.appendSwitch('enable-features', 'GlobalShortcutsPortal');
 app.commandLine.appendSwitch('ozone-platform-hint', 'auto');
@@ -129,7 +129,7 @@ function createHubWindow() {
     minHeight: 600,
     backgroundColor: '#121212',
     icon: iconPath,
-    title: 'Flow',
+    title: 'Astter',
     show: true,
     autoHideMenuBar: true,
     webPreferences: {
@@ -187,7 +187,7 @@ function openScratchpadWindow(noteData) {
     minHeight: 400,
     backgroundColor: '#121212',
     icon: iconPath,
-    title: 'Flow Notes & Scratchpad',
+    title: 'Astter Notes & Scratchpad',
     show: true,
     autoHideMenuBar: true,
     webPreferences: {
@@ -224,18 +224,18 @@ function broadcastMeeting(channel, data) {
   });
 }
 
-meetingRecorder.on('meeting-started', (data) => broadcastMeeting('flow:meeting-started', data));
-meetingRecorder.on('meeting-finished', (data) => broadcastMeeting('flow:meeting-finished', data));
-meetingRecorder.on('active-speaker', (data) => broadcastMeeting('flow:meeting-active-speaker', data));
-meetingRecorder.on('audio-volume', (data) => broadcastMeeting('flow:meeting-audio-volume', data));
-meetingRecorder.on('transcript-turn', (data) => broadcastMeeting('flow:meeting-transcript-turn', data));
-meetingRecorder.on('speakers-updated', (data) => broadcastMeeting('flow:meeting-speakers-updated', data));
+meetingRecorder.on('meeting-started', (data) => broadcastMeeting('astter:meeting-started', data));
+meetingRecorder.on('meeting-finished', (data) => broadcastMeeting('astter:meeting-finished', data));
+meetingRecorder.on('active-speaker', (data) => broadcastMeeting('astter:meeting-active-speaker', data));
+meetingRecorder.on('audio-volume', (data) => broadcastMeeting('astter:meeting-audio-volume', data));
+meetingRecorder.on('transcript-turn', (data) => broadcastMeeting('astter:meeting-transcript-turn', data));
+meetingRecorder.on('speakers-updated', (data) => broadcastMeeting('astter:meeting-speakers-updated', data));
 
 function openGranolaWindow() {
   if (hubWindow && !hubWindow.isDestroyed()) {
     hubWindow.show();
     hubWindow.focus();
-    hubWindow.webContents.send('flow:open-notetaker', 'Notetaker');
+    hubWindow.webContents.send('astter:open-notetaker', 'Notetaker');
   }
 }
 
@@ -303,7 +303,7 @@ function moveCapsule(dx, dy) {
 
   // 2. Move no KWin Wayland (KDE Plasma 6)
   if (process.platform === 'linux') {
-    positionKWinWindowAsync('Flow Capsule', currentCapsuleX, currentCapsuleY);
+    positionKWinWindowAsync('Astter Capsule', currentCapsuleX, currentCapsuleY);
   }
 }
 
@@ -329,7 +329,7 @@ function createStatusWindow() {
     show: false,
     focusable: true,
     hasShadow: false,
-    title: 'Flow Capsule',
+    title: 'Astter Capsule',
     webPreferences: {
       preload: path.join(__dirname, 'preload.cjs'),
       nodeIntegration: false,
@@ -344,7 +344,7 @@ function createStatusWindow() {
     statusWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
     statusWindow.moveTop();
     setTimeout(() => {
-      positionKWinWindowAsync('Flow Capsule', capsuleX, capsuleY);
+      positionKWinWindowAsync('Astter Capsule', capsuleX, capsuleY);
     }, 350);
     console.log('✓ [Flow] Cápsula flutuante visível em:', statusWindow.getPosition());
   });
@@ -380,7 +380,7 @@ function createTray() {
   const trayIconPath = path.join(__dirname, 'assets/icons/flow-tray.png');
   const trayImage = nativeImage.createFromPath(trayIconPath);
   tray = new Tray(trayImage);
-  tray.setToolTip('Flow - Ditado por Voz & AI Notetaker');
+  tray.setToolTip('Astter - Ditado por Voz & AI Notetaker');
 
   const updateMenu = () => {
     const isHubOpen = hubWindow && hubWindow.isVisible();
@@ -388,7 +388,7 @@ function createTray() {
 
     const contextMenu = Menu.buildFromTemplate([
       {
-        label: 'Flow (Wispr Flow v1.6.1147)',
+        label: 'Astter (built on Wispr Flow v1.6.1147)',
         enabled: false,
         icon: path.join(__dirname, 'assets/icons/flow-32.png')
       },
@@ -400,7 +400,7 @@ function createTray() {
         }
       },
       {
-        label: isHubOpen ? '🗂️  Ocultar Flow Hub' : '🗂️  Abrir Flow Hub',
+        label: isHubOpen ? '🗂️  Ocultar Astter Hub' : '🗂️  Abrir Astter Hub',
         click: () => {
           toggleHub();
         }
@@ -481,9 +481,9 @@ function triggerDictation() {
     }
     statusWindow.setAlwaysOnTop(true, 'screen-saver', 1);
     statusWindow.moveTop();
-    statusWindow.webContents.send('flow:dictation-trigger');
+    statusWindow.webContents.send('astter:dictation-trigger');
   } else if (hubWindow && hubWindow.webContents) {
-    hubWindow.webContents.send('flow:dictation-trigger');
+    hubWindow.webContents.send('astter:dictation-trigger');
   }
 }
 
@@ -495,18 +495,18 @@ function startDictation() {
     }
     statusWindow.setAlwaysOnTop(true, 'screen-saver', 1);
     statusWindow.moveTop();
-    statusWindow.webContents.send('flow:dictation-start');
+    statusWindow.webContents.send('astter:dictation-start');
   } else if (hubWindow && hubWindow.webContents) {
-    hubWindow.webContents.send('flow:dictation-start');
+    hubWindow.webContents.send('astter:dictation-start');
   }
 }
 
 function stopDictation() {
   console.log('⏹️ [Flow PTT] Parar ditado (tecla solta)');
   if (statusWindow && statusWindow.webContents) {
-    statusWindow.webContents.send('flow:dictation-stop');
+    statusWindow.webContents.send('astter:dictation-stop');
   } else if (hubWindow && hubWindow.webContents) {
-    hubWindow.webContents.send('flow:dictation-stop');
+    hubWindow.webContents.send('astter:dictation-stop');
   }
 }
 
@@ -549,9 +549,9 @@ function quitFlow() {
 }
 
 // IPC Handlers
-ipcMain.on('flow:toggle-hub', toggleHub);
-ipcMain.on('flow:dictation-trigger', triggerDictation);
-ipcMain.on('flow:open-settings', () => {
+ipcMain.on('astter:toggle-hub', toggleHub);
+ipcMain.on('astter:dictation-trigger', triggerDictation);
+ipcMain.on('astter:open-settings', () => {
   const navigateToSettings = () => {
     if (hubWindow && !hubWindow.isDestroyed() && hubWindow.webContents) {
       hubWindow.webContents.executeJavaScript(`
@@ -572,15 +572,15 @@ ipcMain.on('flow:open-settings', () => {
     setTimeout(navigateToSettings, 200);
   }
 });
-ipcMain.on('flow:toggle-status', toggleStatus);
-ipcMain.on('flow:minimize-hub', () => {
+ipcMain.on('astter:toggle-status', toggleStatus);
+ipcMain.on('astter:minimize-hub', () => {
   if (hubWindow) hubWindow.minimize();
 });
-ipcMain.on('flow:close-hub', () => {
+ipcMain.on('astter:close-hub', () => {
   if (hubWindow) hubWindow.hide();
 });
-ipcMain.on('flow:quit', quitFlow);
-ipcMain.on('flow:trigger-window-move', () => {
+ipcMain.on('astter:quit', quitFlow);
+ipcMain.on('astter:trigger-window-move', () => {
   if (statusWindow && !statusWindow.isDestroyed()) {
     statusWindow.focus();
     try {
@@ -589,11 +589,11 @@ ipcMain.on('flow:trigger-window-move', () => {
   }
 });
 
-ipcMain.on('flow:move-status', (event, { dx, dy }) => {
+ipcMain.on('astter:move-status', (event, { dx, dy }) => {
   moveCapsule(dx, dy);
 });
 
-ipcMain.on('flow:set-status-bounds', (event, { width, height, expandUpwards = true }) => {
+ipcMain.on('astter:set-status-bounds', (event, { width, height, expandUpwards = true }) => {
   if (!statusWindow) return;
   const currentX = currentCapsuleX || statusWindow.getPosition()[0];
   const currentY = currentCapsuleY || statusWindow.getPosition()[1];
@@ -621,11 +621,11 @@ ipcMain.on('flow:set-status-bounds', (event, { width, height, expandUpwards = tr
   });
 
   if (process.platform === 'linux') {
-    positionKWinWindowAsync('Flow Capsule', newX, newY);
+    positionKWinWindowAsync('Astter Capsule', newX, newY);
   }
 });
 
-ipcMain.on('flow:copy-to-clipboard', (event, payload) => {
+ipcMain.on('astter:copy-to-clipboard', (event, payload) => {
   let text = '';
   let autoPaste = true;
 
@@ -671,7 +671,7 @@ ipcMain.on('flow:copy-to-clipboard', (event, payload) => {
   }
 });
 
-ipcMain.handle('flow:transcribe-audio', async (event, base64Data) => {
+ipcMain.handle('astter:transcribe-audio', async (event, base64Data) => {
   if (!base64Data || typeof base64Data !== 'string') return '';
   try {
     const fs = require('fs');
@@ -727,68 +727,68 @@ ipcMain.handle('flow:transcribe-audio', async (event, base64Data) => {
 // ==========================================
 // FLOW MEMORY PERSISTENCE HANDLERS (SQLite + .md)
 // ==========================================
-ipcMain.handle('flow:memory-get-notes', async () => memory.getNotes());
-ipcMain.handle('flow:memory-get-note-by-id', async (e, id) => memory.getNoteById(id));
-ipcMain.handle('flow:memory-save-note', async (e, note) => {
+ipcMain.handle('astter:memory-get-notes', async () => memory.getNotes());
+ipcMain.handle('astter:memory-get-note-by-id', async (e, id) => memory.getNoteById(id));
+ipcMain.handle('astter:memory-save-note', async (e, note) => {
   const saved = memory.saveNote(note);
   if (hubWindow && !hubWindow.isDestroyed()) {
     hubWindow.webContents.send('notes:updated', saved);
   }
   return saved;
 });
-ipcMain.handle('flow:memory-delete-note', async (e, id) => {
+ipcMain.handle('astter:memory-delete-note', async (e, id) => {
   const ok = memory.deleteNote(id);
   if (hubWindow && !hubWindow.isDestroyed()) {
     hubWindow.webContents.send('notes:updated', { id, deleted: true });
   }
   return ok;
 });
-ipcMain.handle('flow:memory-pin-note', async (e, id, pinned) => memory.pinNote(id, pinned));
+ipcMain.handle('astter:memory-pin-note', async (e, id, pinned) => memory.pinNote(id, pinned));
 
-ipcMain.handle('flow:memory-save-transcript', async (e, t) => {
+ipcMain.handle('astter:memory-save-transcript', async (e, t) => {
   const saved = memory.saveTranscript(t);
   if (hubWindow && !hubWindow.isDestroyed()) {
     hubWindow.webContents.send('history:needsUpdate');
   }
   return saved;
 });
-ipcMain.handle('flow:memory-get-transcripts', async (e, params) => memory.getTranscripts(params));
-ipcMain.handle('flow:memory-get-transcript-by-id', async (e, id) => memory.getTranscriptById(id));
-ipcMain.handle('flow:memory-delete-transcript', async (e, id) => memory.deleteTranscript(id));
-ipcMain.handle('flow:memory-delete-all-transcripts', async () => memory.deleteAllTranscripts());
+ipcMain.handle('astter:memory-get-transcripts', async (e, params) => memory.getTranscripts(params));
+ipcMain.handle('astter:memory-get-transcript-by-id', async (e, id) => memory.getTranscriptById(id));
+ipcMain.handle('astter:memory-delete-transcript', async (e, id) => memory.deleteTranscript(id));
+ipcMain.handle('astter:memory-delete-all-transcripts', async () => memory.deleteAllTranscripts());
 
-ipcMain.handle('flow:memory-get-dictionary', async () => memory.getDictionaryWords());
-ipcMain.handle('flow:memory-add-dictionary', async (e, params) => memory.addDictionaryWord(params));
-ipcMain.handle('flow:memory-remove-dictionary', async (e, phrase) => memory.removeDictionaryWord(phrase));
-ipcMain.handle('flow:memory-edit-dictionary', async (e, params) => memory.editDictionaryWord(params));
-ipcMain.handle('flow:memory-star-dictionary', async (e, phrase, isStarred) => memory.starDictionaryWord(phrase, isStarred));
-ipcMain.handle('flow:memory-get-snippets', async () => memory.getSnippets());
+ipcMain.handle('astter:memory-get-dictionary', async () => memory.getDictionaryWords());
+ipcMain.handle('astter:memory-add-dictionary', async (e, params) => memory.addDictionaryWord(params));
+ipcMain.handle('astter:memory-remove-dictionary', async (e, phrase) => memory.removeDictionaryWord(phrase));
+ipcMain.handle('astter:memory-edit-dictionary', async (e, params) => memory.editDictionaryWord(params));
+ipcMain.handle('astter:memory-star-dictionary', async (e, phrase, isStarred) => memory.starDictionaryWord(phrase, isStarred));
+ipcMain.handle('astter:memory-get-snippets', async () => memory.getSnippets());
 
-ipcMain.handle('flow:memory-get-scratchpad', async () => memory.getScratchpad());
-ipcMain.handle('flow:memory-save-scratchpad', async (e, params) => memory.saveScratchpad(params));
+ipcMain.handle('astter:memory-get-scratchpad', async () => memory.getScratchpad());
+ipcMain.handle('astter:memory-save-scratchpad', async (e, params) => memory.saveScratchpad(params));
 
-ipcMain.handle('flow:memory-get-insights-stats', async () => memory.getInsightsStats());
-ipcMain.handle('flow:memory-get-heatmap-stats', async () => memory.getHeatmapStats());
-ipcMain.handle('flow:memory-get-meetings', async () => memory.getMeetings());
-ipcMain.handle('flow:memory-update-meeting-tags', async (e, id, tags) => memory.updateMeetingTags(id, tags));
+ipcMain.handle('astter:memory-get-insights-stats', async () => memory.getInsightsStats());
+ipcMain.handle('astter:memory-get-heatmap-stats', async () => memory.getHeatmapStats());
+ipcMain.handle('astter:memory-get-meetings', async () => memory.getMeetings());
+ipcMain.handle('astter:memory-update-meeting-tags', async (e, id, tags) => memory.updateMeetingTags(id, tags));
 
-ipcMain.on('flow:open-scratchpad', (event, noteData) => {
+ipcMain.on('astter:open-scratchpad', (event, noteData) => {
   openScratchpadWindow(noteData);
 });
 
-ipcMain.on('flow:open-granola-window', () => {
+ipcMain.on('astter:open-granola-window', () => {
   openGranolaWindow();
 });
 
-ipcMain.handle('flow:start-meeting-recording', async (event, options) => {
+ipcMain.handle('astter:start-meeting-recording', async (event, options) => {
   return meetingRecorder.start(options);
 });
 
-ipcMain.handle('flow:stop-meeting-recording', async () => {
+ipcMain.handle('astter:stop-meeting-recording', async () => {
   return await meetingRecorder.stop();
 });
 
-ipcMain.handle('flow:get-meeting-status', async () => {
+ipcMain.handle('astter:get-meeting-status', async () => {
   return {
     isRecording: meetingRecorder.isRecording,
     startTime: meetingRecorder.startTime,
@@ -799,11 +799,11 @@ ipcMain.handle('flow:get-meeting-status', async () => {
   };
 });
 
-ipcMain.on('flow:meeting-rename-speaker', (event, { oldName, newName }) => {
+ipcMain.on('astter:meeting-rename-speaker', (event, { oldName, newName }) => {
   meetingRecorder.renameSpeaker(oldName, newName);
 });
 
-ipcMain.on('flow:meeting-add-attendee', (event, { name }) => {
+ipcMain.on('astter:meeting-add-attendee', (event, { name }) => {
   meetingRecorder.addAttendee(name);
 });
 

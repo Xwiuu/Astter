@@ -80,7 +80,7 @@ def get_next_key_order(keys):
     return ordered
 
 def build_payload(audio_data, model_name):
-    boundary = '----WebKitFormBoundaryFlowWisprDesktop'
+    boundary = '----WebKitFormBoundaryAstterDesktop'
     body = [
         f'--{boundary}'.encode(),
         b'Content-Disposition: form-data; name="file"; filename="audio.webm"',
@@ -120,7 +120,7 @@ def transcribe(audio_path):
 
     keys = load_groq_keys()
     if not keys:
-        sys.stderr.write("❌ [Flow Groq] Nenhuma chave GROQ_API_KEY encontrada no ambiente ou .env\n")
+        sys.stderr.write("❌ [Astter Groq] Nenhuma chave GROQ_API_KEY encontrada no ambiente ou .env\n")
         return ""
 
     ordered_keys = get_next_key_order(keys)
@@ -148,24 +148,24 @@ def transcribe(audio_path):
                     if text in HALLUCINATIONS or len(text) < 2:
                         return ""
 
-                    sys.stderr.write(f"✓ [Flow Groq] Transcrito com sucesso ({model} | Chave: {key_masked})\n")
+                    sys.stderr.write(f"✓ [Astter Groq] Transcrito com sucesso ({model} | Chave: {key_masked})\n")
                     return text
 
             except urllib.error.HTTPError as e:
                 if e.code == 429:
-                    sys.stderr.write(f"⚠️ [Flow Groq] Rate Limit (429) na chave {key_masked}. Alternando para próxima chave do pool...\n")
+                    sys.stderr.write(f"⚠️ [Astter Groq] Rate Limit (429) na chave {key_masked}. Alternando para próxima chave do pool...\n")
                     break  # Tenta a próxima chave do pool
                 elif e.code == 404 and model == 'whisper-large-v3-turbo':
-                    sys.stderr.write(f"⚠️ [Flow Groq] Modelo turbo indisponível na chave {key_masked}, tentando whisper-large-v3...\n")
+                    sys.stderr.write(f"⚠️ [Astter Groq] Modelo turbo indisponível na chave {key_masked}, tentando whisper-large-v3...\n")
                     continue
                 else:
-                    sys.stderr.write(f"⚠️ [Flow Groq] Erro HTTP {e.code} ({e.reason}) na chave {key_masked}.\n")
+                    sys.stderr.write(f"⚠️ [Astter Groq] Erro HTTP {e.code} ({e.reason}) na chave {key_masked}.\n")
                     break
             except Exception as e:
-                sys.stderr.write(f"⚠️ [Flow Groq] Erro de conexão com chave {key_masked}: {e}\n")
+                sys.stderr.write(f"⚠️ [Astter Groq] Erro de conexão com chave {key_masked}: {e}\n")
                 break
 
-    sys.stderr.write("❌ [Flow Groq] Todas as chaves da Groq falharam ou atingiram limite.\n")
+    sys.stderr.write("❌ [Astter Groq] Todas as chaves da Groq falharam ou atingiram limite.\n")
     return ""
 
 if __name__ == '__main__':

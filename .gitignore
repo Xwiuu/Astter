@@ -22,6 +22,7 @@ test_*
 .vite/
 *.log
 /tmp/
+.fuse_hidden*
 
 # Análises e extrações locais
 analysis/

@@ -1,6 +1,6 @@
 // ========================================================
 // FLOW BRIDGE: Mock Electron & Zubridge para rodar o
-// Frontend Oficial do Wispr Flow nativamente no Linux!
+// Frontend Oficial do Astter nativamente no Linux!
 // ========================================================
 
 (function () {
@@ -18,7 +18,7 @@
     return origFetch.apply(this, arguments);
   };
 
-  // Força Dark Mode nativo do Wispr Flow (apenas no Hub)
+  // Força Dark Mode nativo do Astter (apenas no Hub)
   try {
     document.documentElement.dataset.theme = "dark";
     if (!window.location.pathname.includes("/status/")) {
@@ -279,7 +279,7 @@
     }
   ];
 
-  // Estado Root do Wispr Flow
+  // Estado Root do Astter
   const rootState = {
     sessionId: "flow-session-1",
     authSignedIn: true,
@@ -330,8 +330,8 @@
       {
         id: "note-1",
         title: "Primeira Nota com o Flow",
-        content: "O Flow é uma alternativa livre ao Wispr Flow, agora rodando nativamente no Linux com aceleração Whisper na Groq.",
-        contentPreview: "O Flow é uma alternativa livre ao Wispr Flow, agora rodando nativamente no Linux com aceleração Whisper na Groq.",
+        content: "O Flow é uma alternativa livre ao Astter, agora rodando nativamente no Linux com aceleração Whisper na Groq.",
+        contentPreview: "O Flow é uma alternativa livre ao Astter, agora rodando nativamente no Linux com aceleração Whisper na Groq.",
         createdAt: Date.now() - 3600000,
         updatedAt: Date.now() - 3600000,
         modifiedAt: Date.now() - 3600000
@@ -443,7 +443,7 @@
   };
 
   // Abre o Notetaker dentro do hub quando o main process pede (flow:open-notetaker)
-  window.flowNative?.onOpenNotetaker?.((page) => window.zubridge.dispatch("hub:openPage", page || "Notetaker"));
+  window.astterNative?.onOpenNotetaker?.((page) => window.zubridge.dispatch("hub:openPage", page || "Notetaker"));
 
   // Sincroniza o embed do Granola na aba Notetaker
   function updateGranolaEmbed() {
@@ -576,14 +576,14 @@
         if (channel === "notes:get") {
           const id = args[0]?.id || args[0];
           if (id && typeof id === "string") {
-            if (window.flowNative?.memory) {
-              const note = await window.flowNative.memory.getNoteById(id);
+            if (window.astterNative?.memory) {
+              const note = await window.astterNative.memory.getNoteById(id);
               if (note) return note;
             }
             return (rootState.notes || []).find((n) => n.id === id) || null;
           }
-          if (window.flowNative?.memory) {
-            const list = await window.flowNative.memory.getNotes();
+          if (window.astterNative?.memory) {
+            const list = await window.astterNative.memory.getNotes();
             if (list && list.length > 0) rootState.notes = list;
           }
           return rootState.notes || [];
@@ -591,9 +591,9 @@
         if (channel === "notes:create" || channel === "notes:edit") {
           const noteData = args[0] || {};
           let saved = noteData;
-          if (window.flowNative?.memory) {
-            saved = await window.flowNative.memory.saveNote(noteData);
-            rootState.notes = await window.flowNative.memory.getNotes();
+          if (window.astterNative?.memory) {
+            saved = await window.astterNative.memory.saveNote(noteData);
+            rootState.notes = await window.astterNative.memory.getNotes();
           } else {
             const id = noteData.id || "note-" + Date.now();
             saved = { ...noteData, id, modifiedAt: Date.now() };
@@ -604,9 +604,9 @@
         }
         if (channel === "notes:delete") {
           const id = args[0]?.id || args[0];
-          if (window.flowNative?.memory && id) {
-            await window.flowNative.memory.deleteNote(id);
-            rootState.notes = await window.flowNative.memory.getNotes();
+          if (window.astterNative?.memory && id) {
+            await window.astterNative.memory.deleteNote(id);
+            rootState.notes = await window.astterNative.memory.getNotes();
           } else {
             rootState.notes = (rootState.notes || []).filter((n) => n.id !== id);
           }
@@ -616,16 +616,16 @@
         if (channel === "notes:pin") {
           const id = args[0]?.id;
           const pinned = args[0]?.pinned;
-          if (window.flowNative?.memory && id) {
-            await window.flowNative.memory.pinNote(id, pinned);
-            rootState.notes = await window.flowNative.memory.getNotes();
+          if (window.astterNative?.memory && id) {
+            await window.astterNative.memory.pinNote(id, pinned);
+            rootState.notes = await window.astterNative.memory.getNotes();
           }
           listeners.forEach((fn) => { try { fn(rootState); } catch (_) {} });
           return true;
         }
         if (channel === "notes:refresh" || channel === "notes:hardRefresh") {
-          if (window.flowNative?.memory) {
-            rootState.notes = await window.flowNative.memory.getNotes();
+          if (window.astterNative?.memory) {
+            rootState.notes = await window.astterNative.memory.getNotes();
             listeners.forEach((fn) => { try { fn(rootState); } catch (_) {} });
           }
           return true;
@@ -634,36 +634,36 @@
         // ==================== HISTÓRICO HOME (memory/dictations/*.md) ====================
         if (channel === "history:getLastTranscripts") {
           const params = args[0] || {};
-          if (window.flowNative?.memory) {
-            return await window.flowNative.memory.getTranscripts(params);
+          if (window.astterNative?.memory) {
+            return await window.astterNative.memory.getTranscripts(params);
           }
           return [];
         }
         if (channel === "history:getTranscript" || channel === "history:getTranscriptAllColumns") {
           const id = args[0]?.transcriptEntityId || args[0];
-          if (window.flowNative?.memory && id) {
-            return await window.flowNative.memory.getTranscriptById(id);
+          if (window.astterNative?.memory && id) {
+            return await window.astterNative.memory.getTranscriptById(id);
           }
           return null;
         }
         if (channel === "history:deleteTranscript") {
           const id = args[0]?.transcriptEntityId || args[0];
-          if (window.flowNative?.memory && id) {
-            await window.flowNative.memory.deleteTranscript(id);
+          if (window.astterNative?.memory && id) {
+            await window.astterNative.memory.deleteTranscript(id);
             emitIpc("history:needsUpdate");
           }
           return true;
         }
         if (channel === "history:deleteAllTranscripts" || channel === "history:archiveAll") {
-          if (window.flowNative?.memory) {
-            await window.flowNative.memory.deleteAllTranscripts();
+          if (window.astterNative?.memory) {
+            await window.astterNative.memory.deleteAllTranscripts();
             emitIpc("history:needsUpdate");
           }
           return true;
         }
         if (channel === "history:initializeStatistics") {
-          if (window.flowNative?.memory) {
-            const st = await window.flowNative.memory.getInsightsStats();
+          if (window.astterNative?.memory) {
+            const st = await window.astterNative.memory.getInsightsStats();
             return {
               totalWords: st.total_words,
               wordsToday: st.total_words,
@@ -686,8 +686,8 @@
 
         // ==================== INSIGHTS & ESTATÍSTICAS ====================
         if (channel === "insights:getStats") {
-          if (window.flowNative?.memory) {
-            const st = await window.flowNative.memory.getInsightsStats();
+          if (window.astterNative?.memory) {
+            const st = await window.astterNative.memory.getInsightsStats();
             if (st) {
               st.wpm_percentile = st.wpm_percentile ?? 96;
               st.desktop_total_words_corrected = st.desktop_total_words_corrected ?? Math.max(14, Math.round((st.total_words || 0) * 0.08));
@@ -707,8 +707,8 @@
           return rootState.insightsStats;
         }
         if (channel === "insights:getHeatmap") {
-          if (window.flowNative?.memory) {
-            const hm = await window.flowNative.memory.getHeatmapStats();
+          if (window.astterNative?.memory) {
+            const hm = await window.astterNative.memory.getHeatmapStats();
             rootState.heatmapStats = { data: hm, error: false };
             return rootState.heatmapStats.data;
           }
@@ -718,32 +718,32 @@
         // ==================== DICIONÁRIO & SNIPPETS ====================
         if (channel === "memory:initializeDictionary") return true;
         if (channel === "memory:getStrippedSnippets") {
-          if (window.flowNative?.memory) {
-            return await window.flowNative.memory.getSnippets();
+          if (window.astterNative?.memory) {
+            return await window.astterNative.memory.getSnippets();
           }
           return [];
         }
         if (channel === "memory:addManualWord" || channel === "memory:addManualTeamWord") {
-          if (window.flowNative?.memory) {
-            await window.flowNative.memory.addDictionaryWord(args[0] || {});
-            rootState.dictionaryWords = await window.flowNative.memory.getDictionaryWords();
+          if (window.astterNative?.memory) {
+            await window.astterNative.memory.addDictionaryWord(args[0] || {});
+            rootState.dictionaryWords = await window.astterNative.memory.getDictionaryWords();
             listeners.forEach((fn) => { try { fn(rootState); } catch (_) {} });
           }
           return { success: true };
         }
         if (channel === "memory:editManualWord" || channel === "memory:editManualTeamWord") {
-          if (window.flowNative?.memory) {
-            await window.flowNative.memory.editDictionaryWord(args[0] || {});
-            rootState.dictionaryWords = await window.flowNative.memory.getDictionaryWords();
+          if (window.astterNative?.memory) {
+            await window.astterNative.memory.editDictionaryWord(args[0] || {});
+            rootState.dictionaryWords = await window.astterNative.memory.getDictionaryWords();
             listeners.forEach((fn) => { try { fn(rootState); } catch (_) {} });
           }
           return true;
         }
         if (channel === "memory:removeManualWord" || channel === "memory:removeManualWords" || channel === "memory:removeManualTeamWord") {
           const phrase = args[0]?.word || args[0]?.phrase || args[0];
-          if (window.flowNative?.memory && phrase) {
-            await window.flowNative.memory.removeDictionaryWord(phrase);
-            rootState.dictionaryWords = await window.flowNative.memory.getDictionaryWords();
+          if (window.astterNative?.memory && phrase) {
+            await window.astterNative.memory.removeDictionaryWord(phrase);
+            rootState.dictionaryWords = await window.astterNative.memory.getDictionaryWords();
             listeners.forEach((fn) => { try { fn(rootState); } catch (_) {} });
           }
           return true;
@@ -751,16 +751,16 @@
         if (channel === "memory:starWord") {
           const phrase = args[0]?.word || args[0]?.phrase || args[0];
           const isStarred = args[0]?.isStarred ?? true;
-          if (window.flowNative?.memory && phrase) {
-            await window.flowNative.memory.starDictionaryWord(phrase, isStarred);
-            rootState.dictionaryWords = await window.flowNative.memory.getDictionaryWords();
+          if (window.astterNative?.memory && phrase) {
+            await window.astterNative.memory.starDictionaryWord(phrase, isStarred);
+            rootState.dictionaryWords = await window.astterNative.memory.getDictionaryWords();
             listeners.forEach((fn) => { try { fn(rootState); } catch (_) {} });
           }
           return true;
         }
         if (channel === "memory:syncDictionary") {
-          if (window.flowNative?.memory) {
-            rootState.dictionaryWords = await window.flowNative.memory.getDictionaryWords();
+          if (window.astterNative?.memory) {
+            rootState.dictionaryWords = await window.astterNative.memory.getDictionaryWords();
             listeners.forEach((fn) => { try { fn(rootState); } catch (_) {} });
           }
           return true;
@@ -769,13 +769,13 @@
         // ==================== RASCUNHO / SCRATCHPAD ====================
         if (channel === "scratchpad:open" || channel === "scratchpad:openWithNote") {
           if (window.electron?.ipc?.send) {
-            window.electron.ipc.send("flow:open-scratchpad", args[0]);
+            window.electron.ipc.send("astter:open-scratchpad", args[0]);
           }
           return true;
         }
         if (channel === "scratchpad:getRecentNotes") {
-          if (window.flowNative?.memory) {
-            const list = await window.flowNative.memory.getNotes();
+          if (window.astterNative?.memory) {
+            const list = await window.astterNative.memory.getNotes();
             return { notes: list || [], hasMore: false };
           }
           return { notes: rootState.notes || [], hasMore: false };
@@ -783,14 +783,14 @@
         if (channel === "scratchpad:saveNote") {
           const noteData = args[0] || {};
           let noteId = noteData.noteId;
-          if (window.flowNative?.memory) {
-            const saved = await window.flowNative.memory.saveNote({
+          if (window.astterNative?.memory) {
+            const saved = await window.astterNative.memory.saveNote({
               id: noteId,
               title: noteData.title,
               content: noteData.content
             });
-            await window.flowNative.memory.saveScratchpad(noteData);
-            rootState.notes = await window.flowNative.memory.getNotes();
+            await window.astterNative.memory.saveScratchpad(noteData);
+            rootState.notes = await window.astterNative.memory.getNotes();
             listeners.forEach((fn) => { try { fn(rootState); } catch (_) {} });
             noteId = saved?.id || noteId;
           }
@@ -891,13 +891,13 @@
 
   function emitIpcLocal(channel, ...args) {
     try {
-      window.dispatchEvent(new CustomEvent("flow:ipc", { detail: { channel, args } }));
+      window.dispatchEvent(new CustomEvent("astter:ipc", { detail: { channel, args } }));
       if (channel === "status:dictationStatus") {
-        window.dispatchEvent(new CustomEvent("flow:dictationStatus", { detail: args[0] }));
-      } else if (channel === "flow:liveTranscript") {
-        window.dispatchEvent(new CustomEvent("flow:liveTranscript", { detail: args[0] }));
-      } else if (channel === "flow:audioLevel") {
-        window.dispatchEvent(new CustomEvent("flow:audioLevel", { detail: args[0] }));
+        window.dispatchEvent(new CustomEvent("astter:dictationStatus", { detail: args[0] }));
+      } else if (channel === "astter:liveTranscript") {
+        window.dispatchEvent(new CustomEvent("astter:liveTranscript", { detail: args[0] }));
+      } else if (channel === "astter:audioLevel") {
+        window.dispatchEvent(new CustomEvent("astter:audioLevel", { detail: args[0] }));
       }
     } catch (e) {}
     const cbs = ipcListeners.get(channel);
@@ -951,7 +951,7 @@
         }
         const text = (final + interim).trim();
         if (text) {
-          emitIpc("flow:liveTranscript", { text, isFinal: false });
+          emitIpc("astter:liveTranscript", { text, isFinal: false });
         }
       };
 
@@ -995,7 +995,7 @@
         }
         const average = sum / bufferLength;
         const normalized = Math.min(1.0, Math.max(0.0, average / 128.0));
-        emitIpc("flow:audioLevel", normalized);
+        emitIpc("astter:audioLevel", normalized);
       }, 70);
     } catch (e) {}
   }
@@ -1067,7 +1067,7 @@
       console.log("🎙️ [Flow Audio] Gravação iniciada com sucesso (0ms latência)!");
 
       emitIpc("status:dictationStatus", "active_ptt");
-      emitIpc("flow:liveTranscript", { text: "", isFinal: false });
+      emitIpc("astter:liveTranscript", { text: "", isFinal: false });
       startLiveSpeechStreaming();
       startAudioAnalyser(audioStream);
     } catch (err) {
@@ -1100,18 +1100,18 @@
           playFlowSound("success");
           console.log("✨ [Flow Groq Whisper] Transcrição concluída:", text);
 
-          emitIpc("flow:liveTranscript", { text, isFinal: true });
+          emitIpc("astter:liveTranscript", { text, isFinal: true });
 
-          if (window.flowNative && window.flowNative.copyToClipboard) {
-            window.flowNative.copyToClipboard({ text, autoPaste: true });
+          if (window.astterNative && window.astterNative.copyToClipboard) {
+            window.astterNative.copyToClipboard({ text, autoPaste: true });
           }
 
           const wordCount = text.trim().split(/\s+/).filter(Boolean).length;
 
-          if (window.flowNative && window.flowNative.memory) {
+          if (window.astterNative && window.astterNative.memory) {
             try {
               // 1. Salva a transcrição no histórico (.md em memory/dictations/ e SQLite db.db)
-              await window.flowNative.memory.saveTranscript({
+              await window.astterNative.memory.saveTranscript({
                 text,
                 formattedText: text,
                 app: rootState.userContext?.appName || "Konsole",
@@ -1120,14 +1120,14 @@
               });
 
               // 2. Salva como nota Markdown (.md em memory/notes/)
-              await window.flowNative.memory.saveNote({
+              await window.astterNative.memory.saveNote({
                 title: text.slice(0, 36) + (text.length > 36 ? "..." : ""),
                 content: text
               });
 
               // 3. Atualiza estado e estatísticas
-              rootState.notes = await window.flowNative.memory.getNotes();
-              const stats = await window.flowNative.memory.getInsightsStats();
+              rootState.notes = await window.astterNative.memory.getNotes();
+              const stats = await window.astterNative.memory.getInsightsStats();
               if (stats) {
                 rootState.insightsStats = { data: stats, error: false };
                 if (rootState.prefs?.cache?.statistics) {
@@ -1188,7 +1188,7 @@
     }
 
     // 1. No Electron nativo, usa o pipeline de alta confiabilidade via IPC
-    if (window.flowNative && window.flowNative.transcribeAudio) {
+    if (window.astterNative && window.astterNative.transcribeAudio) {
       try {
         const arrayBuf = await audioBlob.arrayBuffer();
         const bytes = new Uint8Array(arrayBuf);
@@ -1198,10 +1198,10 @@
           binary += String.fromCharCode(bytes[i]);
         }
         const base64 = btoa(binary);
-        const text = await window.flowNative.transcribeAudio(base64);
+        const text = await window.astterNative.transcribeAudio(base64);
         return text ? text.trim() : "";
       } catch (err) {
-        console.error("[-] Falha na transcrição via flowNative:", err);
+        console.error("[-] Falha na transcrição via astterNative:", err);
       }
     }
 
@@ -1251,39 +1251,39 @@
   window.__flowStartDictation = () => toggleVoiceRecording(true);
   window.__flowStopDictation = () => toggleVoiceRecording(false);
 
-  if (typeof window.flowNative !== "undefined") {
-    if (window.flowNative.onDictationTrigger) {
-      window.flowNative.onDictationTrigger(() => {
+  if (typeof window.astterNative !== "undefined") {
+    if (window.astterNative.onDictationTrigger) {
+      window.astterNative.onDictationTrigger(() => {
         console.log("⚡ [Flow Native Trigger] Ditado alternado via atalho nativo do sistema!");
         toggleVoiceRecording();
       });
     }
-    if (window.flowNative.onDictationStart) {
-      window.flowNative.onDictationStart(() => {
+    if (window.astterNative.onDictationStart) {
+      window.astterNative.onDictationStart(() => {
         console.log("⚡ [Flow PTT Start] Tecla pressionada! Iniciando gravação...");
         toggleVoiceRecording(true);
       });
     }
-    if (window.flowNative.onDictationStop) {
-      window.flowNative.onDictationStop(() => {
+    if (window.astterNative.onDictationStop) {
+      window.astterNative.onDictationStop(() => {
         console.log("⚡ [Flow PTT Stop] Tecla solta! Finalizando gravação...");
         toggleVoiceRecording(false);
       });
     }
-    if (window.flowNative.onHistoryNeedsUpdate) {
-      window.flowNative.onHistoryNeedsUpdate(() => {
+    if (window.astterNative.onHistoryNeedsUpdate) {
+      window.astterNative.onHistoryNeedsUpdate(() => {
         console.log("⚡ [Bridge] Recebido history:needsUpdate do processo nativo!");
         emitIpc("history:needsUpdate");
       });
     }
-    if (window.flowNative.memory) {
+    if (window.astterNative.memory) {
       (async () => {
         try {
           const [savedNotes, savedWords, savedStats, savedHeatmap] = await Promise.all([
-            window.flowNative.memory.getNotes(),
-            window.flowNative.memory.getDictionaryWords(),
-            window.flowNative.memory.getInsightsStats(),
-            window.flowNative.memory.getHeatmapStats()
+            window.astterNative.memory.getNotes(),
+            window.astterNative.memory.getDictionaryWords(),
+            window.astterNative.memory.getInsightsStats(),
+            window.astterNative.memory.getHeatmapStats()
           ]);
           if (savedNotes && savedNotes.length > 0) rootState.notes = savedNotes;
           if (savedWords && savedWords.length > 0) rootState.dictionaryWords = savedWords;
@@ -1318,5 +1318,5 @@
     }
   }
 
-  console.log("✓ [Flow Bridge] Bridge pronto para executar o Wispr Flow oficial com Groq Whisper!");
+  console.log("✓ [Flow Bridge] Bridge pronto para executar o Astter oficial com Groq Whisper!");
 })();
