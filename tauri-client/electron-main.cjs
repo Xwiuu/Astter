@@ -685,26 +685,33 @@ ipcMain.handle('flow:transcribe-audio', async (event, base64Data) => {
     return new Promise((resolve) => {
       execFile('python3', [pyScript, tmpAudioPath], { timeout: 12000 }, (error, stdout, stderr) => {
         if (error) {
-          console.error('❌ [Flow Groq Whisper Error]:', stderr || error.message);
+          const reason = error.killed ? 'timeout' : (stderr || error.message || 'unknown_error').toString().trim().slice(0, 300);
+          console.error('❌ [Flow Groq Whisper Error]:', reason);
+          try {
+            memory.saveTranscript({ text: '', app: 'Konsole', duration: 2.0, status: 'failed', failureReason: reason });
+            if (hubWindow && !hubWindow.isDestroyed()) {
+              hubWindow.webContents.send('history:needsUpdate');
+            }
+          } catch (mErr) {
+            console.warn('⚠️ [Memory] Erro ao salvar tentativa falha:', mErr);
+          }
           resolve('');
         } else {
           const text = stdout.trim();
           console.log('✨ [Flow Groq Whisper]:', text);
 
-          // Salva automaticamente o ditado em Markdown e no SQLite db.db!
-          if (text) {
-            try {
-              memory.saveTranscript({
-                text,
-                app: 'Konsole',
-                duration: 2.0
-              });
-              if (hubWindow && !hubWindow.isDestroyed()) {
-                hubWindow.webContents.send('history:needsUpdate');
-              }
-            } catch (mErr) {
-              console.warn('⚠️ [Memory] Erro ao salvar transcrição:', mErr);
+          // Salva automaticamente o ditado (ou a tentativa falha) em Markdown e no SQLite db.db!
+          try {
+            if (text) {
+              memory.saveTranscript({ text, app: 'Konsole', duration: 2.0 });
+            } else {
+              memory.saveTranscript({ text: '', app: 'Konsole', duration: 2.0, status: 'failed', failureReason: 'empty_transcript' });
             }
+            if (hubWindow && !hubWindow.isDestroyed()) {
+              hubWindow.webContents.send('history:needsUpdate');
+            }
+          } catch (mErr) {
+            console.warn('⚠️ [Memory] Erro ao salvar transcrição:', mErr);
           }
 
           resolve(text);
@@ -763,6 +770,7 @@ ipcMain.handle('flow:memory-save-scratchpad', async (e, params) => memory.saveSc
 ipcMain.handle('flow:memory-get-insights-stats', async () => memory.getInsightsStats());
 ipcMain.handle('flow:memory-get-heatmap-stats', async () => memory.getHeatmapStats());
 ipcMain.handle('flow:memory-get-meetings', async () => memory.getMeetings());
+ipcMain.handle('flow:memory-update-meeting-tags', async (e, id, tags) => memory.updateMeetingTags(id, tags));
 
 ipcMain.on('flow:open-scratchpad', (event, noteData) => {
   openScratchpadWindow(noteData);

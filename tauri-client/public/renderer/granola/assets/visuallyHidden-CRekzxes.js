@@ -1,2 +1,0 @@
-try{let e=typeof window<`u`?window:typeof global<`u`?global:typeof globalThis<`u`?globalThis:typeof self<`u`?self:{},t=new e.Error().stack;t&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[t]=`d733c167-b70f-4507-af2b-de5ba0557ff4`,e._sentryDebugIdIdentifier=`sentry-dbid-d733c167-b70f-4507-af2b-de5ba0557ff4`)}catch{}var e={clipPath:`inset(50%)`,overflow:`hidden`,whiteSpace:`nowrap`,border:0,padding:0,width:1,height:1,margin:-1},t={...e,position:`fixed`,top:0,left:0},n={...e,position:`absolute`};export{n,t};
-//# sourceMappingURL=visuallyHidden-CRekzxes.js.map

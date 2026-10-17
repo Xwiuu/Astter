@@ -1,2 +1,0 @@
-try{let e=typeof window<`u`?window:typeof global<`u`?global:typeof globalThis<`u`?globalThis:typeof self<`u`?self:{},t=new e.Error().stack;t&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[t]=`f3aa4a8f-8e98-46e2-84bf-abdea90f628f`,e._sentryDebugIdIdentifier=`sentry-dbid-f3aa4a8f-8e98-46e2-84bf-abdea90f628f`)}catch{}function e(e,t){return e??t}export{e as t};
-//# sourceMappingURL=resolveAriaLabelledBy-BzuJr-v-.js.map

@@ -67,7 +67,9 @@ db.exec(`
     status TEXT DEFAULT 'formatted',
     hasRevertedAI INTEGER DEFAULT 0,
     e2eLatency INTEGER DEFAULT 0,
-    filePath TEXT
+    filePath TEXT,
+    failureReason TEXT,
+    language TEXT
   );
 
   CREATE TABLE IF NOT EXISTS dictionary (
@@ -107,10 +109,26 @@ db.exec(`
     durationFormatted TEXT,
     notesMarkdown TEXT,
     transcripts TEXT,
+    tags TEXT DEFAULT '[]',
     createdAt INTEGER NOT NULL,
     filePath TEXT
   );
 `);
+
+// Migração leve: adiciona colunas em bancos criados antes delas existirem.
+function ensureColumn(table, column, ddl) {
+  try {
+    const cols = db.prepare(`PRAGMA table_info(${table})`).all();
+    if (!cols.some((c) => c.name === column)) {
+      db.exec(`ALTER TABLE ${table} ADD COLUMN ${ddl}`);
+    }
+  } catch (e) {
+    console.error(`Error migrating ${table}.${column} column:`, e);
+  }
+}
+ensureColumn('meetings', 'tags', "tags TEXT DEFAULT '[]'");
+ensureColumn('transcripts', 'failureReason', 'failureReason TEXT');
+ensureColumn('transcripts', 'language', 'language TEXT');
 
 function sanitizeFilename(str) {
   return (str || "untitled")
@@ -303,7 +321,9 @@ function saveTranscript(t) {
   const app = t.app || 'Konsole';
   const duration = t.duration || 2.0;
   const words = t.words || text.split(/\s+/).filter(Boolean).length;
-  const status = t.status || 'formatted';
+  const status = t.status || (text ? 'formatted' : 'failed');
+  const failureReason = status === 'failed' ? (t.failureReason || 'unknown_error') : null;
+  const language = t.language || null;
   const timestamp = t.timestamp ? (typeof t.timestamp === 'number' ? t.timestamp : new Date(t.timestamp).getTime()) : now;
 
   const dateObj = new Date(timestamp);
@@ -318,7 +338,7 @@ timestamp: ${dateObj.toISOString()}
 app: ${app}
 words: ${words}
 duration: ${duration}
-status: ${status}
+status: ${status}${failureReason ? `\nfailureReason: ${failureReason}` : ''}
 ---
 
 ${formattedText}
@@ -328,18 +348,23 @@ ${formattedText}
   db.prepare(`
     INSERT INTO transcripts (
       transcriptEntityId, text, asrText, formattedText, editedText, pastedText,
-      timestamp, app, duration, words, status, hasRevertedAI, e2eLatency, filePath
+      timestamp, app, duration, words, status, hasRevertedAI, e2eLatency, filePath,
+      failureReason, language
     )
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(transcriptEntityId) DO UPDATE SET
       text = excluded.text,
       formattedText = excluded.formattedText,
       pastedText = excluded.pastedText,
-      status = excluded.status
-  `).run(id, text, asrText, formattedText, null, pastedText, timestamp, app, duration, words, status, 0, 1200, filePath);
+      status = excluded.status,
+      failureReason = excluded.failureReason,
+      language = excluded.language
+  `).run(id, text, asrText, formattedText, null, pastedText, timestamp, app, duration, words, status, 0, 1200, filePath, failureReason, language);
 
-  // Atualiza métricas de insights
-  updateInsightsAfterTranscript(words, duration, app, dateObj);
+  // Tentativas falhas não contam pra WPM/streak/total de palavras — igual ao dictation_attempts real.
+  if (status !== 'failed') {
+    updateInsightsAfterTranscript(words, duration, app, dateObj);
+  }
 
   return {
     transcriptEntityId: id,
@@ -353,6 +378,8 @@ ${formattedText}
     duration,
     words,
     status,
+    failureReason,
+    language,
     hasRevertedAI: false,
     e2eLatency: 1200
   };
@@ -382,7 +409,9 @@ function getTranscripts({ numTranscripts = 25, offset = 0, searchQuery = "" } = 
     hasRevertedAI: Boolean(r.hasRevertedAI),
     duration: r.duration,
     words: r.words,
-    e2eLatency: r.e2eLatency || 1200
+    e2eLatency: r.e2eLatency || 1200,
+    failureReason: r.failureReason || undefined,
+    language: r.language || undefined
   }));
 }
 
@@ -401,7 +430,9 @@ function getTranscriptById(id) {
     hasRevertedAI: Boolean(r.hasRevertedAI),
     duration: r.duration,
     words: r.words,
-    e2eLatency: r.e2eLatency || 1200
+    e2eLatency: r.e2eLatency || 1200,
+    failureReason: r.failureReason || undefined,
+    language: r.language || undefined
   };
 }
 
@@ -579,14 +610,15 @@ function saveScratchpad({ content, title = "Rascunho", id = "scratchpad-main", t
 function updateInsightsAfterTranscript(newWords, newDurationSec, appName, dateObj) {
   try {
     const dateKey = dateObj.toISOString().slice(0, 10);
-    const totalWords = db.prepare('SELECT SUM(words) as tw FROM transcripts').get().tw || newWords;
-    const totalDuration = db.prepare('SELECT SUM(duration) as td FROM transcripts').get().td || newDurationSec;
-    const totalTranscripts = db.prepare('SELECT COUNT(*) as ct FROM transcripts').get().ct || 1;
+    const totalWords = db.prepare("SELECT SUM(words) as tw FROM transcripts WHERE status != 'failed'").get().tw || newWords;
+    const totalDuration = db.prepare("SELECT SUM(duration) as td FROM transcripts WHERE status != 'failed'").get().td || newDurationSec;
+    const totalTranscripts = db.prepare("SELECT COUNT(*) as ct FROM transcripts WHERE status != 'failed'").get().ct || 1;
 
     // Estatísticas por aplicativo
     const appRows = db.prepare(`
       SELECT app, COUNT(*) as count, SUM(words) as words
       FROM transcripts
+      WHERE status != 'failed'
       GROUP BY app
       ORDER BY words DESC
     `).all();
@@ -603,6 +635,7 @@ function updateInsightsAfterTranscript(newWords, newDurationSec, appName, dateOb
     const heatmapRows = db.prepare(`
       SELECT strftime('%Y-%m-%d', timestamp / 1000, 'unixepoch') as day, SUM(words) as w
       FROM transcripts
+      WHERE status != 'failed'
       GROUP BY day
       ORDER BY day ASC
     `).all();
@@ -675,8 +708,8 @@ function getInsightsStats() {
       }
     } catch (_) {}
   }
-  const totalWords = db.prepare('SELECT SUM(words) as tw FROM transcripts').get().tw || 9;
-  const totalTranscripts = db.prepare('SELECT COUNT(*) as ct FROM transcripts').get().ct || 1;
+  const totalWords = db.prepare("SELECT SUM(words) as tw FROM transcripts WHERE status != 'failed'").get().tw || 9;
+  const totalTranscripts = db.prepare("SELECT COUNT(*) as ct FROM transcripts WHERE status != 'failed'").get().ct || 1;
   const initialData = {
     words_per_minute: 174,
     wpm_percentile: 96,
@@ -707,6 +740,7 @@ function getHeatmapStats() {
   const heatmapRows = db.prepare(`
     SELECT strftime('%Y-%m-%d', timestamp / 1000, 'unixepoch') as day, SUM(words) as w
     FROM transcripts
+    WHERE status != 'failed'
     GROUP BY day
     ORDER BY day ASC
   `).all();
@@ -757,7 +791,8 @@ function getMeetings() {
       actionItems: r.actionItems ? JSON.parse(r.actionItems) : [],
       keyTakeaways: r.keyTakeaways ? JSON.parse(r.keyTakeaways) : [],
       attendees: r.attendees ? JSON.parse(r.attendees) : [],
-      transcripts: r.transcripts ? JSON.parse(r.transcripts) : []
+      transcripts: r.transcripts ? JSON.parse(r.transcripts) : [],
+      tags: r.tags ? JSON.parse(r.tags) : []
     }));
   } catch (e) {
     console.error('Error fetching meetings:', e);
@@ -774,7 +809,8 @@ function getMeetingById(id) {
       actionItems: r.actionItems ? JSON.parse(r.actionItems) : [],
       keyTakeaways: r.keyTakeaways ? JSON.parse(r.keyTakeaways) : [],
       attendees: r.attendees ? JSON.parse(r.attendees) : [],
-      transcripts: r.transcripts ? JSON.parse(r.transcripts) : []
+      transcripts: r.transcripts ? JSON.parse(r.transcripts) : [],
+      tags: r.tags ? JSON.parse(r.tags) : []
     };
   } catch (_) {
     return null;
@@ -785,8 +821,8 @@ function saveMeeting(m) {
   try {
     const stmt = db.prepare(`
       INSERT OR REPLACE INTO meetings
-      (id, title, summary, actionItems, keyTakeaways, attendees, durationMs, durationFormatted, notesMarkdown, transcripts, createdAt, filePath)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (id, title, summary, actionItems, keyTakeaways, attendees, durationMs, durationFormatted, notesMarkdown, transcripts, tags, createdAt, filePath)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `);
     stmt.run(
       m.id,
@@ -799,6 +835,7 @@ function saveMeeting(m) {
       m.durationFormatted || '00:00',
       m.notesMarkdown || '',
       JSON.stringify(m.transcripts || []),
+      JSON.stringify(m.tags || []),
       m.createdAt || Date.now(),
       m.filePath || ''
     );
@@ -806,6 +843,17 @@ function saveMeeting(m) {
   } catch (e) {
     console.error('Error saving meeting in db:', e);
     return m;
+  }
+}
+
+function updateMeetingTags(id, tags) {
+  try {
+    const safeTags = Array.isArray(tags) ? tags.filter((t) => typeof t === 'string' && t.trim()).slice(0, 8) : [];
+    db.prepare('UPDATE meetings SET tags = ? WHERE id = ?').run(JSON.stringify(safeTags), id);
+    return safeTags;
+  } catch (e) {
+    console.error('Error updating meeting tags:', e);
+    return [];
   }
 }
 
@@ -847,5 +895,6 @@ module.exports = {
   getMeetings,
   getMeetingById,
   saveMeeting,
+  updateMeetingTags,
   deleteMeeting
 };

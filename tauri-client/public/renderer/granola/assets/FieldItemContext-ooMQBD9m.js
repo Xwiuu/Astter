@@ -1,2 +1,0 @@
-try{let e=typeof window<`u`?window:typeof global<`u`?global:typeof globalThis<`u`?globalThis:typeof self<`u`?self:{},t=new e.Error().stack;t&&(e._sentryDebugIds=e._sentryDebugIds||{},e._sentryDebugIds[t]=`4439e781-4277-4602-8883-f356f7723a73`,e._sentryDebugIdIdentifier=`sentry-dbid-4439e781-4277-4602-8883-f356f7723a73`)}catch{}import{a as e}from"./rolldown-runtime-Ciu2z6aO.js";import{t}from"./react-CBDM120z.js";var n=e(t(),1),r=n.createContext({disabled:!1});function i(){return n.useContext(r)}export{i as t};
-//# sourceMappingURL=FieldItemContext-ooMQBD9m.js.map

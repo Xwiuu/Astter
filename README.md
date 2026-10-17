@@ -28,7 +28,12 @@
 
 - **🎨 Dual UI Experience:**
   - **Floating Pill Widget:** Sleek dark-mode glassmorphic pill always-on-top with reactive audio waveforms.
-  - **Full Desktop Hub:** 9 rich productivity tabs including Dictation History, AI Scratchpad, Meeting Recorder, Insights, Snippets, and Technical Dictionary.
+  - **Full Desktop Hub:** runs the real Wispr Flow renderer bridged to a 100% local backend — Dictation History, Insights, Dictionary, Snippets, Scratchpad, and an embedded Notetaker, all backed by your own SQLite + Markdown store (nothing leaves your machine).
+
+- **📝 Meeting Notetaker (Granola-style), fully local:**
+  - Dual-channel PipeWire capture (your mic + system/call audio) transcribed live via Groq Whisper.
+  - **Real speaker diarization** (`pyannote.audio`, runs on-device) separates the actual voices of remote participants after the meeting ends, instead of lumping everyone into one generic label — see [Diarization setup](#-meeting-diarization-optional) below.
+  - AI-structured notes (summary, decisions, action items) with an Enhanced/raw-transcript panel switcher and tag pills per meeting.
 
 - **🔕 KDE Plasma 6 & Wayland Optimized:**
   - Specifically handles KDE Plasma 6 Meta-key release behaviors to prevent application launcher popups.
@@ -39,14 +44,14 @@
 
 ### 1. Requirements
 
-Ensure you have Node.js (v18+), Python 3, GCC, and `wl-clipboard` installed:
+Ensure you have Node.js (v18+), Python 3, GCC, `wl-clipboard`, and `pipewire-utils` (for meeting recording) installed:
 
 ```bash
 # Fedora
-sudo dnf install -y nodejs gcc wl-clipboard
+sudo dnf install -y nodejs gcc wl-clipboard pipewire-utils
 
 # Ubuntu / Debian
-sudo apt install -y nodejs gcc wl-clipboard
+sudo apt install -y nodejs gcc wl-clipboard pipewire-bin
 ```
 
 ### 2. Configure uinput Permissions (One-time)
@@ -74,6 +79,30 @@ npm install
 ```bash
 ./launch-flow.sh
 ```
+
+---
+
+## 🗣️ Meeting Diarization (optional)
+
+By default, recorded meetings label every remote participant with a single generic
+speaker. To identify each real voice separately, set up local diarization once:
+
+```bash
+cd tauri-client
+python3.13 -m venv diarize-venv   # use 3.11/3.12/3.13 — whichever has PyTorch wheels available
+./diarize-venv/bin/pip install torch torchaudio --index-url https://download.pytorch.org/whl/cpu
+./diarize-venv/bin/pip install pyannote.audio
+```
+
+Then get a free token and accept the gated model terms:
+
+1. Create an account at [huggingface.co](https://huggingface.co)
+2. Accept the terms on [`pyannote/speaker-diarization-3.1`](https://huggingface.co/pyannote/speaker-diarization-3.1) and [`pyannote/speaker-diarization-community-1`](https://huggingface.co/pyannote/speaker-diarization-community-1)
+3. Generate a read token at [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)
+4. Add it to `tauri-client/.env`: `HUGGINGFACE_TOKEN=hf_...`
+
+Without this setup, meeting recording still works fine — it just skips diarization
+and falls back to the generic speaker label.
 
 ---
 

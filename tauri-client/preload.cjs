@@ -59,7 +59,8 @@ contextBridge.exposeInMainWorld('flowNative', {
     saveScratchpad: (params) => ipcRenderer.invoke('flow:memory-save-scratchpad', params),
     getInsightsStats: () => ipcRenderer.invoke('flow:memory-get-insights-stats'),
     getHeatmapStats: () => ipcRenderer.invoke('flow:memory-get-heatmap-stats'),
-    getMeetings: () => ipcRenderer.invoke('flow:memory-get-meetings')
+    getMeetings: () => ipcRenderer.invoke('flow:memory-get-meetings'),
+    updateMeetingTags: (id, tags) => ipcRenderer.invoke('flow:memory-update-meeting-tags', id, tags)
   },
   openGranolaWindow: () => ipcRenderer.send('flow:open-granola-window'),
   meeting: {

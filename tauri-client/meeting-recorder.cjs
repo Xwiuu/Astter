@@ -9,7 +9,7 @@
 // separação determinística de oradores e estruturação com IA.
 // ========================================================
 
-const { spawn, exec, execSync } = require('child_process');
+const { spawn, exec, execSync, execFile } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -25,6 +25,7 @@ class MeetingRecorder extends EventEmitter {
     this.sysProcess = null;
     this.micBuffer = [];
     this.sysBuffer = [];
+    this.fullSysAudioChunks = []; // Áudio completo do sistema (todos os participantes remotos), preservado para diarização pós-reunião
     this.micAudioLength = 0;
     this.sysAudioLength = 0;
     this.lastMicActivity = 0;
@@ -132,6 +133,7 @@ class MeetingRecorder extends EventEmitter {
     this.transcripts = [];
     this.micBuffer = [];
     this.sysBuffer = [];
+    this.fullSysAudioChunks = [];
     this.micAudioLength = 0;
     this.sysAudioLength = 0;
     this.startTime = Date.now();
@@ -183,6 +185,7 @@ class MeetingRecorder extends EventEmitter {
       this.sysProcess.stdout.on('data', (chunk) => {
         if (!this.isRecording) return;
         this.sysBuffer.push(chunk);
+        this.fullSysAudioChunks.push(chunk);
         this.sysAudioLength += chunk.length;
         const rms = this.calculateRMS(chunk);
         if (rms > 0.015) {
@@ -390,6 +393,9 @@ class MeetingRecorder extends EventEmitter {
       await this.transcribeSliceSync(sysData, this.attendees[1] || 'Participante 1', 'system');
     }
 
+    // Diarização local pós-reunião: separa as vozes reais dos participantes remotos
+    await this.runDiarization();
+
     // Estruturação por IA com Granola Prompt
     console.log(`🤖 [MeetingRecorder] Estruturando ata e notas com IA (Groq LLaMA)...`);
     const structuredNotes = await this.generateStructuredNotes();
@@ -413,6 +419,88 @@ class MeetingRecorder extends EventEmitter {
 
     this.emit('meeting-finished', meetingResult);
     return meetingResult;
+  }
+
+  // Roda a diarização local (pyannote.audio) sobre todo o áudio do sistema da reunião
+  // e substitui o rótulo genérico "Participante 1" pelas vozes reais detectadas.
+  async runDiarization() {
+    if (!this.fullSysAudioChunks || this.fullSysAudioChunks.length === 0) return;
+    const sysTranscripts = this.transcripts.filter(t => t.channel === 'system');
+    if (sysTranscripts.length === 0) return;
+
+    const pythonBin = path.join(__dirname, 'diarize-venv', 'bin', 'python');
+    const scriptPath = path.join(__dirname, 'diarize.py');
+    if (!fs.existsSync(pythonBin) || !fs.existsSync(scriptPath)) return;
+
+    const pcmData = Buffer.concat(this.fullSysAudioChunks);
+    const wavHeader = this.createWavHeader(pcmData.length);
+    const wavBuffer = Buffer.concat([wavHeader, pcmData]);
+    const tempWav = path.join(os.tmpdir(), `meeting_${this.meetingId}_diarize.wav`);
+    fs.writeFileSync(tempWav, wavBuffer);
+
+    console.log('🗣️ [MeetingRecorder] Rodando diarização local (pyannote.audio)...');
+
+    try {
+      const durationSec = pcmData.length / 32000;
+      // Inferência em CPU é mais lenta que tempo real; dá uma folga generosa proporcional à duração.
+      const timeoutMs = Math.min(900000, Math.max(180000, durationSec * 4000));
+      const stdout = await new Promise((resolve, reject) => {
+        execFile(pythonBin, [scriptPath, tempWav], { timeout: timeoutMs, maxBuffer: 20 * 1024 * 1024 }, (err, out) => {
+          if (err) return reject(err);
+          resolve(out);
+        });
+      });
+
+      const parsed = JSON.parse(stdout);
+      if (parsed.error) {
+        console.warn(`⚠️ [MeetingRecorder] Diarização indisponível (${parsed.error}). Mantendo rótulo genérico de participante.`);
+        return;
+      }
+
+      const turns = parsed.turns || [];
+      if (!turns.length) return;
+
+      this.applyDiarizationLabels(turns, sysTranscripts);
+      const voiceCount = new Set(turns.map(t => t.speaker)).size;
+      console.log(`✓ [MeetingRecorder] Diarização concluída: ${voiceCount} voz(es) distinta(s) detectada(s) entre os participantes remotos.`);
+    } catch (err) {
+      console.warn('⚠️ [MeetingRecorder] Falha na diarização local:', err.message || err);
+    } finally {
+      try { fs.unlinkSync(tempWav); } catch (_) {}
+    }
+  }
+
+  // Reatribui o speaker de cada trecho transcrito do canal de sistema com base
+  // no turno de diarização (voz real) que mais se sobrepõe à sua janela de tempo.
+  applyDiarizationLabels(turns, sysTranscripts) {
+    const knownNames = this.attendees.slice(1).filter(a => a && a !== 'Participantes');
+    const labelForSpeakerIndex = (idx) => knownNames[idx] || `Pessoa ${idx + 1}`;
+
+    for (const entry of sysTranscripts) {
+      const durationMs = (entry.durationSec || 0) * 1000;
+      const windowStartMs = entry.timestampMs - durationMs;
+      const windowEndMs = entry.timestampMs;
+
+      let bestTurn = null;
+      let bestOverlap = -Infinity;
+      for (const turn of turns) {
+        const turnStartMs = turn.start * 1000;
+        const turnEndMs = turn.end * 1000;
+        const overlap = Math.min(windowEndMs, turnEndMs) - Math.max(windowStartMs, turnStartMs);
+        if (overlap > bestOverlap) {
+          bestOverlap = overlap;
+          bestTurn = turn;
+        }
+      }
+      if (bestTurn) {
+        entry.speaker = labelForSpeakerIndex(bestTurn.speaker);
+      }
+    }
+
+    const detectedLabels = [...new Set(sysTranscripts.map(t => t.speaker))];
+    for (const label of detectedLabels) {
+      if (!this.attendees.includes(label)) this.attendees.push(label);
+    }
   }
 
   async transcribeSliceSync(pcmBuffer, defaultSpeaker, channel) {
