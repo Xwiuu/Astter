@@ -357,13 +357,6 @@ function createStatusWindow() {
     console.log('✓ [Astter] Cápsula flutuante visível em:', statusWindow.getPosition());
   });
 
-  statusWindow.on('blur', () => {
-    if (statusWindow && !statusWindow.isDestroyed()) {
-      statusWindow.setAlwaysOnTop(true, 'screen-saver', 1);
-      statusWindow.moveTop();
-    }
-  });
-
   statusWindow.webContents.on('did-fail-load', (e, code, desc, url) => {
     console.error('❌ [Astter] Falha ao carregar status:', desc, url);
     setTimeout(() => {
@@ -779,6 +772,36 @@ ipcMain.handle('astter:memory-get-insights-stats', async () => memory.getInsight
 ipcMain.handle('astter:memory-get-heatmap-stats', async () => memory.getHeatmapStats());
 ipcMain.handle('astter:memory-get-meetings', async () => memory.getMeetings());
 ipcMain.handle('astter:memory-update-meeting-tags', async (e, id, tags) => memory.updateMeetingTags(id, tags));
+
+// Agenda real via "pc" (projeto pessoal do usuário em /run/media/.../life/personal-core).
+// O token OAuth nunca passa por aqui — "pc" resolve o keyring do sistema sozinho.
+// Se o binário "pc" não existir (qualquer outra máquina/usuário), retorna lista vazia
+// em silêncio, sem quebrar o app nem logar erro assustador.
+ipcMain.handle('astter:calendar-get-upcoming', async (e, { days = 14 } = {}) => {
+  const { execFile } = require('child_process');
+  const fmt = (d) => d.toISOString().slice(0, 10);
+  const from = fmt(new Date());
+  const to = fmt(new Date(Date.now() + days * 24 * 60 * 60 * 1000));
+  return new Promise((resolve) => {
+    execFile(
+      'pc',
+      ['calendar', 'events', '--json', '--from', from, '--to', to],
+      { timeout: 8000 },
+      (err, stdout) => {
+        if (err) {
+          resolve({ events: [], available: false });
+          return;
+        }
+        try {
+          const parsed = JSON.parse(stdout);
+          resolve({ events: parsed.events || [], timezone: parsed.timezone, available: true });
+        } catch (_) {
+          resolve({ events: [], available: false });
+        }
+      }
+    );
+  });
+});
 
 ipcMain.on('astter:open-scratchpad', (event, noteData) => {
   openScratchpadWindow(noteData);

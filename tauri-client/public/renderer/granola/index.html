@@ -1870,6 +1870,69 @@
         renderNoteSections(sections);
       }
 
+      /* ---------- Agenda real (via personal-core, se disponível) ---------- */
+      async function refreshUpcomingCalendar() {
+        const nativeCalendar = astterNative?.calendar;
+        if (!nativeCalendar || typeof nativeCalendar.getUpcoming !== "function") return;
+        let result;
+        try {
+          result = await nativeCalendar.getUpcoming(14);
+        } catch (e) {
+          return;
+        }
+        if (!result || !result.available || !Array.isArray(result.events) || !result.events.length) {
+          // Sem integração real disponível nesta máquina: mantém o card estático de exemplo.
+          return;
+        }
+        const card = $("comingUpCard");
+        if (!card) return;
+        const byDay = new Map();
+        for (const ev of result.events) {
+          const start = new Date(ev.starts_at);
+          const dayKey = start.toDateString();
+          if (!byDay.has(dayKey)) byDay.set(dayKey, { date: start, events: [] });
+          byDay.get(dayKey).events.push(ev);
+        }
+        const days = [...byDay.values()].sort((a, b) => a.date - b.date);
+        card.textContent = "";
+        days.forEach((day, i) => {
+          if (i > 0) card.appendChild(document.createElement("hr")).className = "dashed-divider";
+          const row = document.createElement("div");
+          row.className = "calendar-row";
+          const dateCol = document.createElement("div");
+          dateCol.className = "calendar-date";
+          dateCol.innerHTML = `<div class="day-num serif tnum">${day.date.getDate()}</div><div class="day-label">${day.date.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "")}</div>`;
+          row.appendChild(dateCol);
+          const eventsCol = document.createElement("div");
+          eventsCol.className = "calendar-events";
+          for (const ev of day.events) {
+            const item = document.createElement("div");
+            item.className = "event-item";
+            item.setAttribute("role", "button");
+            item.setAttribute("tabindex", "0");
+            const timeLabel = ev.all_day
+              ? "Dia inteiro"
+              : `${new Date(ev.starts_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })} – ${new Date(ev.ends_at).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`;
+            item.innerHTML = `<div class="event-title"></div><div class="event-time"></div>`;
+            item.querySelector(".event-title").textContent = ev.summary || "(sem título)";
+            item.querySelector(".event-time").textContent = timeLabel;
+            item.addEventListener("click", () => showToast(ev.summary || "Evento sem título"));
+            item.addEventListener("keydown", (e) => {
+              if (e.key === "Enter" || e.key === " ") { e.preventDefault(); showToast(ev.summary || "Evento sem título"); }
+            });
+            eventsCol.appendChild(item);
+          }
+          if (!day.events.length) {
+            const empty = document.createElement("div");
+            empty.className = "calendar-empty";
+            empty.textContent = "Sem eventos hoje";
+            eventsCol.appendChild(empty);
+          }
+          row.appendChild(eventsCol);
+          card.appendChild(row);
+        });
+      }
+
       async function refreshSavedMeetings() {
         if (!nativeMemory || typeof nativeMemory.getMeetings !== "function") return;
         try {
@@ -2111,6 +2174,7 @@
       renderTranscript(state.currentTranscript);
       setRecordingUI(false);
       refreshSavedMeetings();
+      refreshUpcomingCalendar();
     })();
   </script>
 </body>

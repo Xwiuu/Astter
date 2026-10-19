@@ -62,6 +62,9 @@ contextBridge.exposeInMainWorld('astterNative', {
     getMeetings: () => ipcRenderer.invoke('astter:memory-get-meetings'),
     updateMeetingTags: (id, tags) => ipcRenderer.invoke('astter:memory-update-meeting-tags', id, tags)
   },
+  calendar: {
+    getUpcoming: (days) => ipcRenderer.invoke('astter:calendar-get-upcoming', { days })
+  },
   openGranolaWindow: () => ipcRenderer.send('astter:open-granola-window'),
   meeting: {
     start: (options) => ipcRenderer.invoke('astter:start-meeting-recording', options),

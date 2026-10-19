@@ -488,36 +488,24 @@
   listeners.add(updateGranolaEmbed);
   window.addEventListener("resize", updateGranolaEmbed);
 
-  // Intercepta cliques nos itens da barra lateral para garantir navegação instantânea entre Ditados e Granola
+  // Intercepta cliques em QUALQUER item da barra lateral (genérico via data-testid) para garantir
+  // navegação instantânea: o app real espera um backend de navegação que não existe neste clone,
+  // então sem isto nenhum clique na sidebar reage. Antes isto só cobria Notetaker e Home à mão —
+  // cliques em Insights/Dictionary/Snippets/Extensions não faziam nada (raiz do bug "trava no Notetaker").
   document.addEventListener("click", (e) => {
-    const notetakerBtn = e.target.closest('[data-testid="sidebar-item-Notetaker"]') ||
-                         e.target.closest('[data-testid="sidebar-item-Notes"]') ||
-                         e.target.closest('#poc-hub-target') ||
-                         (e.target.closest('button, li') && (e.target.closest('button, li').textContent || '').match(/(Notetaker|Reuniões|Notes|Scratchpad)/i));
-    if (notetakerBtn) {
-      console.log("⚡ [Hub] Sidebar Notetaker clicado!");
-      rootState.navigationState = {
-        current: { hubPage: "Notetaker" },
-        canGoBack: true,
-        canGoForward: false
-      };
-      listeners.forEach((fn) => { try { fn(rootState); } catch (_) {} });
-      updateGranolaEmbed();
-    }
-
-    const homeBtn = e.target.closest('[data-testid="sidebar-item-Dictation"]') ||
-                    e.target.closest('[data-testid="sidebar-item-Home"]') ||
-                    (e.target.closest('button, li') && (e.target.closest('button, li').textContent || '').match(/(Home|Ditados|Recentes)/i));
-    if (homeBtn) {
-      console.log("⚡ [Hub] Sidebar Home clicado!");
-      rootState.navigationState = {
-        current: { hubPage: "Dictation" },
-        canGoBack: false,
-        canGoForward: true
-      };
-      listeners.forEach((fn) => { try { fn(rootState); } catch (_) {} });
-      updateGranolaEmbed();
-    }
+    const navBtn = e.target.closest('[data-testid^="sidebar-item-"]') || e.target.closest('#poc-hub-target');
+    if (!navBtn) return;
+    const testid = navBtn.id === "poc-hub-target" ? "sidebar-item-Notetaker" : navBtn.getAttribute("data-testid");
+    if (!testid) return;
+    const page = testid.replace("sidebar-item-", "");
+    console.log("⚡ [Hub] Sidebar item clicado:", page);
+    rootState.navigationState = {
+      current: { hubPage: page },
+      canGoBack: page !== "Dictation",
+      canGoForward: false
+    };
+    listeners.forEach((fn) => { try { fn(rootState); } catch (_) {} });
+    updateGranolaEmbed();
   }, true);
 
 
