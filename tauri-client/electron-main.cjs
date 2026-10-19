@@ -252,8 +252,8 @@ let currentCapsuleY = 0;
 let isKWinMoving = false;
 let pendingKWinMove = null;
 
-function positionKWinWindowAsync(title, x, y) {
-  pendingKWinMove = { title, x: Math.round(x), y: Math.round(y) };
+function positionKWinWindowAsync(title, x, y, avoidDocks = false) {
+  pendingKWinMove = { title, x: Math.round(x), y: Math.round(y), avoidDocks };
   if (isKWinMoving) return;
 
   const runNext = () => {
@@ -265,18 +265,63 @@ function positionKWinWindowAsync(title, x, y) {
     const item = pendingKWinMove;
     pendingKWinMove = null;
 
-    const kwinScript = `
-      let wins = workspace.windowList();
-      for (let i = 0; i < wins.length; i++) {
-        if (wins[i].caption === "${item.title}") {
-          wins[i].frameGeometry = {
-            x: ${item.x},
-            y: ${item.y},
-            width: wins[i].width,
-            height: wins[i].height
-          };
+    // Docks/widgets flutuantes (ex: Latte Dock) costumam não reservar strut no
+    // workArea do compositor, então o Electron não sabe que eles existem e a
+    // cápsula pode nascer encoberta atrás deles (sem aparecer e sem receber clique).
+    // Se avoidDocks estiver ativo, o próprio script KWin checa sobreposição com
+    // janelas dock (`.dock === true`) na mesma tela e sobe a cápsula acima delas.
+    const dockAvoidanceSnippet = item.avoidDocks ? `
+      let target = wins[idx];
+      // Usa a tela que CONTÉM o ponto de destino, não target.output: logo após
+      // o show() a janela pode ainda não ter "assentado" num output, deixando
+      // target.output errado/atrasado e fazendo esse desvio falhar em silêncio.
+      let screenGeom = null, screenName = null;
+      let screens = workspace.screens;
+      for (let s = 0; s < screens.length; s++) {
+        let sg = screens[s].geometry;
+        if (${item.x} >= sg.x && ${item.x} < sg.x + sg.width && ${item.y} >= sg.y && ${item.y} < sg.y + sg.height) {
+          screenGeom = sg;
+          screenName = screens[s].name;
           break;
         }
+      }
+      if (screenGeom) {
+        let capX = ${item.x}, capY = ${item.y}, capW = target.width, capH = target.height;
+        let allWins = workspace.windowList();
+        for (let j = 0; j < allWins.length; j++) {
+          let d = allWins[j];
+          if (!d.dock) continue;
+          if (!d.output || d.output.name !== screenName) continue;
+          let dg = d.frameGeometry;
+          let overlapsH = capX < dg.x + dg.width && capX + capW > dg.x;
+          let overlapsV = capY + capH > dg.y && capY < dg.y + dg.height;
+          if (overlapsH && overlapsV) {
+            let adjustedY = dg.y - capH - 8;
+            if (adjustedY < screenGeom.y) adjustedY = screenGeom.y;
+            capY = adjustedY;
+          }
+        }
+        target.frameGeometry = { x: capX, y: capY, width: capW, height: capH };
+      } else {
+        target.frameGeometry = { x: ${item.x}, y: ${item.y}, width: target.width, height: target.height };
+      }
+    ` : `
+      wins[idx].frameGeometry = {
+        x: ${item.x},
+        y: ${item.y},
+        width: wins[idx].width,
+        height: wins[idx].height
+      };
+    `;
+
+    const kwinScript = `
+      let wins = workspace.windowList();
+      let idx = -1;
+      for (let i = 0; i < wins.length; i++) {
+        if (wins[i].caption === "${item.title}") { idx = i; break; }
+      }
+      if (idx !== -1) {
+        ${dockAvoidanceSnippet}
       }
     `;
     const scriptName = `pos_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
@@ -352,7 +397,7 @@ function createStatusWindow() {
     statusWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
     statusWindow.moveTop();
     setTimeout(() => {
-      positionKWinWindowAsync('Astter Capsule', capsuleX, capsuleY);
+      positionKWinWindowAsync('Astter Capsule', capsuleX, capsuleY, true);
     }, 350);
     console.log('✓ [Astter] Cápsula flutuante visível em:', statusWindow.getPosition());
   });

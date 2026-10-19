@@ -730,7 +730,10 @@
         if (!isDragging) return;
         const dx = e.screenX - dragStartX;
         const dy = e.screenY - dragStartY;
-        if (Math.hypot(dx, dy) > 2) {
+        // Mouse/trackpad real sempre treme uns pixels mesmo num clique parado;
+        // threshold baixo demais (ex: 2px) faz todo clique virar "arraste" e a
+        // cápsula nunca abre o menu nem dispara nenhuma ação.
+        if (Math.hypot(dx, dy) > 6) {
           dragHasMoved = true;
         }
         if (dragHasMoved && (dx !== 0 || dy !== 0)) {
