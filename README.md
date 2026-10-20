@@ -1,6 +1,32 @@
+<div align="center">
+
 # Astter 🎙️⚡
 
+**A native, zero-latency Linux alternative to Wispr Flow — hold a key, talk, and it types for you.**
+
+[![License: MIT](https://img.shields.io/badge/license-MIT-brightgreen.svg)](#%EF%B8%8F-license)
+[![Platform](https://img.shields.io/badge/platform-Linux%20(Wayland%20%26%20X11)-0078d4.svg)](#-quick-start)
+[![Desktop](https://img.shields.io/badge/desktop-KDE%20Plasma%206%20%7C%20GNOME%20%7C%20Sway%20%7C%20Hyprland-7f5af0.svg)](#-quick-start)
+[![Built with Electron](https://img.shields.io/badge/built%20with-Electron-47848F.svg?logo=electron&logoColor=white)](#-quick-start)
+[![Transcription](https://img.shields.io/badge/transcription-Groq%20Whisper%20Large--v3-f55036.svg)](#-features)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-blueviolet.svg)](#-contributing)
+
+</div>
+
 > **Astter** is a native, high-performance, open-source Linux alternative to Wispr Flow. Engineered with **Electron & Tauri**, **C (Linux uinput)**, and **Groq Whisper Large-v3** for ultra-fast push-to-talk voice dictation and auto-typing on Linux Wayland (KDE Plasma 6, GNOME, Sway, Hyprland) & X11.
+
+---
+
+## 📑 Table of Contents
+
+- [What is Astter?](#-what-is-astter)
+- [Features](#-features)
+- [Quick Start](#-quick-start)
+- [Meeting Diarization (optional)](#️-meeting-diarization-optional)
+- [Meeting Summary Export (optional)](#-meeting-summary-export-optional)
+- [Shortcuts](#️-shortcuts)
+- [Contributing](#-contributing)
+- [License](#️-license)
 
 ---
 
@@ -27,13 +53,15 @@
   - Built-in hallucination filters to suppress silence artifacts.
 
 - **🎨 Dual UI Experience:**
-  - **Floating Pill Widget:** Sleek dark-mode glassmorphic pill always-on-top with reactive audio waveforms.
+  - **Floating Pill Widget:** Sleek dark-mode glassmorphic pill always-on-top with reactive audio waveforms, and freely **repositionable to any screen edge** (top, bottom, left, right) via a single click — it always stays on top and avoids overlapping panels/docks automatically.
   - **Full Desktop Hub:** runs the real Wispr Flow renderer bridged to a 100% local backend — Dictation History, Insights, Dictionary, Snippets, Scratchpad, and an embedded Notetaker, all backed by your own SQLite + Markdown store (nothing leaves your machine).
 
 - **📝 Meeting Notetaker (Granola-style), fully local:**
   - Dual-channel PipeWire capture (your mic + system/call audio) transcribed live via Groq Whisper.
-  - **Real speaker diarization** (`pyannote.audio`, runs on-device) separates the actual voices of remote participants after the meeting ends, instead of lumping everyone into one generic label — see [Diarization setup](#-meeting-diarization-optional) below.
+  - **Real speaker diarization** (`pyannote.audio`, runs on-device) separates the actual voices of remote participants after the meeting ends, instead of lumping everyone into one generic label — see [Diarization setup](#️-meeting-diarization-optional) below.
   - AI-structured notes (summary, decisions, action items) with an Enhanced/raw-transcript panel switcher and tag pills per meeting.
+  - **Export summaries straight to your filesystem** (Markdown + PDF), optionally organized into a subfolder per client/project — see [Meeting Summary Export](#-meeting-summary-export-optional) below.
+  - Crash-safe by design: closing the app mid-recording or mid-processing waits for the meeting to finish saving first, so a recording is never silently lost.
 
 - **🔕 KDE Plasma 6 & Wayland Optimized:**
   - Specifically handles KDE Plasma 6 Meta-key release behaviors to prevent application launcher popups.
@@ -106,13 +134,40 @@ and falls back to the generic speaker label.
 
 ---
 
+## 📁 Meeting Summary Export (optional)
+
+By default, every meeting is saved locally in `memory/meetings/` (Markdown) and in your
+local SQLite store. If you'd rather also keep a copy organized in your own folder
+structure (e.g. one subfolder per client or project), open the capsule menu and click
+the **folder icon** to pick a destination folder.
+
+- Nothing changes until you set a folder — it's entirely opt-in.
+- Once set, every finished meeting also drops a `.md` and a `.pdf` copy into that folder.
+- When starting a recording, you can optionally type a client/project name — the copy
+  is then saved under `<your folder>/<client name>/` instead of the folder root.
+- The local `memory/meetings/` + SQLite save always happens regardless — this is purely
+  an additional, human-friendly copy for your own filesystem/client deliverables.
+
+---
+
 ## ⌨️ Shortcuts
 
-| Shortcut | Action |
+| Shortcut / Control | Action |
 |---|---|
 | **Hold `Ctrl + Win`** | Push-to-Talk (Hold to speak, release to paste into active cursor) |
 | **`Ctrl + Alt + Space`** | Toggle Dictation Mode (Hands-free) |
 | **`F8`** | Secondary Global Dictation Toggle |
+| **Capsule → position icon** | Cycle the floating pill's screen position (bottom → top → left → right) |
+| **Capsule → folder icon** | Choose/change the local folder meeting summaries are exported to |
+| **Capsule → camera icon** | Start/stop meeting recording |
+
+---
+
+## 🤝 Contributing
+
+Issues and PRs are welcome! Astter is a solo-built, actively-used daily driver, so the
+fastest way to get a fix merged is to open a focused PR with a clear description of the
+problem it solves. Please keep PRs scoped to one change at a time.
 
 ---
 

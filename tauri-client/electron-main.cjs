@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Tray, Menu, globalShortcut, ipcMain, screen, nativeImage, clipboard } = require('electron');
+const { app, BrowserWindow, Tray, Menu, globalShortcut, ipcMain, screen, nativeImage, clipboard, dialog } = require('electron');
 const path = require('path');
 const http = require('http');
 const fs = require('fs');
@@ -643,7 +643,21 @@ function startPttDaemon() {
   }
 }
 
-function quitFlow() {
+async function quitFlow() {
+  if (meetingRecorder.isRecording || meetingRecorder.isProcessingStop) {
+    console.log('⏳ [Astter] Reunião em andamento — salvando com segurança antes de sair...');
+    try {
+      if (meetingRecorder.isRecording) await meetingRecorder.stop();
+      const maxWaitMs = 60000;
+      const waitStart = Date.now();
+      while (meetingRecorder.isProcessingStop && Date.now() - waitStart < maxWaitMs) {
+        await new Promise((r) => setTimeout(r, 200));
+      }
+    } catch (e) {
+      console.warn('⚠️ [Astter] Erro ao finalizar reunião antes de sair:', e.message);
+    }
+  }
+
   console.log('👋 [Astter] Encerrando aplicativo...');
   isQuitting = true;
   if (pttProcess) {
@@ -708,6 +722,16 @@ ipcMain.on('astter:set-capsule-position', (event, position) => {
   saveAppConfig({ capsulePosition });
   const { x, y } = computeCapsuleXY(getTargetDisplay(), capsulePosition);
   applyCapsulePosition(x, y, { avoidDocks: true, edge: capsulePosition });
+});
+
+ipcMain.handle('astter:get-export-folder', () => loadAppConfig().meetingExportFolder || null);
+
+ipcMain.handle('astter:choose-export-folder', async () => {
+  const parentWindow = statusWindow && !statusWindow.isDestroyed() ? statusWindow : undefined;
+  const result = await dialog.showOpenDialog(parentWindow, { properties: ['openDirectory', 'createDirectory'] });
+  if (result.canceled || !result.filePaths[0]) return loadAppConfig().meetingExportFolder || null;
+  saveAppConfig({ meetingExportFolder: result.filePaths[0] });
+  return result.filePaths[0];
 });
 
 ipcMain.on('astter:set-status-bounds', (event, { width, height, expandUpwards = true }) => {

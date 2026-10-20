@@ -16,6 +16,8 @@ contextBridge.exposeInMainWorld('astterNative', {
   },
   getCapsulePosition: () => ipcRenderer.invoke('astter:get-capsule-position'),
   setCapsulePosition: (position) => ipcRenderer.send('astter:set-capsule-position', position),
+  getExportFolder: () => ipcRenderer.invoke('astter:get-export-folder'),
+  chooseExportFolder: () => ipcRenderer.invoke('astter:choose-export-folder'),
   copyToClipboard: (payload) => {
     if (typeof payload === 'string') {
       ipcRenderer.send('astter:copy-to-clipboard', { text: payload, autoPaste: true });

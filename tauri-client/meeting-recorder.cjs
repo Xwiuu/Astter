@@ -20,6 +20,8 @@ class MeetingRecorder extends EventEmitter {
   constructor(options = {}) {
     super();
     this.isRecording = false;
+    this.isProcessingStop = false;
+    this.client = '';
     this.startTime = null;
     this.micProcess = null;
     this.sysProcess = null;
@@ -130,6 +132,7 @@ class MeetingRecorder extends EventEmitter {
     this.meetingId = options.id || `meeting_${Date.now()}`;
     this.meetingTitle = options.title || `Reunião ${new Date().toLocaleDateString('pt-BR')}`;
     this.attendees = options.attendees || ['Você'];
+    this.client = (options.client || '').trim();
     this.transcripts = [];
     this.micBuffer = [];
     this.sysBuffer = [];
@@ -369,56 +372,62 @@ class MeetingRecorder extends EventEmitter {
   async stop() {
     if (!this.isRecording) return null;
     this.isRecording = false;
+    this.isProcessingStop = true;
 
-    if (this.chunkCheckInterval) clearInterval(this.chunkCheckInterval);
-    if (this.micProcess) {
-      try { this.micProcess.kill('SIGINT'); } catch (_) {}
-      this.micProcess = null;
+    try {
+      if (this.chunkCheckInterval) clearInterval(this.chunkCheckInterval);
+      if (this.micProcess) {
+        try { this.micProcess.kill('SIGINT'); } catch (_) {}
+        this.micProcess = null;
+      }
+      if (this.sysProcess) {
+        try { this.sysProcess.kill('SIGINT'); } catch (_) {}
+        this.sysProcess = null;
+      }
+
+      const durationMs = Date.now() - this.startTime;
+      console.log(`⏹️ [MeetingRecorder] Reunião finalizada. Duração: ${this.formatTime(durationMs)}. Processando fatias finais...`);
+
+      // Processa qualquer resíduo nos buffers
+      if (this.micBuffer.length > 0) {
+        const micData = Buffer.concat(this.micBuffer);
+        await this.transcribeSliceSync(micData, 'Você', 'mic');
+      }
+      if (this.sysBuffer.length > 0) {
+        const sysData = Buffer.concat(this.sysBuffer);
+        await this.transcribeSliceSync(sysData, this.attendees[1] || 'Participante 1', 'system');
+      }
+
+      // Diarização local pós-reunião: separa as vozes reais dos participantes remotos
+      await this.runDiarization();
+
+      // Estruturação por IA com Granola Prompt
+      console.log(`🤖 [MeetingRecorder] Estruturando ata e notas com IA (Groq LLaMA)...`);
+      const structuredNotes = await this.generateStructuredNotes();
+
+      const meetingResult = {
+        id: this.meetingId,
+        title: structuredNotes.title || this.meetingTitle,
+        summary: structuredNotes.summary,
+        actionItems: structuredNotes.actionItems,
+        keyTakeaways: structuredNotes.keyTakeaways,
+        notesMarkdown: structuredNotes.fullMarkdown,
+        attendees: structuredNotes.attendees || this.attendees,
+        transcripts: this.transcripts,
+        createdAt: this.startTime,
+        durationMs,
+        durationFormatted: this.formatTime(durationMs),
+        client: this.client
+      };
+
+      // Salva em disco (Markdown e SQLite) e, se configurado, exporta cópia (.md/.pdf) para pasta local
+      await this.saveMeetingToDisk(meetingResult);
+
+      this.emit('meeting-finished', meetingResult);
+      return meetingResult;
+    } finally {
+      this.isProcessingStop = false;
     }
-    if (this.sysProcess) {
-      try { this.sysProcess.kill('SIGINT'); } catch (_) {}
-      this.sysProcess = null;
-    }
-
-    const durationMs = Date.now() - this.startTime;
-    console.log(`⏹️ [MeetingRecorder] Reunião finalizada. Duração: ${this.formatTime(durationMs)}. Processando fatias finais...`);
-
-    // Processa qualquer resíduo nos buffers
-    if (this.micBuffer.length > 0) {
-      const micData = Buffer.concat(this.micBuffer);
-      await this.transcribeSliceSync(micData, 'Você', 'mic');
-    }
-    if (this.sysBuffer.length > 0) {
-      const sysData = Buffer.concat(this.sysBuffer);
-      await this.transcribeSliceSync(sysData, this.attendees[1] || 'Participante 1', 'system');
-    }
-
-    // Diarização local pós-reunião: separa as vozes reais dos participantes remotos
-    await this.runDiarization();
-
-    // Estruturação por IA com Granola Prompt
-    console.log(`🤖 [MeetingRecorder] Estruturando ata e notas com IA (Groq LLaMA)...`);
-    const structuredNotes = await this.generateStructuredNotes();
-
-    const meetingResult = {
-      id: this.meetingId,
-      title: structuredNotes.title || this.meetingTitle,
-      summary: structuredNotes.summary,
-      actionItems: structuredNotes.actionItems,
-      keyTakeaways: structuredNotes.keyTakeaways,
-      notesMarkdown: structuredNotes.fullMarkdown,
-      attendees: structuredNotes.attendees || this.attendees,
-      transcripts: this.transcripts,
-      createdAt: this.startTime,
-      durationMs,
-      durationFormatted: this.formatTime(durationMs)
-    };
-
-    // Salva em disco (Markdown e SQLite)
-    this.saveMeetingToDisk(meetingResult);
-
-    this.emit('meeting-finished', meetingResult);
-    return meetingResult;
   }
 
   // Roda a diarização local (pyannote.audio) sobre todo o áudio do sistema da reunião
@@ -629,19 +638,23 @@ Responda ESTRITAMENTE em formato JSON com o seguinte schema:
     }
   }
 
-  saveMeetingToDisk(meeting) {
+  sanitizeForFilename(str) {
+    return (str || '')
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9_-]+/g, '_')
+      .slice(0, 40);
+  }
+
+  async saveMeetingToDisk(meeting) {
     const memoryDir = path.resolve(__dirname, '../memory/meetings');
     if (!fs.existsSync(memoryDir)) {
       fs.mkdirSync(memoryDir, { recursive: true });
     }
 
     const dateStr = new Date(meeting.createdAt).toISOString().split('T')[0];
-    const cleanTitle = (meeting.title || 'reuniao')
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .replace(/[^a-z0-9_-]+/g, '_')
-      .slice(0, 40);
+    const cleanTitle = this.sanitizeForFilename(meeting.title) || 'reuniao';
 
     const mdPath = path.join(memoryDir, `${dateStr}_${cleanTitle}.md`);
 
@@ -688,8 +701,79 @@ ${meeting.transcripts.map(t => `**${t.speaker}** *(${t.timeFormatted})*: ${t.tex
         createdAt: meeting.createdAt,
         filePath: mdPath
       });
+      await this.exportMeetingCopy(meeting, mdContent, dateStr, cleanTitle);
     } catch (e) {
       console.error('❌ [MeetingRecorder] Erro ao salvar arquivo da reunião:', e);
+    }
+  }
+
+  // Lê a pasta de exportação configurada pelo usuário (via cápsula) no config compartilhado.
+  // Ausência de configuração = recurso desligado, sem afetar o fluxo normal de gravação.
+  getExportFolder() {
+    try {
+      const configPath = path.resolve(__dirname, '../memory/app-config.json');
+      const config = JSON.parse(fs.readFileSync(configPath, 'utf8'));
+      return config.meetingExportFolder || null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  // Conversão leve de markdown -> HTML, suficiente para o formato que nós mesmos geramos
+  // (frontmatter, títulos, citações, listas e negrito), só para o export em PDF.
+  renderMarkdownToHtml(markdown) {
+    const body = markdown.replace(/^---\n[\s\S]*?\n---\n/, '');
+    const escape = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const lines = escape(body).split('\n').map((line) => {
+      if (/^### /.test(line)) return `<h3>${line.slice(4)}</h3>`;
+      if (/^## /.test(line)) return `<h2>${line.slice(3)}</h2>`;
+      if (/^# /.test(line)) return `<h1>${line.slice(2)}</h1>`;
+      if (/^&gt; /.test(line)) return `<blockquote>${line.slice(5)}</blockquote>`;
+      if (/^- /.test(line)) return `<li>${line.slice(2)}</li>`;
+      if (!line.trim()) return '<br/>';
+      return `<p>${line}</p>`;
+    }).join('\n').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+
+    return `<!doctype html><html><head><meta charset="utf-8"><style>
+      body { font-family: -apple-system, system-ui, sans-serif; color: #1a1a1a; padding: 48px; line-height: 1.6; }
+      h1 { font-size: 26px; } h2 { font-size: 19px; margin-top: 28px; } h3 { font-size: 16px; }
+      blockquote { color: #555; border-left: 3px solid #38bdf8; margin: 0; padding-left: 14px; }
+      li { margin-left: 20px; }
+    </style></head><body>${lines}</body></html>`;
+  }
+
+  // Exporta uma cópia da reunião (.md sempre, .pdf se a renderização funcionar) para a pasta
+  // local configurada pelo usuário, organizada em subpasta por cliente/projeto quando informado.
+  // Falha aqui nunca quebra a gravação: o salvamento em memory/meetings + SQLite já aconteceu antes.
+  async exportMeetingCopy(meeting, mdContent, dateStr, cleanTitle) {
+    const exportFolder = this.getExportFolder();
+    if (!exportFolder) return;
+
+    try {
+      const targetDir = meeting.client
+        ? path.join(exportFolder, this.sanitizeForFilename(meeting.client) || meeting.client)
+        : exportFolder;
+      fs.mkdirSync(targetDir, { recursive: true });
+
+      const basename = `${dateStr}_${cleanTitle}`;
+      const mdOutPath = path.join(targetDir, `${basename}.md`);
+      fs.writeFileSync(mdOutPath, mdContent, 'utf8');
+
+      const pdfOutPath = path.join(targetDir, `${basename}.pdf`);
+      const { BrowserWindow } = require('electron');
+      const pdfWindow = new BrowserWindow({ show: false, webPreferences: { offscreen: true } });
+      try {
+        const html = this.renderMarkdownToHtml(mdContent);
+        await pdfWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
+        const pdfBuffer = await pdfWindow.webContents.printToPDF({ printBackground: true, pageSize: 'A4' });
+        fs.writeFileSync(pdfOutPath, pdfBuffer);
+      } finally {
+        pdfWindow.destroy();
+      }
+
+      console.log(`📁 [MeetingRecorder] Cópia exportada para: ${targetDir}`);
+    } catch (e) {
+      console.warn('⚠️ [MeetingRecorder] Falha ao exportar cópia para pasta local:', e.message || e);
     }
   }
 }

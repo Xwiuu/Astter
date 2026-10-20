@@ -174,8 +174,8 @@
 
       /* ==================== ESTADO 1B: MENU (Grip + Mic + Meeting + Logo + Settings) ==================== */
       .thought-bubble.state-menu {
-        width: 194px;
-        min-width: 194px;
+        width: 216px;
+        min-width: 216px;
         padding: 0 8px 0 6px;
         background: rgba(18, 18, 22, 0.96);
         border-color: rgba(255, 255, 255, 0.16);
@@ -318,6 +318,12 @@
         background: rgba(56, 189, 248, 0.3);
         color: #7DD3FC;
         box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+      }
+
+      .pill-btn.export-btn:hover {
+        background: rgba(34, 197, 94, 0.3);
+        color: #86EFAC;
+        box-shadow: 0 0 10px rgba(34, 197, 94, 0.4);
       }
 
       .menu-center-logo {
@@ -607,6 +613,11 @@
                   <line x1="3" x2="21" y1="10" y2="10"/>
                 </svg>
               </button>
+              <button class="pill-btn export-btn" id="menuExportBtn" title="Pasta de exportação dos resumos (clique para escolher)">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>
+                </svg>
+              </button>
               <div class="menu-center-logo" id="menuLogoBtn" title="Fechar menu">
                 <svg class="flow-symbol-svg" viewBox="0 0 187 187" fill="none">
                   <rect width="187" height="187" rx="40" fill="#1A1A1A"/>
@@ -640,6 +651,7 @@
           const meetingBtn = document.getElementById("menuMeetingBtn");
           const settings = document.getElementById("menuSettingsBtn");
           const positionBtn = document.getElementById("menuPositionBtn");
+          const exportBtn = document.getElementById("menuExportBtn");
           const logo = document.getElementById("menuLogoBtn");
           const menuGrip = document.getElementById("menuDragHandle");
 
@@ -668,11 +680,35 @@
           }
 
           if (meetingBtn) {
-            bindAction(meetingBtn, () => {
+            bindAction(meetingBtn, async () => {
               console.log("🎙️ [Capsule] Botão de reunião acionado!");
-              if (window.astterNative?.meeting?.start) {
-                window.astterNative.meeting.start();
-              }
+              if (!window.astterNative?.meeting?.start) return;
+              let client = "";
+              try {
+                const folder = window.astterNative.getExportFolder && (await window.astterNative.getExportFolder());
+                if (folder) {
+                  client = (window.prompt("Cliente/projeto (opcional) — organiza o resumo em uma subpasta:", "") || "").trim();
+                }
+              } catch (_) {}
+              window.astterNative.meeting.start({ client });
+            });
+          }
+
+          if (exportBtn) {
+            (async () => {
+              try {
+                const folder = window.astterNative.getExportFolder && (await window.astterNative.getExportFolder());
+                exportBtn.title = folder
+                  ? `Pasta de exportação: ${folder} (clique para alterar)`
+                  : "Pasta de exportação dos resumos (clique para escolher)";
+              } catch (_) {}
+            })();
+            bindAction(exportBtn, async () => {
+              if (!window.astterNative?.chooseExportFolder) return;
+              const folder = await window.astterNative.chooseExportFolder();
+              exportBtn.title = folder
+                ? `Pasta de exportação: ${folder} (clique para alterar)`
+                : "Pasta de exportação dos resumos (clique para escolher)";
             });
           }
 
