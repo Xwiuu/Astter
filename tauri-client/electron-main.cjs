@@ -22,6 +22,29 @@ let tray = null;
 let isQuitting = false;
 const meetingRecorder = require('./meeting-recorder.cjs');
 
+// Preferência de posição da cápsula flutuante (topo/baixo/esquerda/direita),
+// persistida em disco para sobreviver a reinícios do app.
+const APP_CONFIG_PATH = path.join(__dirname, '../memory/app-config.json');
+const VALID_CAPSULE_POSITIONS = ['bottom', 'top', 'left', 'right'];
+
+function loadAppConfig() {
+  try {
+    return JSON.parse(fs.readFileSync(APP_CONFIG_PATH, 'utf8'));
+  } catch (_) {
+    return {};
+  }
+}
+
+function saveAppConfig(partial) {
+  const next = { ...loadAppConfig(), ...partial };
+  try { fs.writeFileSync(APP_CONFIG_PATH, JSON.stringify(next, null, 2), 'utf8'); } catch (_) {}
+  return next;
+}
+
+let capsulePosition = VALID_CAPSULE_POSITIONS.includes(loadAppConfig().capsulePosition)
+  ? loadAppConfig().capsulePosition
+  : 'bottom';
+
 // Ensure single instance
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
@@ -107,6 +130,25 @@ function getTargetDisplay() {
   } catch (_) {}
 
   return widest || screen.getPrimaryDisplay();
+}
+
+const CAPSULE_W = 220;
+const CAPSULE_H = 46;
+const CAPSULE_EDGE_MARGIN = 19; // mesma folga usada na posição "bottom" original (scrH - 65 = scrH - CAPSULE_H - 19)
+
+function computeCapsuleXY(targetDisplay, position) {
+  const { x: scrX, y: scrY, width: scrW, height: scrH } = targetDisplay.workArea;
+  switch (position) {
+    case 'top':
+      return { x: Math.round(scrX + (scrW - CAPSULE_W) / 2), y: Math.round(scrY + CAPSULE_EDGE_MARGIN) };
+    case 'left':
+      return { x: Math.round(scrX + CAPSULE_EDGE_MARGIN), y: Math.round(scrY + (scrH - CAPSULE_H) / 2) };
+    case 'right':
+      return { x: Math.round(scrX + scrW - CAPSULE_W - CAPSULE_EDGE_MARGIN), y: Math.round(scrY + (scrH - CAPSULE_H) / 2) };
+    case 'bottom':
+    default:
+      return { x: Math.round(scrX + (scrW - CAPSULE_W) / 2), y: Math.round(scrY + scrH - 65) };
+  }
 }
 
 function createHubWindow() {
@@ -252,8 +294,8 @@ let currentCapsuleY = 0;
 let isKWinMoving = false;
 let pendingKWinMove = null;
 
-function positionKWinWindowAsync(title, x, y, avoidDocks = false) {
-  pendingKWinMove = { title, x: Math.round(x), y: Math.round(y), avoidDocks };
+function positionKWinWindowAsync(title, x, y, avoidDocks = false, edge = 'bottom') {
+  pendingKWinMove = { title, x: Math.round(x), y: Math.round(y), avoidDocks, edge };
   if (isKWinMoving) return;
 
   const runNext = () => {
@@ -287,6 +329,7 @@ function positionKWinWindowAsync(title, x, y, avoidDocks = false) {
       }
       if (screenGeom) {
         let capX = ${item.x}, capY = ${item.y}, capW = target.width, capH = target.height;
+        let edge = "${item.edge}";
         let allWins = workspace.windowList();
         for (let j = 0; j < allWins.length; j++) {
           let d = allWins[j];
@@ -295,7 +338,24 @@ function positionKWinWindowAsync(title, x, y, avoidDocks = false) {
           let dg = d.frameGeometry;
           let overlapsH = capX < dg.x + dg.width && capX + capW > dg.x;
           let overlapsV = capY + capH > dg.y && capY < dg.y + dg.height;
-          if (overlapsH && overlapsV) {
+          if (!overlapsH || !overlapsV) continue;
+          // Empurra a cápsula pro lado OPOSTO do dock, no eixo que combina com a
+          // borda escolhida (topo/baixo move em Y, esquerda/direita move em X) —
+          // assim o desvio nunca joga a cápsula pra fora da borda que o usuário
+          // escolheu, só a afasta o suficiente do dock que estava sobrepondo.
+          if (edge === "top") {
+            let adjustedY = dg.y + dg.height + 8;
+            if (adjustedY + capH > screenGeom.y + screenGeom.height) adjustedY = screenGeom.y + screenGeom.height - capH;
+            capY = adjustedY;
+          } else if (edge === "left") {
+            let adjustedX = dg.x + dg.width + 8;
+            if (adjustedX + capW > screenGeom.x + screenGeom.width) adjustedX = screenGeom.x + screenGeom.width - capW;
+            capX = adjustedX;
+          } else if (edge === "right") {
+            let adjustedX = dg.x - capW - 8;
+            if (adjustedX < screenGeom.x) adjustedX = screenGeom.x;
+            capX = adjustedX;
+          } else {
             let adjustedY = dg.y - capH - 8;
             if (adjustedY < screenGeom.y) adjustedY = screenGeom.y;
             capY = adjustedY;
@@ -342,29 +402,30 @@ function positionKWinWindowAsync(title, x, y, avoidDocks = false) {
   runNext();
 }
 
-function moveCapsule(dx, dy) {
+// Único ponto que move a janela real (drag manual e troca de posição via botão
+// usam isso): Electron via setPosition (X11 / fallback) + KWin via script (Wayland).
+function applyCapsulePosition(x, y, { avoidDocks = false, edge = 'bottom' } = {}) {
   if (!statusWindow || statusWindow.isDestroyed()) return;
-  currentCapsuleX = Math.round(currentCapsuleX + dx);
-  currentCapsuleY = Math.round(currentCapsuleY + dy);
-
-  // 1. Move no Electron (X11 / fallback)
+  currentCapsuleX = x;
+  currentCapsuleY = y;
   try {
-    statusWindow.setPosition(currentCapsuleX, currentCapsuleY);
+    statusWindow.setPosition(x, y);
     statusWindow.setAlwaysOnTop(true, 'screen-saver', 1);
     statusWindow.moveTop();
   } catch (_) {}
-
-  // 2. Move no KWin Wayland (KDE Plasma 6)
   if (process.platform === 'linux') {
-    positionKWinWindowAsync('Astter Capsule', currentCapsuleX, currentCapsuleY);
+    positionKWinWindowAsync('Astter Capsule', x, y, avoidDocks, edge);
   }
+}
+
+function moveCapsule(dx, dy) {
+  if (!statusWindow || statusWindow.isDestroyed()) return;
+  applyCapsulePosition(Math.round(currentCapsuleX + dx), Math.round(currentCapsuleY + dy));
 }
 
 function createStatusWindow() {
   const targetDisplay = getTargetDisplay();
-  const { x: scrX, y: scrY, width: scrW, height: scrH } = targetDisplay.workArea;
-  const capsuleX = Math.round(scrX + (scrW - 220) / 2);
-  const capsuleY = Math.round(scrY + scrH - 65);
+  const { x: capsuleX, y: capsuleY } = computeCapsuleXY(targetDisplay, capsulePosition);
   currentCapsuleX = capsuleX;
   currentCapsuleY = capsuleY;
 
@@ -397,7 +458,7 @@ function createStatusWindow() {
     statusWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
     statusWindow.moveTop();
     setTimeout(() => {
-      positionKWinWindowAsync('Astter Capsule', capsuleX, capsuleY, true);
+      positionKWinWindowAsync('Astter Capsule', capsuleX, capsuleY, true, capsulePosition);
     }, 350);
     console.log('✓ [Astter] Cápsula flutuante visível em:', statusWindow.getPosition());
   });
@@ -639,6 +700,16 @@ ipcMain.on('astter:move-status', (event, { dx, dy }) => {
   moveCapsule(dx, dy);
 });
 
+ipcMain.handle('astter:get-capsule-position', () => capsulePosition);
+
+ipcMain.on('astter:set-capsule-position', (event, position) => {
+  if (!VALID_CAPSULE_POSITIONS.includes(position)) return;
+  capsulePosition = position;
+  saveAppConfig({ capsulePosition });
+  const { x, y } = computeCapsuleXY(getTargetDisplay(), capsulePosition);
+  applyCapsulePosition(x, y, { avoidDocks: true, edge: capsulePosition });
+});
+
 ipcMain.on('astter:set-status-bounds', (event, { width, height, expandUpwards = true }) => {
   if (!statusWindow) return;
   const currentX = currentCapsuleX || statusWindow.getPosition()[0];
@@ -671,6 +742,39 @@ ipcMain.on('astter:set-status-bounds', (event, { width, height, expandUpwards = 
   }
 });
 
+const TERMINAL_RESOURCE_CLASSES = [
+  'konsole', 'alacritty', 'gnome-terminal-server', 'xterm', 'kitty', 'foot',
+  'terminator', 'tilix', 'xfce4-terminal', 'lxterminal', 'urxvt', 'st',
+  'wezterm', 'deepin-terminal', 'terminology'
+];
+
+// Descobre se a janela ativa é um terminal via um script KWin que escreve a
+// resourceClass no clipboard do klipper (truque: não há stdout utilizável
+// num `qdbus loadScript/start`, então usamos o klipper como canal de volta).
+// Roda ANTES de escrever a transcrição no clipboard de verdade — senão esse
+// probe sobrescreveria o texto que estamos prestes a colar.
+function detectActiveWindowIsTerminal(callback) {
+  if (process.platform !== 'linux') { callback(false); return; }
+  const kwinScript = `
+    let w = workspace.activeWindow;
+    let cls = w ? (w.resourceClass || "") : "";
+    callDBus("org.kde.klipper", "/klipper", "org.kde.klipper.klipper", "setClipboardContents", cls);
+  `;
+  const scriptName = `termcheck_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+  const tmpPath = path.join('/tmp', `${scriptName}.js`);
+  fs.writeFile(tmpPath, kwinScript, (err) => {
+    if (err) { callback(false); return; }
+    const cmd = `qdbus-qt6 org.kde.KWin /Scripting org.kde.kwin.Scripting.loadScript "${tmpPath}" "${scriptName}" && qdbus-qt6 org.kde.KWin /Scripting org.kde.kwin.Scripting.start && qdbus-qt6 org.kde.KWin /Scripting org.kde.kwin.Scripting.unloadScript "${scriptName}"`;
+    exec(cmd, { timeout: 1000 }, () => {
+      try { fs.unlink(tmpPath, () => {}); } catch (_) {}
+      exec('wl-paste', { timeout: 500 }, (err2, stdout) => {
+        const cls = (stdout || '').trim().toLowerCase();
+        callback(!err2 && TERMINAL_RESOURCE_CLASSES.some((t) => cls.includes(t)));
+      });
+    });
+  });
+}
+
 ipcMain.on('astter:copy-to-clipboard', (event, payload) => {
   let text = '';
   let autoPaste = true;
@@ -683,37 +787,53 @@ ipcMain.on('astter:copy-to-clipboard', (event, payload) => {
   }
 
   if (!text) return;
-  clipboard.writeText(text);
 
-  // Coloca o texto de forma limpa e assíncrona no Wayland clipboard e na seleção primária
-  try {
-    const { spawn } = require('child_process');
-    const p1 = spawn('wl-copy', [text], { stdio: 'ignore', detached: true });
-    p1.unref();
-    const p2 = spawn('wl-copy', ['-p', text], { stdio: 'ignore', detached: true });
-    p2.unref();
-    console.log('📋 [Astter Clipboard] Texto colocado no Wayland clipboard e primary (wl-copy):', text.slice(0, 40));
-  } catch (e) {
-    console.warn('⚠️ [Astter Clipboard] Falha ao executar wl-copy:', e);
-  }
+  const writeClipboardAndPaste = (pasteMode) => {
+    clipboard.writeText(text);
 
-  // Dá 60ms para o servidor Wayland registrar a nova seleção antes de simular o Ctrl+V
-  if (autoPaste) {
-    setTimeout(() => {
-      try {
-        const net = require('net');
-        const socketClient = net.createConnection('/tmp/flow-uinput.sock', () => {
-          socketClient.write('PASTE');
-          socketClient.end();
-          console.log('📋 [Astter AutoPaste] Hardware uinput Ctrl+V enviado via socket persistente!');
-        });
-        socketClient.on('error', (err) => {
-          console.warn('⚠️ [Astter AutoPaste] Socket uinput indisponível:', err.message);
-        });
-      } catch (err) {
-        console.error('⚠️ [Astter AutoPaste] Erro ao disparar colagem:', err);
-      }
-    }, 60);
+    // Coloca o texto de forma limpa e assíncrona no Wayland clipboard e na seleção primária
+    try {
+      const { spawn } = require('child_process');
+      const p1 = spawn('wl-copy', [text], { stdio: 'ignore', detached: true });
+      p1.unref();
+      const p2 = spawn('wl-copy', ['-p', text], { stdio: 'ignore', detached: true });
+      p2.unref();
+      console.log('📋 [Astter Clipboard] Texto colocado no Wayland clipboard e primary (wl-copy):', text.slice(0, 40));
+    } catch (e) {
+      console.warn('⚠️ [Astter Clipboard] Falha ao executar wl-copy:', e);
+    }
+
+    // Dá 60ms para o servidor Wayland registrar a nova seleção antes de simular o paste
+    if (autoPaste) {
+      setTimeout(() => {
+        try {
+          const net = require('net');
+          const socketClient = net.createConnection('/tmp/flow-uinput.sock', () => {
+            socketClient.write(pasteMode);
+            socketClient.end();
+            console.log('📋 [Astter AutoPaste] Hardware uinput', pasteMode, 'enviado via socket persistente!');
+          });
+          socketClient.on('error', (err) => {
+            console.warn('⚠️ [Astter AutoPaste] Socket uinput indisponível:', err.message);
+          });
+        } catch (err) {
+          console.error('⚠️ [Astter AutoPaste] Erro ao disparar colagem:', err);
+        }
+      }, 60);
+    }
+  };
+
+  // Detecta terminal ANTES de escrever o texto de verdade no clipboard: o probe
+  // usa o clipboard como canal de retorno, então faria a transcrição sumir se
+  // rodasse depois. Escolhe Ctrl+V (apps normais) ou Shift+Insert (terminais),
+  // nunca os dois — mandar os dois colava o texto duplicado em qualquer app
+  // que reconhece ambos os atalhos como "colar".
+  if (autoPaste && process.platform === 'linux') {
+    detectActiveWindowIsTerminal((isTerminal) => {
+      writeClipboardAndPaste(isTerminal ? 'PASTE:SHIFTINS' : 'PASTE:CTRLV');
+    });
+  } else {
+    writeClipboardAndPaste('PASTE:CTRLV');
   }
 });
 

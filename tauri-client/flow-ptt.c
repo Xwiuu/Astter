@@ -61,13 +61,14 @@ static void emit_key(int fd, int type, int code, int val) {
     write(fd, &ie, sizeof(ie));
 }
 
-static void do_paste(void) {
+// Manda SEMPRE os dois (Ctrl+V e Shift+Insert) duplicava o texto colado: a
+// maioria dos apps (incluindo terminais modernos) reconhece os dois atalhos
+// como "colar", então cada um deles colava uma cópia inteira do texto. Agora
+// o chamador (electron-main.cjs, que detecta o app em foco) escolhe UM modo.
+static void do_paste_ctrlv(void) {
     if (uinput_fd < 0) return;
+    usleep(50000); // 50ms: dá tempo do Wayland registrar o foco e o clipboard
 
-    // Breve pausa para o Wayland registrar o foco e clipboard
-    usleep(50000); // 50ms
-
-    // 1. Emite Ctrl + V de alta precisão
     emit_key(uinput_fd, EV_KEY, KEY_LEFTCTRL, 1);
     emit_key(uinput_fd, EV_SYN, SYN_REPORT, 0);
     usleep(25000);
@@ -83,8 +84,14 @@ static void do_paste(void) {
     emit_key(uinput_fd, EV_KEY, KEY_LEFTCTRL, 0);
     emit_key(uinput_fd, EV_SYN, SYN_REPORT, 0);
 
-    // 2. Emite Shift+Insert para terminais e apps que usam colagem primária
-    usleep(25000);
+    printf("📋 [Flow PTT] Ctrl+V simulado com timestamp real!\n");
+    fflush(stdout);
+}
+
+static void do_paste_shiftinsert(void) {
+    if (uinput_fd < 0) return;
+    usleep(50000); // 50ms: dá tempo do Wayland registrar o foco e o clipboard
+
     emit_key(uinput_fd, EV_KEY, KEY_LEFTSHIFT, 1);
     emit_key(uinput_fd, EV_SYN, SYN_REPORT, 0);
     usleep(15000);
@@ -97,7 +104,7 @@ static void do_paste(void) {
     emit_key(uinput_fd, EV_KEY, KEY_LEFTSHIFT, 0);
     emit_key(uinput_fd, EV_SYN, SYN_REPORT, 0);
 
-    printf("📋 [Flow PTT] Ctrl+V e Shift+Insert simulados com timestamp real!\n");
+    printf("📋 [Flow PTT] Shift+Insert simulado com timestamp real!\n");
     fflush(stdout);
 }
 
@@ -206,8 +213,10 @@ int main(int argc, char *argv[]) {
                 int n = read(client, cmd, sizeof(cmd) - 1);
                 if (n > 0) {
                     cmd[n] = '\0';
-                    if (strstr(cmd, "PASTE")) {
-                        do_paste();
+                    if (strstr(cmd, "PASTE:SHIFTINS")) {
+                        do_paste_shiftinsert();
+                    } else if (strstr(cmd, "PASTE")) {
+                        do_paste_ctrlv();
                     }
                 }
                 close(client);

@@ -14,6 +14,8 @@ contextBridge.exposeInMainWorld('astterNative', {
   moveStatus: (dx, dy) => {
     ipcRenderer.send('astter:move-status', { dx, dy });
   },
+  getCapsulePosition: () => ipcRenderer.invoke('astter:get-capsule-position'),
+  setCapsulePosition: (position) => ipcRenderer.send('astter:set-capsule-position', position),
   copyToClipboard: (payload) => {
     if (typeof payload === 'string') {
       ipcRenderer.send('astter:copy-to-clipboard', { text: payload, autoPaste: true });

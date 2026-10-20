@@ -124,6 +124,20 @@
         to { --glow-angle: 360deg; }
       }
 
+      /* Pulso disparado quando a cápsula troca de posição (topo/baixo/lados): a
+         janela pula pra um canto bem diferente da tela sem nenhuma transição de
+         movimento (o KWin só "teleporta" a janela), então sem isso o usuário não
+         percebe que algo mudou se não estiver olhando pro canto novo. */
+      @keyframes capsuleRepositionPulse {
+        0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(56, 189, 248, 0.6); }
+        35% { transform: scale(1.3); box-shadow: 0 0 22px 6px rgba(56, 189, 248, 0.55); }
+        100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(56, 189, 248, 0); }
+      }
+
+      .thought-bubble.reposition-pulse {
+        animation: capsuleRepositionPulse 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+
       /* ==================== ESTADO 1: RESTING (Grip + Logo) ==================== */
       .thought-bubble.state-resting {
         width: 46px;
@@ -160,8 +174,8 @@
 
       /* ==================== ESTADO 1B: MENU (Grip + Mic + Meeting + Logo + Settings) ==================== */
       .thought-bubble.state-menu {
-        width: 168px;
-        min-width: 168px;
+        width: 194px;
+        min-width: 194px;
         padding: 0 8px 0 6px;
         background: rgba(18, 18, 22, 0.96);
         border-color: rgba(255, 255, 255, 0.16);
@@ -298,6 +312,12 @@
         background: rgba(167, 139, 250, 0.3);
         color: #C4B5FD;
         box-shadow: 0 0 10px rgba(167, 139, 250, 0.4);
+      }
+
+      .pill-btn.position-btn:hover {
+        background: rgba(56, 189, 248, 0.3);
+        color: #7DD3FC;
+        box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
       }
 
       .menu-center-logo {
@@ -495,6 +515,19 @@
       let audioScale = 1;
       let lastStateChangeTime = 0;
 
+      // Posição atual da cápsula (sincronizada com o main process no load, pra o
+      // botão de ciclar posições continuar de onde parou após um restart do app).
+      const CAPSULE_POSITION_ORDER = ["bottom", "top", "left", "right"];
+      const CAPSULE_POSITION_LABEL = { bottom: "embaixo", top: "em cima", left: "na esquerda", right: "na direita" };
+      let capsulePosition = "bottom";
+      (async () => {
+        try {
+          if (window.astterNative && window.astterNative.getCapsulePosition) {
+            capsulePosition = await window.astterNative.getCapsulePosition();
+          }
+        } catch (_) {}
+      })();
+
       // Renderiza o interior da cápsula com base no estado REA
       function renderBubble(status) {
         currentStatus = status;
@@ -584,6 +617,16 @@
                   <path d="M116 89.1C112 89.1 108.5 92.7 108.5 96.6V127.5C108.5 131.3 112 134.9 116 134.9C120 134.9 123.6 131.3 123.6 127.5V96.6C123.6 92.7 120 89.1 116 89.1Z" fill="#FFFFEB"/>
                 </svg>
               </div>
+              <button class="pill-btn position-btn" id="menuPositionBtn" title="Posição da cápsula (clique para alternar: embaixo → cima → esquerda → direita)">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="5 9 2 12 5 15"></polyline>
+                  <polyline points="9 5 12 2 15 5"></polyline>
+                  <polyline points="15 19 12 22 9 19"></polyline>
+                  <polyline points="19 9 22 12 19 15"></polyline>
+                  <line x1="2" y1="12" x2="22" y2="12"></line>
+                  <line x1="12" y1="2" x2="12" y2="22"></line>
+                </svg>
+              </button>
               <button class="pill-btn settings-btn" id="menuSettingsBtn" title="Configurações do Aion">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                   <circle cx="12" cy="12" r="3"></circle>
@@ -596,6 +639,7 @@
           const mic = document.getElementById("menuMicBtn");
           const meetingBtn = document.getElementById("menuMeetingBtn");
           const settings = document.getElementById("menuSettingsBtn");
+          const positionBtn = document.getElementById("menuPositionBtn");
           const logo = document.getElementById("menuLogoBtn");
           const menuGrip = document.getElementById("menuDragHandle");
 
@@ -629,6 +673,26 @@
               if (window.astterNative?.meeting?.start) {
                 window.astterNative.meeting.start();
               }
+            });
+          }
+
+          if (positionBtn) {
+            bindAction(positionBtn, () => {
+              const idx = CAPSULE_POSITION_ORDER.indexOf(capsulePosition);
+              capsulePosition = CAPSULE_POSITION_ORDER[(idx + 1) % CAPSULE_POSITION_ORDER.length];
+              console.log("📍 [Capsule] Nova posição:", capsulePosition);
+              positionBtn.title = `Cápsula ${CAPSULE_POSITION_LABEL[capsulePosition]} (clique para alternar)`;
+              if (window.astterNative && window.astterNative.setCapsulePosition) {
+                window.astterNative.setCapsulePosition(capsulePosition);
+              }
+              // A janela "teleporta" pro canto novo via KWin (sem animação de
+              // movimento), então sem esse pulso o usuário não percebe que ela
+              // mudou de lugar se não estiver olhando pro canto certo.
+              setTimeout(() => {
+                thoughtBubble.classList.remove("reposition-pulse");
+                void thoughtBubble.offsetWidth;
+                thoughtBubble.classList.add("reposition-pulse");
+              }, 420);
             });
           }
 
