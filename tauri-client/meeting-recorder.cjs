@@ -761,11 +761,18 @@ ${meeting.transcripts.map(t => `**${t.speaker}** *(${t.timeFormatted})*: ${t.tex
 
       const pdfOutPath = path.join(targetDir, `${basename}.pdf`);
       const { BrowserWindow } = require('electron');
-      const pdfWindow = new BrowserWindow({ show: false, webPreferences: { offscreen: true } });
+      // Sem offscreen:true de propósito — este app já roda com a composição de GPU
+      // ajustada para o Wayland (ver electron-main.cjs), e OSR depende dela para gerar
+      // o frame; combinado, isso trava o printToPDF indefinidamente sem erro nenhum.
+      const pdfWindow = new BrowserWindow({ show: false });
+      const withTimeout = (promise, ms) => Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error(`timeout após ${ms}ms`)), ms))
+      ]);
       try {
         const html = this.renderMarkdownToHtml(mdContent);
-        await pdfWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`);
-        const pdfBuffer = await pdfWindow.webContents.printToPDF({ printBackground: true, pageSize: 'A4' });
+        await withTimeout(pdfWindow.loadURL(`data:text/html;charset=utf-8,${encodeURIComponent(html)}`), 15000);
+        const pdfBuffer = await withTimeout(pdfWindow.webContents.printToPDF({ printBackground: true, pageSize: 'A4' }), 15000);
         fs.writeFileSync(pdfOutPath, pdfBuffer);
       } finally {
         pdfWindow.destroy();
